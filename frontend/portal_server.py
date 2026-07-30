@@ -1,11 +1,18 @@
 #!/usr/bin/env python3
 """Serves the activity frontend and a small control API for the lab.
 
-Runs on the host (macOS/Linux), not inside the Containerlab VM. Every action
-shells out to the same podman VM Containerlab deploys into, via
-`podman machine ssh`, and runs the existing lab.sh / scripts/*.sh unchanged --
-this is a thin control surface over the same commands from the README, not a
-reimplementation of them.
+Runs on the host (not inside a VM). Every action runs the existing
+lab.sh / scripts/*.sh unchanged -- this is a thin control surface over the
+same commands from the README, not a reimplementation of them.
+
+Where those scripts actually execute depends on .measlab/runtime.env,
+written by install.sh:
+  - MEASLAB_HOP=direct           run scripts directly (native Linux, WSL2 --
+                                  no VM involved, a real Linux kernel is
+                                  already present)
+  - MEASLAB_HOP=podman-machine   hop through `podman machine ssh` (macOS --
+                                  Darwin has no Linux kernel, so Podman runs
+                                  containers inside a small Linux VM)
 
 Usage: python3 frontend/portal_server.py [port]   (default port 8080)
 """
@@ -20,8 +27,25 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 FRONTEND = ROOT / "frontend"
-PODMAN_MACHINE = "podman-machine-default"
+RUNTIME_CONFIG = ROOT / ".measlab" / "runtime.env"
 ANSI_RE = re.compile(r"\x1b\[[0-9;]*[a-zA-Z]")
+
+
+def _load_runtime():
+    hop, machine = "direct", "podman-machine-default"
+    if RUNTIME_CONFIG.exists():
+        for line in RUNTIME_CONFIG.read_text().splitlines():
+            if "=" not in line:
+                continue
+            key, _, value = line.partition("=")
+            if key == "MEASLAB_HOP":
+                hop = value.strip()
+            elif key == "MEASLAB_MACHINE":
+                machine = value.strip()
+    return hop, machine
+
+
+HOP, PODMAN_MACHINE = _load_runtime()
 
 # Fixed, argument-free actions only -- each maps to an existing script call.
 ACTIONS = {
@@ -47,23 +71,27 @@ TIMEOUTS = {"lab_up": 180, "lab_down": 120, "lab_reset": 120}
 DEFAULT_TIMEOUT = 60
 
 
-def run_in_vm(script: str, args: list) -> tuple:
-    """Run <repo>/<script> <args> inside the Containerlab VM over podman machine ssh."""
+def run_in_vm(script: str, args: list, action: str = "") -> tuple:
+    """Run <repo>/<script> <args> wherever the lab actually lives (see HOP above)."""
     remote_path = str(ROOT / script)
     remote_cmd = "sudo bash " + " ".join(shlex.quote(p) for p in [remote_path, *args])
+    if HOP == "podman-machine":
+        cmd = ["podman", "machine", "ssh", PODMAN_MACHINE, "--", remote_cmd]
+    else:
+        cmd = ["bash", "-c", remote_cmd]
     try:
         proc = subprocess.run(
-            ["podman", "machine", "ssh", PODMAN_MACHINE, "--", remote_cmd],
+            cmd,
             capture_output=True,
             text=True,
-            timeout=TIMEOUTS.get(script, DEFAULT_TIMEOUT),
+            timeout=TIMEOUTS.get(action, DEFAULT_TIMEOUT),
         )
         output = ANSI_RE.sub("", proc.stdout + proc.stderr)
         return proc.returncode == 0, output
     except subprocess.TimeoutExpired:
         return False, "Timed out waiting for the command to finish."
     except FileNotFoundError:
-        return False, "podman command not found on this machine."
+        return False, f"Command not found: {cmd[0]}"
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -92,7 +120,7 @@ class Handler(SimpleHTTPRequestHandler):
             if action not in ACTIONS:
                 return self._json(404, {"ok": False, "output": f"Unknown action: {action}"})
             script, args = ACTIONS[action]
-            ok, output = run_in_vm(script, args)
+            ok, output = run_in_vm(script, args, action)
             return self._json(200, {"ok": ok, "output": output})
 
         if self.path == "/api/lg":

@@ -31,15 +31,30 @@ IPv6 uses the documentation prefix 3fff::/20 ([RFC 9637](https://www.rfc-editor.
 
 Inter-AS point-to-point links use 100.64.0.0/10 for IPv4 and /64s from the relevant AS's /32 for IPv6.
 
-## Getting the lab (three routes)
+## Getting the lab (four routes)
+
+**One-command install on your own machine.** Clone the repo, then:
+
+- macOS or native Linux: `./install.sh`
+- Windows: open PowerShell and run `.\install.ps1` (it sets up WSL2 if needed, then runs `install.sh` inside it)
+
+This installs whatever's missing (Podman, Containerlab, ttyd), deploys the lab, and leaves you ready to run `./portal.sh`. See [Installer internals](#installer-internals) below for what it actually does on each platform.
 
 **GitHub Codespaces, nothing installed.** The repository ships a `.devcontainer/` configuration built on Containerlab's official Dev Container image, so a learner can open the repo on GitHub, create a Codespace, and get a browser-based VS Code with Docker and Containerlab pre-installed. GitHub's free allowance (120 core-hours per month at the time of writing) comfortably covers the unit. See [containerlab.dev/manual/codespaces](https://containerlab.dev/manual/codespaces/).
 
 **VS Code Dev Container on the learner's own machine.** The same `.devcontainer/` works locally on Windows, macOS and Linux with [Docker Desktop](https://www.docker.com/products/docker-desktop/) and the Dev Containers extension. This is Containerlab's recommended route on macOS and Windows.
 
-**Native Linux.** Docker Engine plus [Containerlab](https://containerlab.dev/install/), then work in the folder directly.
+**Native Linux, by hand.** Docker Engine or Podman plus [Containerlab](https://containerlab.dev/install/), then work in the folder directly (this is what `install.sh` automates).
 
-All three routes converge on `sudo ./lab.sh up` / `check` / `reset` / `down`, and `sudo ./lab.sh docs` serves the activity frontend on port 8080 (auto-forwarded in Codespaces).
+All four routes converge on `sudo ./lab.sh up` / `check` / `reset` / `down`, and `sudo ./lab.sh docs` serves the activity frontend on port 8080 (auto-forwarded in Codespaces).
+
+### Installer internals
+
+`install.sh` is one shared script for macOS and Linux (native or inside WSL2 -- `uname -s` reports "Linux" in WSL2 too, so the same code path handles both). The only platform-specific branch is macOS, and only because Darwin has no Linux kernel at all: Podman needs a small Linux VM ("podman machine") to run containers in, so `install.sh` creates one (rootful, 4 CPUs, 4GiB RAM) and installs Containerlab inside it. Native Linux and WSL2 already have a real Linux kernel, so Podman, Containerlab and ttyd install directly via the system package manager (apt/dnf/pacman), with a plain-binary fallback for distros without a suitable package -- the same fallback this lab needed on Fedora CoreOS.
+
+`install.ps1` is a thin Windows wrapper: it has exactly one job, making sure WSL2 with a Linux distro exists (`wsl --install -d Ubuntu`, which may need a reboot the very first time WSL is used on a machine), then re-runs `install.sh` inside it.
+
+Either script writes `.measlab/runtime.env`, recording whether the lab needs that `podman machine ssh` hop (macOS) or is reachable directly (Linux, WSL2). `portal.sh` and `frontend/portal_server.py` read it so the Control Portal works the same way regardless of platform.
 
 ## The activity frontend
 
@@ -51,16 +66,19 @@ The markdown sheets remain the single source of truth: after editing anything in
 
 The frontend's "Control Portal" page adds buttons for the lab lifecycle and every activity toggle (congestion, peering, scenarios 1/2, looking glass), plus a live browser terminal into each learner-accessible node (r1, r2, r3, host1) — so activities can be run without typing `docker exec` commands by hand.
 
-Run `./portal.sh` on the machine that has a browser (Ctrl-C to stop), then open `http://localhost:8080`. Requires `ttyd` (`brew install ttyd` / `apt install ttyd`) and `python3`. `portal.sh` reaches the lab via `podman machine ssh`, which matches this repo's macOS+Podman setup; on native Linux or a devcontainer, adjust `run_in_vm()` in `frontend/portal_server.py` and the `podman machine ssh` prefix in `portal.sh` to call the lab directly instead.
+Run `./portal.sh` on the machine that has a browser (Ctrl-C to stop), then open `http://localhost:8080`. Requires `ttyd` and `python3` -- both handled by `install.sh`/`install.ps1` if you used those. `portal.sh` and `frontend/portal_server.py` read `.measlab/runtime.env` (written by the installer) to know whether to reach the lab directly or hop through `podman machine ssh`; if you set the lab up by hand instead of via the installer, create that file yourself (see [Installer internals](#installer-internals)).
 
 Known rough edge: the terminal panel nests several nested PTYs (browser → ttyd → ssh → container exec), and an occasional stray cursor-position escape sequence can garble the first characters typed into a fresh tab. Press Ctrl-C and retype if a command looks wrong; it does not recur once a tab has settled.
 
 ## Requirements
 
-- Docker ([Docker Desktop](https://www.docker.com/products/docker-desktop/) on macOS and Windows, Docker Engine on Linux)
-- [Containerlab](https://containerlab.dev/install/) 0.60 or newer
+`./install.sh` / `install.ps1` install all of this for you. By hand, you need:
 
-Around 2 GB of RAM covers the whole lab.
+- A container runtime: [Docker Desktop](https://www.docker.com/products/docker-desktop/)/Engine, or [Podman](https://podman.io/docs/installation) (this repo's own scripts assume Podman -- see `--runtime podman` in `lab.sh`)
+- [Containerlab](https://containerlab.dev/install/) 0.60 or newer
+- [ttyd](https://github.com/tsl0922/ttyd) and `python3`, only for the Control Portal
+
+Around 4 GiB of RAM covers the whole lab plus some headroom; on macOS that's the Podman machine's memory (`install.sh` sets this up), not just the containers themselves.
 
 ## Start the lab
 

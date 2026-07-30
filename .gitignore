@@ -1,6 +1,9 @@
 # Containerlab runtime state (regenerated on every deploy; includes generated TLS keys)
 clab-measlab/
 
+# Written by install.sh; records this machine's own platform/hop choice
+.measlab/
+
 # Local, machine-specific settings
 .claude/settings.local.json
 
