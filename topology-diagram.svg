@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" font-family="Helvetica, Arial, sans-serif">
+  <rect width="1200" height="620" fill="#ffffff"/>
+  <text x="30" y="40" font-size="22" font-weight="bold" fill="#25316a">Lab topology (learner view)</text>
+  <text x="30" y="62" font-size="13" fill="#555555">You may log in to the blue machines only. Everything else is the Internet: measure it from outside.</text>
+
+  <!-- connectors first, under the boxes -->
+  <g stroke="#25316a" stroke-width="2" fill="none">
+    <line x1="105" y1="295" x2="250" y2="295"/>
+    <line x1="250" y1="295" x2="320" y2="170"/>
+    <line x1="250" y1="295" x2="320" y2="420"/>
+    <line x1="320" y1="170" x2="320" y2="420"/>
+    <line x1="320" y1="170" x2="510" y2="170"/>
+    <line x1="320" y1="420" x2="510" y2="420"/>
+    <line x1="510" y1="170" x2="510" y2="420"/>
+    <line x1="510" y1="170" x2="690" y2="85"/>
+    <line x1="510" y1="420" x2="690" y2="85"/>
+    <line x1="690" y1="85" x2="950" y2="255"/>
+    <line x1="950" y1="255" x2="1110" y2="255"/>
+    <line x1="950" y1="420" x2="1110" y2="420"/>
+    <!-- IXP peering LAN star -->
+    <line x1="510" y1="170" x2="740" y2="325"/>
+    <line x1="510" y1="420" x2="740" y2="325"/>
+    <line x1="950" y1="420" x2="740" y2="325"/>
+  </g>
+  <!-- dormant learner peering port -->
+  <line x1="320" y1="420" x2="740" y2="325" stroke="#f36b21" stroke-width="2" stroke-dasharray="7 6"/>
+
+  <!-- IXP fabric -->
+  <rect x="640" y="230" width="200" height="150" fill="#f4f4f4" stroke="#c9c9c9" stroke-width="2" rx="10"/>
+  <text x="740" y="256" font-size="15" font-weight="bold" fill="#25316a" text-anchor="middle">IXP</text>
+  <text x="740" y="274" font-size="11" fill="#555555" text-anchor="middle">shared peering LAN</text>
+  <rect x="690" y="300" width="100" height="50" fill="#25316a" rx="4"/>
+  <text x="740" y="321" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">route server</text>
+  <text x="740" y="338" font-size="11" fill="#8fb7e1" text-anchor="middle">AS 65100</text>
+
+  <!-- learner AS group -->
+  <rect x="30" y="95" width="360" height="400" fill="none" stroke="#8fb7e1" stroke-width="2" stroke-dasharray="8 5" rx="8"/>
+  <text x="42" y="118" font-size="14" font-weight="bold" fill="#25316a">Your network (AS 65001)</text>
+  <text x="42" y="136" font-size="12" fill="#25316a">10.1.0.0/16 and 3fff:1::/32</text>
+
+  <g>
+    <rect x="55" y="270" width="100" height="50" fill="#8fb7e1" rx="4"/>
+    <text x="105" y="291" font-size="14" font-weight="bold" fill="#25316a" text-anchor="middle">host1</text>
+    <text x="105" y="308" font-size="10" fill="#25316a" text-anchor="middle">10.1.10.10</text>
+
+    <rect x="200" y="270" width="100" height="50" fill="#8fb7e1" rx="4"/>
+    <text x="250" y="291" font-size="14" font-weight="bold" fill="#25316a" text-anchor="middle">r3</text>
+    <text x="250" y="308" font-size="10" fill="#25316a" text-anchor="middle">LAN router</text>
+
+    <rect x="270" y="145" width="100" height="50" fill="#8fb7e1" rx="4"/>
+    <text x="320" y="166" font-size="14" font-weight="bold" fill="#25316a" text-anchor="middle">r1</text>
+    <text x="320" y="183" font-size="10" fill="#25316a" text-anchor="middle">border A</text>
+
+    <rect x="270" y="395" width="100" height="50" fill="#8fb7e1" rx="4"/>
+    <text x="320" y="416" font-size="14" font-weight="bold" fill="#25316a" text-anchor="middle">r2</text>
+    <text x="320" y="433" font-size="10" fill="#25316a" text-anchor="middle">border B + IXP port</text>
+  </g>
+
+  <!-- the Internet -->
+  <g>
+    <rect x="460" y="145" width="100" height="50" fill="#25316a" rx="4"/>
+    <text x="510" y="166" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">upstream A</text>
+    <text x="510" y="183" font-size="10" fill="#8fb7e1" text-anchor="middle">provider</text>
+    <rect x="472" y="203" width="76" height="20" fill="#c9c9c9" rx="3"/>
+    <text x="510" y="217" font-size="11" fill="#25316a" text-anchor="middle">AS 65010</text>
+
+    <rect x="460" y="395" width="100" height="50" fill="#25316a" rx="4"/>
+    <text x="510" y="416" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">upstream B</text>
+    <text x="510" y="433" font-size="10" fill="#8fb7e1" text-anchor="middle">provider</text>
+    <rect x="472" y="453" width="76" height="20" fill="#c9c9c9" rx="3"/>
+    <text x="510" y="467" font-size="11" fill="#25316a" text-anchor="middle">AS 65020</text>
+
+    <rect x="640" y="60" width="100" height="50" fill="#25316a" rx="4"/>
+    <text x="690" y="81" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">transit</text>
+    <text x="690" y="98" font-size="10" fill="#8fb7e1" text-anchor="middle">long-haul carrier</text>
+    <rect x="750" y="75" width="76" height="20" fill="#c9c9c9" rx="3"/>
+    <text x="788" y="89" font-size="11" fill="#25316a" text-anchor="middle">AS 65030</text>
+
+    <rect x="900" y="230" width="100" height="50" fill="#25316a" rx="4"/>
+    <text x="950" y="251" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">dest-1</text>
+    <text x="950" y="268" font-size="10" fill="#8fb7e1" text-anchor="middle">hosting network</text>
+    <rect x="912" y="288" width="76" height="20" fill="#c9c9c9" rx="3"/>
+    <text x="950" y="302" font-size="11" fill="#25316a" text-anchor="middle">AS 65040</text>
+
+    <rect x="1060" y="230" width="100" height="50" fill="#25316a" rx="4"/>
+    <text x="1110" y="251" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">target1</text>
+    <text x="1110" y="268" font-size="9" fill="#8fb7e1" text-anchor="middle">10.40.10.10 / 3fff:40:10::10</text>
+
+    <rect x="900" y="395" width="100" height="50" fill="#25316a" rx="4"/>
+    <text x="950" y="416" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">dest-2</text>
+    <text x="950" y="433" font-size="10" fill="#8fb7e1" text-anchor="middle">content network</text>
+    <rect x="912" y="453" width="76" height="20" fill="#c9c9c9" rx="3"/>
+    <text x="950" y="467" font-size="11" fill="#25316a" text-anchor="middle">AS 65050</text>
+
+    <rect x="1060" y="395" width="100" height="50" fill="#25316a" rx="4"/>
+    <text x="1110" y="416" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">target2</text>
+    <text x="1110" y="433" font-size="9" fill="#8fb7e1" text-anchor="middle">10.50.10.10 / 3fff:50:10::10</text>
+  </g>
+
+  <!-- dormant port callout -->
+  <rect x="410" y="330" width="190" height="34" fill="#c9c9c9" rx="3"/>
+  <text x="505" y="344" font-size="11" fill="#25316a" text-anchor="middle">dormant peering port</text>
+  <text x="505" y="358" font-size="11" fill="#25316a" text-anchor="middle">(enabled in a later activity)</text>
+
+  <!-- legend -->
+  <g>
+    <rect x="30" y="555" width="18" height="18" fill="#8fb7e1" rx="3"/>
+    <text x="56" y="569" font-size="13" fill="#25316a">Your machines (log in allowed)</text>
+    <rect x="290" y="555" width="18" height="18" fill="#25316a" rx="3"/>
+    <text x="316" y="569" font-size="13" fill="#25316a">The Internet (measure only, no access)</text>
+    <line x1="620" y1="564" x2="660" y2="564" stroke="#f36b21" stroke-width="2" stroke-dasharray="7 6"/>
+    <text x="670" y="569" font-size="13" fill="#25316a">Configured but not active yet</text>
+  </g>
+</svg>

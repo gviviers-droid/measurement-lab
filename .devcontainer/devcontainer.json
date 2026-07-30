@@ -1,0 +1,13 @@
+{
+  "name": "Internet Measurements Lab",
+  "image": "ghcr.io/srl-labs/containerlab/devcontainer-dind-slim:0.77.0",
+  "hostRequirements": {
+    "cpus": 2,
+    "memory": "8gb"
+  },
+  "forwardPorts": [8080],
+  "portsAttributes": {
+    "8080": { "label": "Activity frontend", "onAutoForward": "openBrowser" }
+  },
+  "postAttachCommand": "echo 'Start the lab with: sudo ./lab.sh up   Then open the activities: sudo ./lab.sh docs'"
+}

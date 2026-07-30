@@ -1,0 +1,129 @@
+# Internet Measurements course - hands-on lab (dual-stack, IXP, two destinations)
+# Learner AS 65001 (r1, r2, r3, host1) is the only part learners may configure or inspect.
+# Everything else plays the Internet: observe from outside, never log in.
+#
+# Deploy:   sudo containerlab deploy -t topology.clab.yml
+# Then:     sudo ./scripts/impairments.sh
+# Verify:   sudo ./scripts/lab-check.sh
+# Destroy:  sudo containerlab destroy -t topology.clab.yml
+
+name: measlab
+
+topology:
+  defaults:
+    kind: linux
+
+  kinds:
+    linux:
+      image: quay.io/frrouting/frr:10.2.1
+
+  nodes:
+    # ----- Learner AS 65001: 10.1.0.0/16 and 3fff:1::/32 -----
+    r1:
+      binds: [configs/daemons:/etc/frr/daemons, configs/r1/frr.conf:/etc/frr/frr.conf]
+      exec:
+        - sysctl -w net.ipv4.ip_forward=1
+        - sysctl -w net.ipv6.conf.all.forwarding=1
+    r2:
+      binds: [configs/daemons:/etc/frr/daemons, configs/r2/frr.conf:/etc/frr/frr.conf]
+      exec:
+        - sysctl -w net.ipv4.ip_forward=1
+        - sysctl -w net.ipv6.conf.all.forwarding=1
+    r3:
+      binds: [configs/daemons:/etc/frr/daemons, configs/r3/frr.conf:/etc/frr/frr.conf]
+      exec:
+        - sysctl -w net.ipv4.ip_forward=1
+        - sysctl -w net.ipv6.conf.all.forwarding=1
+    host1:
+      image: ghcr.io/srl-labs/network-multitool
+      exec:
+        - ip address add 10.1.10.10/24 dev eth1
+        - ip route replace default via 10.1.10.1 metric 1
+        - ip -6 address add 3fff:1:10::10/64 dev eth1
+        - ip -6 route replace default via 3fff:1:10::1 metric 1
+
+    # ----- The "Internet" (observe-only) -----
+    ra:   # upstream A, AS 65010: 10.10.0.0/16, 3fff:10::/32
+      binds: [configs/daemons:/etc/frr/daemons, configs/ra/frr.conf:/etc/frr/frr.conf]
+      exec:
+        - sysctl -w net.ipv4.ip_forward=1
+        - sysctl -w net.ipv6.conf.all.forwarding=1
+    rb:   # upstream B, AS 65020: 10.20.0.0/16, 3fff:20::/32
+      binds: [configs/daemons:/etc/frr/daemons, configs/rb/frr.conf:/etc/frr/frr.conf]
+      exec:
+        - sysctl -w net.ipv4.ip_forward=1
+        - sysctl -w net.ipv6.conf.all.forwarding=1
+    rt:   # transit, AS 65030: 10.30.0.0/16, 3fff:30::/32
+      binds: [configs/daemons:/etc/frr/daemons, configs/rt/frr.conf:/etc/frr/frr.conf]
+      exec:
+        - sysctl -w net.ipv4.ip_forward=1
+        - sysctl -w net.ipv6.conf.all.forwarding=1
+    rd1:  # dest-1 (hosting network), AS 65040: 10.40.0.0/16, 3fff:40::/32
+      binds: [configs/daemons:/etc/frr/daemons, configs/rd1/frr.conf:/etc/frr/frr.conf]
+      exec:
+        - sysctl -w net.ipv4.ip_forward=1
+        - sysctl -w net.ipv6.conf.all.forwarding=1
+    rd2:  # dest-2 (content network), AS 65050: 10.50.0.0/16, 3fff:50::/32
+      binds: [configs/daemons:/etc/frr/daemons, configs/rd2/frr.conf:/etc/frr/frr.conf]
+      exec:
+        - sysctl -w net.ipv4.ip_forward=1
+        - sysctl -w net.ipv6.conf.all.forwarding=1
+    rs:   # IXP route server, AS 65100
+      binds: [configs/daemons:/etc/frr/daemons, configs/rs/frr.conf:/etc/frr/frr.conf]
+    ixp-sw:  # IXP peering LAN: 100.64.99.0/24 and 3fff:ff::/64
+      image: ghcr.io/srl-labs/network-multitool
+      exec:
+        - ip link add br0 type bridge
+        - ip link set br0 up
+        - sh -c 'for i in eth1 eth2 eth3 eth4 eth5 eth6; do ip link set $i master br0; ip link set $i up; done'
+    target1:  # in dest-1, reached via transit
+      image: ghcr.io/srl-labs/network-multitool
+      exec:
+        - ip address add 10.40.10.10/24 dev eth1
+        - ip route replace default via 10.40.10.1 metric 1
+        - ip -6 address add 3fff:40:10::10/64 dev eth1
+        - ip -6 route replace default via 3fff:40:10::1 metric 1
+        - sh -c 'iperf3 -s -D'
+    target2:  # in dest-2, reached via the IXP
+      image: ghcr.io/srl-labs/network-multitool
+      exec:
+        - ip address add 10.50.10.10/24 dev eth1
+        - ip route replace default via 10.50.10.1 metric 1
+        - ip -6 address add 3fff:50:10::10/64 dev eth1
+        - ip -6 route replace default via 3fff:50:10::1 metric 1
+        - sh -c 'iperf3 -s -D'
+    ct1:  # cross-traffic host in upstream A, used by congestion.sh
+      image: ghcr.io/srl-labs/network-multitool
+      exec:
+        - ip address add 10.10.10.10/24 dev eth1
+        - ip route replace default via 10.10.10.1 metric 1
+        - ip -6 address add 3fff:10:10::10/64 dev eth1
+        - ip -6 route replace default via 3fff:10:10::1 metric 1
+
+  links:
+    # Learner AS internal
+    - endpoints: ["r1:eth1", "r3:eth1"]
+    - endpoints: ["r2:eth1", "r3:eth2"]
+    - endpoints: ["r1:eth2", "r2:eth2"]
+    - endpoints: ["r3:eth3", "host1:eth1"]
+    # Border links
+    - endpoints: ["r1:eth3", "ra:eth1"]
+    - endpoints: ["r2:eth3", "rb:eth1"]
+    # Provider mesh
+    - endpoints: ["ra:eth2", "rb:eth2"]
+    - endpoints: ["ra:eth3", "rt:eth1"]
+    - endpoints: ["rb:eth3", "rt:eth2"]
+    # Destinations
+    - endpoints: ["rt:eth3", "rd1:eth1"]
+    - endpoints: ["rt:eth4", "rd2:eth3"]
+    - endpoints: ["rd1:eth2", "target1:eth1"]
+    - endpoints: ["rd2:eth1", "target2:eth1"]
+    # Cross-traffic host
+    - endpoints: ["ra:eth4", "ct1:eth1"]
+    # IXP peering LAN (star into the bridge container)
+    - endpoints: ["ixp-sw:eth1", "rs:eth1"]
+    - endpoints: ["ixp-sw:eth2", "ra:eth5"]
+    - endpoints: ["ixp-sw:eth3", "rb:eth4"]
+    - endpoints: ["ixp-sw:eth4", "rd1:eth3"]
+    - endpoints: ["ixp-sw:eth5", "rd2:eth2"]
+    - endpoints: ["ixp-sw:eth6", "r2:eth4"]

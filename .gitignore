@@ -1,0 +1,8 @@
+# Containerlab runtime state (regenerated on every deploy; includes generated TLS keys)
+clab-measlab/
+
+# Local, machine-specific settings
+.claude/settings.local.json
+
+# OS cruft
+.DS_Store

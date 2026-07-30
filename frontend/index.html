@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Internet Measurements Lab</title>
+<style>
+:root {
+  --bg: #0d1226;
+  --panel: #151d3b;
+  --panel-2: #1b2547;
+  --line: #2a3763;
+  --text: #dfe6f5;
+  --muted: #8fa0c9;
+  --blue: #8fb7e1;
+  --orange: #f36b21;
+  --grey: #c9c9c9;
+  --mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, "Liberation Mono", monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: var(--sans); font-size: 16px; line-height: 1.65;
+}
+.shell { display: grid; grid-template-columns: 290px 1fr; min-height: 100vh; }
+
+/* ---- sidebar ---- */
+nav {
+  background: var(--panel); border-right: 1px solid var(--line);
+  padding: 22px 18px; position: sticky; top: 0; height: 100vh; overflow-y: auto;
+}
+.brand { font-family: var(--mono); font-size: 14px; color: var(--muted); margin: 0 0 2px; }
+.brand::before { content: "learner@as65001:~$ "; color: var(--orange); }
+.brand-title { font-family: var(--mono); font-size: 18px; font-weight: 700; color: var(--text); margin: 0 0 22px; letter-spacing: .3px; }
+.nav-item {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
+  padding: 9px 10px; margin: 2px 0; border-radius: 6px;
+  color: var(--blue); text-decoration: none; font-size: 14.5px;
+  border-left: 3px solid transparent;
+}
+.nav-item:hover { background: var(--panel-2); }
+.nav-item.active { background: var(--panel-2); color: var(--text); border-left-color: var(--orange); }
+.nav-progress { font-family: var(--mono); font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+.nav-progress.done { color: var(--orange); }
+nav .foot { margin-top: 26px; padding-top: 14px; border-top: 1px solid var(--line);
+  font-size: 12.5px; color: var(--muted); }
+nav .foot a { color: var(--blue); }
+
+/* ---- content ---- */
+main { padding: 42px clamp(24px, 5vw, 72px); max-width: 900px; }
+.page { display: none; }
+.page.visible { display: block; }
+h1 { font-family: var(--mono); font-size: 26px; line-height: 1.3; margin: 0 0 6px; }
+h1::before { content: "$ "; color: var(--orange); }
+h2 { font-family: var(--mono); font-size: 18px; margin: 34px 0 10px; color: var(--text);
+  padding-top: 14px; border-top: 1px solid var(--line); display: flex; align-items: center; gap: 10px; }
+h3 { font-size: 16px; margin: 22px 0 8px; }
+p, li { color: var(--text); max-width: 74ch; }
+a { color: var(--blue); }
+strong { color: #fff; }
+blockquote { margin: 14px 0; padding: 10px 18px; border-left: 3px solid var(--blue);
+  background: var(--panel); border-radius: 0 6px 6px 0; }
+blockquote p { color: var(--muted); }
+
+/* code */
+code { font-family: var(--mono); font-size: 14px; background: var(--panel-2);
+  padding: 1.5px 6px; border-radius: 4px; color: var(--blue); }
+.codewrap { position: relative; margin: 14px 0; }
+pre { background: #0a0f1f; border: 1px solid var(--line); border-radius: 8px;
+  padding: 14px 16px; overflow-x: auto; margin: 0; }
+pre code { background: none; padding: 0; color: #e8eefb; font-size: 14px; }
+.copy-btn { position: absolute; top: 8px; right: 8px; font-family: var(--mono); font-size: 12px;
+  background: var(--panel-2); color: var(--blue); border: 1px solid var(--line);
+  border-radius: 5px; padding: 3px 10px; cursor: pointer; }
+.copy-btn:hover { color: var(--orange); border-color: var(--orange); }
+.copy-btn:focus-visible, .nav-item:focus-visible, summary:focus-visible, .task-check:focus-visible {
+  outline: 2px solid var(--orange); outline-offset: 2px; }
+
+/* tables */
+table { border-collapse: collapse; margin: 14px 0; font-size: 14.5px; width: 100%; }
+th, td { border: 1px solid var(--line); padding: 7px 11px; text-align: left; vertical-align: top; }
+th { background: var(--panel); font-family: var(--mono); font-size: 13px; color: var(--muted); }
+td code { white-space: nowrap; }
+
+/* task checkboxes */
+.task-check { width: 17px; height: 17px; accent-color: var(--orange); cursor: pointer; flex: none; }
+h2.task-done { color: var(--muted); }
+h2.task-done .task-title { text-decoration: line-through; text-decoration-color: var(--orange); }
+
+/* answers */
+details.answers { margin: 26px 0; background: var(--panel); border: 1px dashed var(--line);
+  border-radius: 8px; padding: 0 18px; }
+details.answers summary { font-family: var(--mono); font-size: 15px; color: var(--orange);
+  cursor: pointer; padding: 13px 0; }
+details.answers[open] { border-style: solid; padding-bottom: 8px; }
+
+/* diagram */
+.diagram { background: #fff; border-radius: 10px; padding: 10px; margin: 16px 0; }
+.diagram svg { width: 100%; height: auto; display: block; }
+
+/* control portal */
+.btn-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0 20px; }
+.portal-btn {
+  font-family: var(--mono); font-size: 13.5px; color: var(--blue);
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px;
+  padding: 8px 14px; cursor: pointer;
+}
+.portal-btn:hover { color: var(--orange); border-color: var(--orange); }
+.portal-btn:disabled { opacity: .5; cursor: wait; }
+.portal-btn.danger { color: #f36b6b; }
+.portal-btn.danger:hover { border-color: #f36b6b; }
+.lg-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0 20px; align-items: center; }
+.lg-row select, .lg-row input {
+  font-family: var(--mono); font-size: 13.5px; background: var(--panel-2); color: var(--text);
+  border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px;
+}
+.lg-row input { flex: 1; min-width: 220px; }
+#portal-output {
+  background: #0a0f1f; border: 1px solid var(--line); border-radius: 8px;
+  padding: 14px 16px; font-family: var(--mono); font-size: 13px; color: #e8eefb;
+  white-space: pre-wrap; word-break: break-word; max-height: 360px; overflow-y: auto;
+}
+.term-tabs { display: flex; gap: 6px; margin: 16px 0 0; }
+.term-tab {
+  font-family: var(--mono); font-size: 13.5px; color: var(--muted);
+  background: var(--panel); border: 1px solid var(--line); border-bottom: none;
+  border-radius: 6px 6px 0 0; padding: 8px 16px; cursor: pointer;
+}
+.term-tab.active { color: var(--text); background: var(--panel-2); }
+.term-frames { border: 1px solid var(--line); border-radius: 0 8px 8px 8px; overflow: hidden; }
+.term-frame { display: none; width: 100%; height: 480px; border: 0; background: #000; }
+.term-frame.visible { display: block; }
+
+/* mobile */
+@media (max-width: 860px) {
+  .shell { grid-template-columns: 1fr; }
+  nav { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+  main { padding: 26px 18px; }
+}
+@media print {
+  nav, .copy-btn { display: none; }
+  body { background: #fff; color: #000; }
+  .page { display: block !important; page-break-after: always; }
+  details.answers { border: 1px solid #999; }
+  details.answers[open] summary { color: #000; }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+<nav aria-label="Lab pages">
+  <p class="brand">measlab</p>
+  <p class="brand-title">Internet Measurements Lab</p>
+  <a class="nav-item" href="#lab-guide" data-page="lab-guide"><span class="nav-label">Lab Guide</span><span class="nav-progress" data-progress="lab-guide"></span></a>
+<a class="nav-item" href="#portal" data-page="portal"><span class="nav-label">Control Portal</span><span class="nav-progress" data-progress="portal"></span></a>
+<a class="nav-item" href="#activity1" data-page="activity1"><span class="nav-label">1 · Measure the Path</span><span class="nav-progress" data-progress="activity1"></span></a>
+<a class="nav-item" href="#activity2" data-page="activity2"><span class="nav-label">2 · When the Path Gets Busy</span><span class="nav-progress" data-progress="activity2"></span></a>
+<a class="nav-item" href="#activity3" data-page="activity3"><span class="nav-label">3 · Turn On Peering</span><span class="nav-progress" data-progress="activity3"></span></a>
+<a class="nav-item" href="#activity4" data-page="activity4"><span class="nav-label">4 · The Slow Neighbour</span><span class="nav-progress" data-progress="activity4"></span></a>
+<a class="nav-item" href="#activity5" data-page="activity5"><span class="nav-label">5 · Now You See It, Now You Don&#x27;t</span><span class="nav-progress" data-progress="activity5"></span></a>
+<a class="nav-item" href="#cheatsheet" data-page="cheatsheet"><span class="nav-label">Cheatsheet</span><span class="nav-progress" data-progress="cheatsheet"></span></a>
+  <p class="foot">Progress is saved in this browser only. Answers stay hidden until you open them; open them only after committing to your own answers in writing.</p>
+</nav>
+<main>
+<article id="lab-guide" class="page" data-title="Lab Guide"><h1>Lab Guide</h1>
+<h2>What this is</h2>
+<p>A small Internet you run on your own computer: seven networks speaking real BGP, an Internet Exchange Point, and impaired long-haul links. You operate one of the networks, AS 65001, and measure the rest from the outside, the way a real operator measures the Internet.</p>
+<h2>The rules</h2>
+<p>You may log in to your own four machines: routers r1, r2 and r3, and the workstation host1. Every other network carries your traffic but stays closed to you. You measure it, reason about it, and build evidence; you never get anyone else's passwords. A looking glass gives you read-only visibility into other networks, exactly as real operators publish.</p>
+<h2>Three ways to run the lab</h2>
+<p><strong>In your browser, nothing installed (GitHub Codespaces).</strong> Open the lab repository on GitHub, press the green Code button, choose Codespaces, and create one. A cloud machine with everything pre-installed opens in your browser, terminal included. The free allowance covers all five activities comfortably.</p>
+<p><strong>On your own machine with VS Code.</strong> Install <a href="https://www.docker.com/products/docker-desktop/">Docker Desktop</a> and <a href="https://code.visualstudio.com/">VS Code</a> with the Dev Containers extension, open the lab folder, and accept the prompt to reopen it in the container. This works on Windows, macOS and Linux and installs nothing besides Docker and VS Code themselves.</p>
+<p><strong>Natively on Linux.</strong> Install Docker Engine and <a href="https://containerlab.dev/install/">Containerlab</a>, then work straight in the lab folder.</p>
+<h2>Start, check, stop</h2>
+<p>All three routes end at the same three commands, run in the lab folder:</p>
+<pre><code>sudo ./lab.sh up
+sudo ./lab.sh check
+sudo ./lab.sh down
+</code></pre>
+<p><code>up</code> deploys the network and applies the link conditions. <code>check</code> verifies the whole environment and must show every line as PASS before you begin an activity. <code>down</code> removes everything. <code>sudo ./lab.sh docs</code> serves this guide at http://localhost:8080 if you prefer it over opening the file directly.</p>
+<h2>If something looks wrong</h2>
+<p>Every activity assumes the base state: check green, congestion stopped, peering down, scenarios off. Reset to it with:</p>
+<pre><code>sudo ./lab.sh reset
+</code></pre>
+<p>Then run <code>sudo ./lab.sh check</code> again. If a check still fails, <code>sudo ./lab.sh down</code> followed by <code>sudo ./lab.sh up</code> rebuilds the world from scratch; the lab keeps no state you can lose.</p>
+<h2>The network</h2>
+<div class="diagram"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" font-family="Helvetica, Arial, sans-serif">
+  <rect width="1200" height="620" fill="#ffffff"/>
+  <text x="30" y="40" font-size="22" font-weight="bold" fill="#25316a">Lab topology (learner view)</text>
+  <text x="30" y="62" font-size="13" fill="#555555">You may log in to the blue machines only. Everything else is the Internet: measure it from outside.</text>
+
+  <!-- connectors first, under the boxes -->
+  <g stroke="#25316a" stroke-width="2" fill="none">
+    <line x1="105" y1="295" x2="250" y2="295"/>
+    <line x1="250" y1="295" x2="320" y2="170"/>
+    <line x1="250" y1="295" x2="320" y2="420"/>
+    <line x1="320" y1="170" x2="320" y2="420"/>
+    <line x1="320" y1="170" x2="510" y2="170"/>
+    <line x1="320" y1="420" x2="510" y2="420"/>
+    <line x1="510" y1="170" x2="510" y2="420"/>
+    <line x1="510" y1="170" x2="690" y2="85"/>
+    <line x1="510" y1="420" x2="690" y2="85"/>
+    <line x1="690" y1="85" x2="950" y2="255"/>
+    <line x1="950" y1="255" x2="1110" y2="255"/>
+    <line x1="950" y1="420" x2="1110" y2="420"/>
+    <!-- IXP peering LAN star -->
+    <line x1="510" y1="170" x2="740" y2="325"/>
+    <line x1="510" y1="420" x2="740" y2="325"/>
+    <line x1="950" y1="420" x2="740" y2="325"/>
+  </g>
+  <!-- dormant learner peering port -->
+  <line x1="320" y1="420" x2="740" y2="325" stroke="#f36b21" stroke-width="2" stroke-dasharray="7 6"/>
+
+  <!-- IXP fabric -->
+  <rect x="640" y="230" width="200" height="150" fill="#f4f4f4" stroke="#c9c9c9" stroke-width="2" rx="10"/>
+  <text x="740" y="256" font-size="15" font-weight="bold" fill="#25316a" text-anchor="middle">IXP</text>
+  <text x="740" y="274" font-size="11" fill="#555555" text-anchor="middle">shared peering LAN</text>
+  <rect x="690" y="300" width="100" height="50" fill="#25316a" rx="4"/>
+  <text x="740" y="321" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">route server</text>
+  <text x="740" y="338" font-size="11" fill="#8fb7e1" text-anchor="middle">AS 65100</text>
+
+  <!-- learner AS group -->
+  <rect x="30" y="95" width="360" height="400" fill="none" stroke="#8fb7e1" stroke-width="2" stroke-dasharray="8 5" rx="8"/>
+  <text x="42" y="118" font-size="14" font-weight="bold" fill="#25316a">Your network (AS 65001)</text>
+  <text x="42" y="136" font-size="12" fill="#25316a">10.1.0.0/16 and 3fff:1::/32</text>
+
+  <g>
+    <rect x="55" y="270" width="100" height="50" fill="#8fb7e1" rx="4"/>
+    <text x="105" y="291" font-size="14" font-weight="bold" fill="#25316a" text-anchor="middle">host1</text>
+    <text x="105" y="308" font-size="10" fill="#25316a" text-anchor="middle">10.1.10.10</text>
+
+    <rect x="200" y="270" width="100" height="50" fill="#8fb7e1" rx="4"/>
+    <text x="250" y="291" font-size="14" font-weight="bold" fill="#25316a" text-anchor="middle">r3</text>
+    <text x="250" y="308" font-size="10" fill="#25316a" text-anchor="middle">LAN router</text>
+
+    <rect x="270" y="145" width="100" height="50" fill="#8fb7e1" rx="4"/>
+    <text x="320" y="166" font-size="14" font-weight="bold" fill="#25316a" text-anchor="middle">r1</text>
+    <text x="320" y="183" font-size="10" fill="#25316a" text-anchor="middle">border A</text>
+
+    <rect x="270" y="395" width="100" height="50" fill="#8fb7e1" rx="4"/>
+    <text x="320" y="416" font-size="14" font-weight="bold" fill="#25316a" text-anchor="middle">r2</text>
+    <text x="320" y="433" font-size="10" fill="#25316a" text-anchor="middle">border B + IXP port</text>
+  </g>
+
+  <!-- the Internet -->
+  <g>
+    <rect x="460" y="145" width="100" height="50" fill="#25316a" rx="4"/>
+    <text x="510" y="166" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">upstream A</text>
+    <text x="510" y="183" font-size="10" fill="#8fb7e1" text-anchor="middle">provider</text>
+    <rect x="472" y="203" width="76" height="20" fill="#c9c9c9" rx="3"/>
+    <text x="510" y="217" font-size="11" fill="#25316a" text-anchor="middle">AS 65010</text>
+
+    <rect x="460" y="395" width="100" height="50" fill="#25316a" rx="4"/>
+    <text x="510" y="416" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">upstream B</text>
+    <text x="510" y="433" font-size="10" fill="#8fb7e1" text-anchor="middle">provider</text>
+    <rect x="472" y="453" width="76" height="20" fill="#c9c9c9" rx="3"/>
+    <text x="510" y="467" font-size="11" fill="#25316a" text-anchor="middle">AS 65020</text>
+
+    <rect x="640" y="60" width="100" height="50" fill="#25316a" rx="4"/>
+    <text x="690" y="81" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">transit</text>
+    <text x="690" y="98" font-size="10" fill="#8fb7e1" text-anchor="middle">long-haul carrier</text>
+    <rect x="750" y="75" width="76" height="20" fill="#c9c9c9" rx="3"/>
+    <text x="788" y="89" font-size="11" fill="#25316a" text-anchor="middle">AS 65030</text>
+
+    <rect x="900" y="230" width="100" height="50" fill="#25316a" rx="4"/>
+    <text x="950" y="251" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">dest-1</text>
+    <text x="950" y="268" font-size="10" fill="#8fb7e1" text-anchor="middle">hosting network</text>
+    <rect x="912" y="288" width="76" height="20" fill="#c9c9c9" rx="3"/>
+    <text x="950" y="302" font-size="11" fill="#25316a" text-anchor="middle">AS 65040</text>
+
+    <rect x="1060" y="230" width="100" height="50" fill="#25316a" rx="4"/>
+    <text x="1110" y="251" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">target1</text>
+    <text x="1110" y="268" font-size="9" fill="#8fb7e1" text-anchor="middle">10.40.10.10 / 3fff:40:10::10</text>
+
+    <rect x="900" y="395" width="100" height="50" fill="#25316a" rx="4"/>
+    <text x="950" y="416" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">dest-2</text>
+    <text x="950" y="433" font-size="10" fill="#8fb7e1" text-anchor="middle">content network</text>
+    <rect x="912" y="453" width="76" height="20" fill="#c9c9c9" rx="3"/>
+    <text x="950" y="467" font-size="11" fill="#25316a" text-anchor="middle">AS 65050</text>
+
+    <rect x="1060" y="395" width="100" height="50" fill="#25316a" rx="4"/>
+    <text x="1110" y="416" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">target2</text>
+    <text x="1110" y="433" font-size="9" fill="#8fb7e1" text-anchor="middle">10.50.10.10 / 3fff:50:10::10</text>
+  </g>
+
+  <!-- dormant port callout -->
+  <rect x="410" y="330" width="190" height="34" fill="#c9c9c9" rx="3"/>
+  <text x="505" y="344" font-size="11" fill="#25316a" text-anchor="middle">dormant peering port</text>
+  <text x="505" y="358" font-size="11" fill="#25316a" text-anchor="middle">(enabled in a later activity)</text>
+
+  <!-- legend -->
+  <g>
+    <rect x="30" y="555" width="18" height="18" fill="#8fb7e1" rx="3"/>
+    <text x="56" y="569" font-size="13" fill="#25316a">Your machines (log in allowed)</text>
+    <rect x="290" y="555" width="18" height="18" fill="#25316a" rx="3"/>
+    <text x="316" y="569" font-size="13" fill="#25316a">The Internet (measure only, no access)</text>
+    <line x1="620" y1="564" x2="660" y2="564" stroke="#f36b21" stroke-width="2" stroke-dasharray="7 6"/>
+    <text x="670" y="569" font-size="13" fill="#25316a">Configured but not active yet</text>
+  </g>
+</svg></div>
+</article>
+<article id="portal" class="page" data-title="Control Portal"><h1>Control Portal</h1>
+
+<p>Start and stop the lab and its activities from here, and use real terminals
+into your own network instead of typing <code>docker exec</code> commands by
+hand. Run <code>./portal.sh</code> on your own machine first (not inside the
+lab), then reload this page from <code>http://localhost:8080</code>.</p>
+
+<h2>Lab lifecycle</h2>
+<div class="btn-row">
+  <button class="portal-btn" data-action="lab_up">Start lab (up)</button>
+  <button class="portal-btn" data-action="lab_check">Health check</button>
+  <button class="portal-btn" data-action="lab_reset">Reset to base state</button>
+  <button class="portal-btn danger" data-action="lab_down">Stop lab (down)</button>
+</div>
+
+<h2>Activity 2 &middot; congestion</h2>
+<div class="btn-row">
+  <button class="portal-btn" data-action="congestion_start">Start congestion</button>
+  <button class="portal-btn" data-action="congestion_stop">Stop congestion</button>
+  <button class="portal-btn" data-action="congestion_status">Status</button>
+</div>
+
+<h2>Activity 3 &middot; peering</h2>
+<div class="btn-row">
+  <button class="portal-btn" data-action="peering_up">Enable peering</button>
+  <button class="portal-btn" data-action="peering_down">Disable peering</button>
+  <button class="portal-btn" data-action="peering_status">Status</button>
+</div>
+
+<h2>Activities 4 &amp; 5 &middot; scenarios</h2>
+<div class="btn-row">
+  <button class="portal-btn" data-action="scenario1_on">Scenario 1 on</button>
+  <button class="portal-btn" data-action="scenario1_off">Scenario 1 off</button>
+  <button class="portal-btn" data-action="scenario2_on">Scenario 2 on</button>
+  <button class="portal-btn" data-action="scenario2_off">Scenario 2 off</button>
+</div>
+
+<h2>Looking glass</h2>
+<p>Read-only <code>show</code> commands against the Internet routers &mdash;
+same rule as <code>lg.sh</code>: observe only.</p>
+<div class="lg-row">
+  <select id="lg-router">
+    <option value="upstream-a">upstream-a</option>
+    <option value="upstream-b">upstream-b</option>
+    <option value="transit">transit</option>
+    <option value="route-server">route-server</option>
+  </select>
+  <input id="lg-cmd" type="text" value="show bgp summary">
+  <button class="portal-btn" id="lg-run">Run</button>
+</div>
+
+<pre id="portal-output">Output will appear here.</pre>
+
+<h2>Terminals</h2>
+<p>Live shells into the nodes you're allowed to touch: r1, r2, r3, host1.
+Each opens where <code>docker exec -it clab-measlab-&lt;node&gt; sh</code> would
+have dropped you &mdash; run <code>vtysh</code>, <code>ping</code>,
+<code>traceroute</code>, <code>mtr</code> directly, no prefix needed.</p>
+<div class="term-tabs">
+  <button class="term-tab active" data-term="host1" type="button">host1</button>
+  <button class="term-tab" data-term="r1" type="button">r1</button>
+  <button class="term-tab" data-term="r2" type="button">r2</button>
+  <button class="term-tab" data-term="r3" type="button">r3</button>
+</div>
+<div class="term-frames">
+  <iframe class="term-frame visible" data-term="host1" src="http://localhost:7681" title="host1 terminal"></iframe>
+  <iframe class="term-frame" data-term="r1" src="http://localhost:7682" title="r1 terminal"></iframe>
+  <iframe class="term-frame" data-term="r2" src="http://localhost:7683" title="r2 terminal"></iframe>
+  <iframe class="term-frame" data-term="r3" src="http://localhost:7684" title="r3 terminal"></iframe>
+</div>
+
+<script>
+(function () {
+  var out = document.getElementById("portal-output");
+
+  function show(text) { out.textContent = text; }
+
+  function post(url, body) {
+    return fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    }).then(function (r) { return r.json(); }).catch(function (e) {
+      return { ok: false, output: "Request failed: " + e + "\n\nIs ./portal.sh running?" };
+    });
+  }
+
+  document.querySelectorAll(".portal-btn[data-action]").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var action = btn.dataset.action;
+      btn.disabled = true;
+      show("Running " + action + " ...");
+      post("/api/run", { action: action }).then(function (res) {
+        btn.disabled = false;
+        show((res.ok ? "" : "[failed]\n") + res.output);
+      });
+    });
+  });
+
+  document.getElementById("lg-run").addEventListener("click", function () {
+    var router = document.getElementById("lg-router").value;
+    var cmd = document.getElementById("lg-cmd").value;
+    show("Running looking glass ...");
+    post("/api/lg", { router: router, cmd: cmd }).then(function (res) {
+      show((res.ok ? "" : "[failed]\n") + res.output);
+    });
+  });
+
+  var tabs = Array.prototype.slice.call(document.querySelectorAll(".term-tab"));
+  var frames = Array.prototype.slice.call(document.querySelectorAll(".term-frame"));
+  tabs.forEach(function (tab) {
+    tab.addEventListener("click", function () {
+      tabs.forEach(function (t) { t.classList.toggle("active", t === tab); });
+      frames.forEach(function (f) {
+        f.classList.toggle("visible", f.dataset.term === tab.dataset.term);
+      });
+    });
+  });
+})();
+</script>
+
+</article>
+<article id="activity1" class="page" data-title="Activity 1: Measure the Path"><h1>Activity 1: Measure the Path</h1>
+<p><strong>Maps to:</strong> Modules 2.1 (Active Measurement) and 2.3 (Core Performance Metrics)
+<strong>Time:</strong> 30 to 40 minutes
+<strong>You need:</strong> the lab deployed and checked (see README.md), plus a terminal.</p>
+<h2>The rules of this lab</h2>
+<p>You run the network of AS 65001: routers r1, r2 and r3, and the workstation host1. You may log in to these four machines and inspect anything on them.</p>
+<p>The rest of the lab plays the role of the Internet. Other networks carry your traffic, and you can measure them from the outside, but you cannot log in to them. This mirrors your position as a real network operator: when a problem sits in another AS, you diagnose it with measurements and evidence, then contact the operator responsible. You never get their passwords. Some operators publish a looking glass, a public page for running read-only commands on their routers; this lab has one too (<code>scripts/lg.sh</code>), and a later activity uses it.</p>
+<h2>The network</h2>
+<p>Your AS holds 10.1.0.0/16 and the IPv6 allocation 3fff:1::/32, a /32 like every AS in this lab. You connect to two upstream providers. Upstream A (AS 65010) and upstream B (AS 65020) both buy transit from AS 65030 and both peer at an Internet Exchange Point. Two destination networks exist: dest-1 (AS 65040), a hosting network reached through transit, and dest-2 (AS 65050), a content network present at the IXP. Your border router r2 has a port at the IXP as well, but no peering sessions run on it yet. See <code>../topology-diagram.svg</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Address (IPv4 / IPv6)</th>
+<th>Machine</th>
+<th>Network</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>10.1.10.10 / 3fff:1:10::10</td>
+<td>host1, your workstation</td>
+<td>AS 65001 (yours)</td>
+</tr>
+<tr>
+<td>10.1.10.1 / 3fff:1:10::1</td>
+<td>r3, your LAN router</td>
+<td>AS 65001 (yours)</td>
+</tr>
+<tr>
+<td>10.1.1.1 / 3fff:1:0:1::1</td>
+<td>r1, your border router to upstream A</td>
+<td>AS 65001 (yours)</td>
+</tr>
+<tr>
+<td>10.1.2.1 / 3fff:1:0:2::1</td>
+<td>r2, your border router to upstream B</td>
+<td>AS 65001 (yours)</td>
+</tr>
+<tr>
+<td>100.64.11.1 / 3fff:10:0:11::1</td>
+<td>upstream A router</td>
+<td>AS 65010</td>
+</tr>
+<tr>
+<td>100.64.13.2 / 3fff:30:0:13::2</td>
+<td>transit router, side facing upstream A</td>
+<td>AS 65030</td>
+</tr>
+<tr>
+<td>100.64.34.2 / 3fff:30:0:34::2</td>
+<td>dest-1 router</td>
+<td>AS 65040</td>
+</tr>
+<tr>
+<td>10.40.10.10 / 3fff:40:10::10</td>
+<td>target1, server in dest-1</td>
+<td>AS 65040</td>
+</tr>
+<tr>
+<td>100.64.99.50 / 3fff:ff::50</td>
+<td>dest-2 router, IXP-facing port</td>
+<td>AS 65050</td>
+</tr>
+<tr>
+<td>10.50.10.10 / 3fff:50:10::10</td>
+<td>target2, server in dest-2</td>
+<td>AS 65050</td>
+</tr>
+</tbody>
+</table>
+<p>Addresses starting with 100.64.99 or 3fff:ff: sit on the IXP peering LAN, a single shared subnet where all members connect.</p>
+<p>Open a shell on your workstation:</p>
+<pre><code>docker exec -it clab-measlab-host1 bash
+</code></pre>
+<h2>Task 1: Discover both paths, in both address families</h2>
+<p>Run four traceroutes from host1 and keep the outputs:</p>
+<pre><code>traceroute -n 10.40.10.10
+traceroute -n -6 3fff:40:10::10
+traceroute -n 10.50.10.10
+traceroute -n -6 3fff:50:10::10
+</code></pre>
+<p>Using the address table, label every hop with its machine and AS number.</p>
+<p><strong>Question 1a.</strong> How many ASes does your traffic cross to reach target1? And to reach target2?</p>
+<p><strong>Question 1b.</strong> For each target, do IPv4 and IPv6 follow the same sequence of machines?</p>
+<p><strong>Question 1c.</strong> The path to target2 crosses the IXP. Which single hop in the traceroute tells you that, and what is odd about how the exchange itself appears?</p>
+<h2>Task 2: Locate the latency</h2>
+<p>Ping both targets, ten packets each, and note the average round-trip times:</p>
+<pre><code>ping -c 10 10.40.10.10
+ping -c 10 10.50.10.10
+</code></pre>
+<p>Then walk the target1 path: ping each hop from Task 1 in order and record the average per hop.</p>
+<p><strong>Question 2a.</strong> Between which two hops does the round-trip time to target1 make its first large jump? And its second?</p>
+<p><strong>Question 2b.</strong> target2 sits behind the same upstream as target1, yet answers far faster. Using your per-hop data, express in two sentences why.</p>
+<p><strong>Question 2c.</strong> A colleague concludes that the router at the first jump is overloaded, because latency rises there. Give an alternative explanation for a latency jump between two hops that has nothing to do with router load.</p>
+<h2>Task 3: Jitter and loss</h2>
+<p>A ping average hides variation. Run mtr, which probes every hop at once and keeps per-hop statistics:</p>
+<pre><code>mtr -n --report --report-cycles 100 10.40.10.10
+</code></pre>
+<p>This takes about two minutes. Read the columns: <code>Loss%</code>, <code>Avg</code>, <code>Best</code>, <code>Wrst</code> (worst) and <code>StDev</code> (the spread of round-trip times, one way to express jitter). Repeat for target2 and compare.</p>
+<p><strong>Question 3a.</strong> On the target1 path, at which hop does packet loss first appear, and does it persist to the destination?</p>
+<p><strong>Question 3b.</strong> Which hop shows the largest StDev? Express in one sentence what that number tells you about the path beyond that hop.</p>
+<h2>Task 4: One ping is not a measurement</h2>
+<p>Send a longer stream to target1 and read the summary line:</p>
+<pre><code>ping -c 100 -i 0.2 10.40.10.10
+</code></pre>
+<p>The final line reports <code>min/avg/max/mdev</code>.</p>
+<p><strong>Question 4a.</strong> How far apart are your minimum and maximum? If you had sent one ping and it happened to hit the maximum, how wrong would your latency estimate have been?</p>
+<p><strong>Question 4b.</strong> For this path, which single number would you report to a colleague as "the latency", and why? Keep your answer; Module 2.5 and the next activity return to this question with better tools.</p>
+<h2>Task 5: Read your own BGP table</h2>
+<p>Your routers learned all these paths through BGP. Open the CLI of your border router r1:</p>
+<pre><code>docker exec -it clab-measlab-r1 vtysh
+</code></pre>
+<p>Look up both destinations in both address families:</p>
+<pre><code>show bgp ipv4 unicast 10.40.0.0/16
+show bgp ipv6 unicast 3fff:40::/32
+show bgp ipv4 unicast 10.50.0.0/16
+show bgp ipv6 unicast 3fff:50::/32
+</code></pre>
+<p><strong>Question 5a.</strong> Read the AS path attribute for each destination. Which ASes appear, in what order, and does the IXP appear?</p>
+<p><strong>Question 5b.</strong> Compare the AS paths with your traceroutes from Task 1. The traceroute shows individual routers; the AS path shows networks. Do the two views agree?</p>
+<p><strong>Question 5c.</strong> Every AS in this lab announces one IPv4 /16 and one IPv6 /32. A /16 holds 65,536 addresses. Using prefix arithmetic, how many /64 subnets fit in your 3fff:1::/32?</p>
+<p>Type <code>exit</code> twice to leave the router.</p>
+<details class="answers"><summary>Check your answers (reveal after writing your own)</summary>
+<p>Reveal these after you have committed to your own answers in writing.</p>
+<p><strong>1a.</strong> target1: four ASes, your 65001, upstream A (65010), transit (65030) and 65040. target2: three, your 65001, upstream A (65010) and 65050.</p>
+<p><strong>1b.</strong> Yes. In this lab's base state, IPv4 and IPv6 cross the same machines for both targets, which you can verify by matching each v6 hop to the same router's v4 address in the table. On the real Internet the two families sometimes take different paths; a later activity creates that situation.</p>
+<p><strong>1c.</strong> The hop 100.64.99.50 (IPv6: 3fff:ff::50) is dest-2's port on the IXP peering LAN, so your packet went straight from upstream A's IXP port to dest-2's. The odd part: the exchange itself never appears. An IXP is a shared LAN, a layer-2 fabric, so it adds no router hop of its own and, as Task 5 shows, no AS either.</p>
+<p><strong>2a.</strong> First jump: between upstream A (100.64.11.1) and the transit router (100.64.13.2), where the average rises by roughly 20 ms. Second jump: between the transit router and the dest-1 router (100.64.34.2), roughly 25 ms more.</p>
+<p><strong>2b.</strong> target2 skips transit. Traffic crosses the IXP peering LAN directly from upstream A to dest-2, avoiding both impaired long-haul links, so the round trip stays within a few milliseconds. Peering shortens paths, and your measurements have now quantified by how much.</p>
+<p><strong>2c.</strong> Distance. A link spanning a long physical distance adds propagation delay on every packet regardless of how busy the routers at either end are. In this lab the two jumps represent long-haul links, and both were injected on purpose; the routers themselves are idle.</p>
+<p><strong>3a.</strong> Loss of around 1% first appears at the dest-1 router (100.64.34.2) and persists to target1. Loss that starts at one hop and continues to the destination points at a real problem on the path. Loss appearing at a single middle hop and then vanishing usually means that router deprioritises replies addressed to itself while forwarding your traffic without harm. The target2 path shows no loss.</p>
+<p><strong>3b.</strong> The final hops of the target1 path show the largest StDev, because they sit behind both jittery links and jitter accumulates along a path. The number tells you how much individual round-trip times swing around the average: unstable delivery, even when the average looks acceptable.</p>
+<p><strong>4a.</strong> Expect a spread of roughly 10 to 20 ms between minimum and maximum. A single ping landing at the maximum would have overstated typical latency by around a quarter to a third.</p>
+<p><strong>4b.</strong> There is no single correct answer, and that is the point. The minimum approximates the clean path latency, the average reflects typical experience, and neither captures the spread. Any honest report needs at least two numbers.</p>
+<p><strong>5a.</strong> dest-1: <code>65010 65030 65040</code> in both address families. dest-2: <code>65010 65050</code>. The IXP's route server (AS 65100) appears in neither path: route servers pass routes between members without inserting themselves, so the exchange stays invisible at the BGP level too.</p>
+<p><strong>5b.</strong> Yes. Each group of traceroute hops falls inside one AS from the BGP path, in the same order, with the IXP LAN forming the invisible seam between 65010 and 65050. BGP gives you the network-level map; traceroute fills in the routers. Unit 3 builds on both views: RIPE Atlas gives you traceroutes from thousands of vantage points, and RIPEstat and RIS give you the BGP view of the whole Internet.</p>
+<p><strong>5c.</strong> A /32 leaves 32 bits before the /64 boundary, so 2^32 subnets: 4,294,967,296 /64s, each holding more host addresses than the entire IPv4 Internet. Your single IPv6 allocation contains as many /64 networks as IPv4 has addresses in total.</p></details>
+</article>
+<article id="activity2" class="page" data-title="Activity 2: When the Path Gets Busy"><h1>Activity 2: When the Path Gets Busy</h1>
+<p><strong>Maps to:</strong> Modules 2.3 (Core Performance Metrics) and 2.5 (Analysing Measurement Data)
+<strong>Time:</strong> 30 minutes
+<strong>Start state:</strong> lab deployed, <code>lab-check.sh</code> all green, congestion stopped, peering down.
+<strong>You need:</strong> two terminals: one shell inside host1, and one on your own machine in the lab folder (where you ran <code>containerlab deploy</code>).</p>
+<p>In Activity 1 you located latency along a path. This activity adds the dimension the Internet never holds still: time. Real links carry other people's traffic, and that load rises and falls with human activity through the day. Your lab compresses that daily cycle into a switch you control, so you can measure the same path under quiet and busy conditions and see which statistics survive the difference.</p>
+<h2>Task 1: Establish the baseline</h2>
+<p>From host1, capture one hundred round-trip times to target1 and store them:</p>
+<pre><code>ping -c 100 -i 0.2 10.40.10.10 | grep -oE 'time=[0-9.]+' | cut -d= -f2 &gt; baseline.txt
+</code></pre>
+<p>Compute the summary statistics:</p>
+<pre><code>sort -n baseline.txt | awk '{a[NR]=$1; s+=$1}
+  END {print &quot;count:&quot;, NR;
+       print &quot;mean:&quot;, s/NR;
+       print &quot;median:&quot;, a[int((NR+1)/2)];
+       print &quot;p95:&quot;, a[int(NR*0.95)];
+       print &quot;min:&quot;, a[1];
+       print &quot;max:&quot;, a[NR]}'
+</code></pre>
+<p>Record all six numbers. Repeat for IPv6 (<code>ping -c 100 -i 0.2 3fff:40:10::10</code>, output to <code>baseline6.txt</code>) and confirm the two families measure alike.</p>
+<h2>Task 2: Load the path</h2>
+<p>In your other terminal, on your own machine in the lab folder, switch on the background load:</p>
+<pre><code>sudo ./scripts/congestion.sh start
+</code></pre>
+<p>Another network in upstream A now pushes a heavy stream across the same transit link your traffic uses. You did not cause it and cannot stop their traffic; you can only measure what it does to yours. Wait thirty seconds for the queue to build.</p>
+<h2>Task 3: Measure the busy path</h2>
+<p>From host1, repeat the exact measurement into a new file:</p>
+<pre><code>ping -c 100 -i 0.2 10.40.10.10 | grep -oE 'time=[0-9.]+' | cut -d= -f2 &gt; busy.txt
+</code></pre>
+<p>Run the same statistics on <code>busy.txt</code>. Note the count as well: pings that received no reply produce no line, so a shrinking count is your loss figure. Then run mtr for the per-hop view:</p>
+<pre><code>mtr -n --report --report-cycles 100 10.40.10.10
+</code></pre>
+<p><strong>Question 3a.</strong> Compare baseline and busy: which moved more, the mean or the median? Which single statistic changed the most?</p>
+<p><strong>Question 3b.</strong> In Activity 1 you explained the baseline latency with distance. Distance has not changed. Name the delay component that has, and state where along the path it lives (use the mtr output as evidence).</p>
+<p><strong>Question 3c.</strong> Did loss change, and at the same hop as in Activity 1 or elsewhere?</p>
+<h2>Task 4: Report honestly</h2>
+<p>Switch the load off and confirm recovery with a short ping:</p>
+<pre><code>sudo ./scripts/congestion.sh stop
+</code></pre>
+<p><strong>Question 4a.</strong> Your monitoring system samples this path once per hour with a single ping. Sketch what its latency graph would show across a day with two busy periods, and name what it would miss.</p>
+<p><strong>Question 4b.</strong> You may report exactly two numbers per measurement window to describe this path. Which two do you choose, and why those?</p>
+<p><strong>Question 4c.</strong> On the real Internet, load on a link follows the waking hours of the people behind it. Express in two sentences why a measurement campaign for this path must span at least 24 hours, and what a measurement taken only at 04:00 would falsely conclude.</p>
+<details class="answers"><summary>Check your answers (reveal after writing your own)</summary>
+<p>Reveal these after committing to your own answers.</p>
+<p><strong>3a.</strong> The mean moves more than the median, because the mean absorbs the tail of queueing spikes while the median only shifts with the typical packet. The largest single change appears at the top of the distribution: p95 and max grow by far the most, from tens of milliseconds to potentially hundreds. Exact values vary between machines; the pattern does not.</p>
+<p><strong>3b.</strong> Queueing delay. Packets wait in the buffer of the loaded transit link before transmission, and the mtr report shows the inflation starting at the transit-to-dest-1 hop (100.64.34.2) while earlier hops keep their baseline figures. Propagation delay is physics and constant; queueing delay is load and variable. Telling them apart is one of the most useful skills in latency analysis.</p>
+<p><strong>3c.</strong> Yes. On top of the constant 1% you found in Activity 1, the loaded link drops packets whenever its queue overflows, so loss rises at the same hop and persists to the destination. Congestion loss and the baseline loss share a location but differ in behaviour: one vanishes when the load stops.</p>
+<p><strong>4a.</strong> The graph would show mostly flat baseline values with, at best, one or two elevated samples, depending on whether the hourly probe happened to land inside a busy period. It would miss the shape, depth and duration of both congestion windows entirely, and could miss them altogether. Sampling frequency bounds what a measurement can see; Module 2.5 calls this the resolution of a measurement campaign, and RIPE Atlas anchors this lesson at Internet scale in Unit 3.</p>
+<p><strong>4b.</strong> Median and 95th percentile is the defensible pair: the median describes the typical experience and resists outliers, while p95 exposes the tail that users feel as slowness. Mean plus maximum is the common wrong answer, since one lucky or unlucky packet distorts both.</p>
+<p><strong>4c.</strong> A path measured only during quiet hours describes the link, and a path measured across a full day describes the service people receive from it. A campaign sampling only at 04:00 would conclude the path is fast, clean and stable, and it would be right about the cable and wrong about the Internet.</p></details>
+</article>
+<article id="activity3" class="page" data-title="Activity 3: Turn On Peering"><h1>Activity 3: Turn On Peering</h1>
+<p><strong>Maps to:</strong> Modules 2.1 and 2.3, and the Unit 1 material on IXPs and Internet flattening
+<strong>Time:</strong> 25 minutes
+<strong>Start state:</strong> lab deployed, <code>lab-check.sh</code> all green, congestion stopped, peering down.
+<strong>You need:</strong> a shell inside host1, a shell on your own machine in the lab folder, and access to r1 and r2.</p>
+<p>Your AS has held a port at the IXP since the lab began, configured and paid for, carrying nothing. Today you become a peer. The measurement discipline: never change a network without a before picture, so the first half of this activity records the world as it is, and the second half enables the sessions and measures what changed. This before-and-after method is exactly how operators justify peering decisions with data.</p>
+<h2>Task 1: The before picture</h2>
+<p>From host1, record path and latency to target2 in both families:</p>
+<pre><code>traceroute -n 10.50.10.10
+traceroute -n -6 3fff:50:10::10
+ping -c 20 10.50.10.10
+ping -c 20 3fff:50:10::10
+</code></pre>
+<p>Then read your own routing. On r1 (<code>docker exec -it clab-measlab-r1 vtysh</code>):</p>
+<pre><code>show bgp ipv4 unicast 10.50.0.0/16
+show bgp ipv6 unicast 3fff:50::/32
+</code></pre>
+<p>Note the AS path and which border router carries the traffic. Finally, look at the dormant sessions on r2 (<code>docker exec -it clab-measlab-r2 vtysh</code>):</p>
+<pre><code>show bgp summary
+</code></pre>
+<p><strong>Question 1a.</strong> What state does r2 report for the two sessions towards 100.64.99.1 and 3fff:ff::1, and what does that state mean?</p>
+<h2>Task 2: Become a peer</h2>
+<p>On your own machine in the lab folder:</p>
+<pre><code>sudo ./scripts/peering.sh up
+</code></pre>
+<p>Give BGP half a minute, then confirm on r2 that both sessions show as Established and count the prefixes received. Look at what arrived:</p>
+<pre><code>show bgp ipv4 unicast
+show bgp ipv6 unicast
+</code></pre>
+<p><strong>Question 2a.</strong> Which prefixes did the route server send you, and with what AS paths? One AS you expected to see in those paths is missing. Which, and why?</p>
+<h2>Task 3: The after picture</h2>
+<p>Repeat every measurement from Task 1: both traceroutes, both pings, both BGP lookups.</p>
+<p><strong>Question 3a.</strong> Describe the new path to target2: which machines, how many hops, which of your border routers.</p>
+<p><strong>Question 3b.</strong> Quantify the improvement: round-trip time before versus after, in both address families.</p>
+<p><strong>Question 3c.</strong> Your router now knows two routes to 10.50.0.0/16. Read the BGP output on r2: which attribute makes the peering route win, and what is its value compared with the transit-learned route?</p>
+<p><strong>Question 3d.</strong> Measure target1 again. Did peering change anything for it? State the general rule this demonstrates.</p>
+<h2>Task 4: The business case</h2>
+<p>Write three sentences a manager would understand: what you enabled, what measurably improved, and for which destinations. Then restore the base state for the next activity:</p>
+<pre><code>sudo ./scripts/peering.sh down
+</code></pre>
+<details class="answers"><summary>Check your answers (reveal after writing your own)</summary>
+<p><strong>1a.</strong> Idle (Admin): the sessions exist in configuration but an operator shut them down on purpose. Configured-but-disabled is a normal state on real routers, and it differs from a session that is down because of a fault.</p>
+<p><strong>2a.</strong> The route server passes you the prefixes of the other members: upstream A (10.10.0.0/16, 3fff:10::/32), upstream B, and dest-2 (10.50.0.0/16, 3fff:50::/32), each with a path of a single AS. Missing: AS 65100, the route server itself. A route server distributes routes between members without inserting its own AS number, so peering through it looks, in BGP, like a direct adjacency with every member.</p>
+<p><strong>3a.</strong> host1 to r3, then r2, then straight to dest-2's IXP port (100.64.99.50, or 3fff:ff::50), then target2. Four hops, leaving through r2, with upstream A no longer involved.</p>
+<p><strong>3b.</strong> Before: a few milliseconds via upstream A's peering (the path found in Activity 1). After: below a millisecond in both families, since the path now crosses only your own AS and the exchange fabric. The improvement is modest here because the before path was already peered at one remove; the structural gain is independence: your traffic to dest-2 no longer depends on upstream A at all, which Scenario 1 in the next activity makes valuable.</p>
+<p><strong>3c.</strong> Local preference. The peering route carries 250 against 200 for the transit-learned route via r1, so it wins before AS path length is even compared. Your own policy, not the Internet, made this choice, which is the point: routing is policy, and you just set one.</p>
+<p><strong>3d.</strong> Nothing changed for target1. dest-1 is not present at the exchange, so your new sessions offer no route to it. The rule: peering improves reachability only to networks that are also at the exchange; everything else still rides transit. Real peering decisions weigh exactly this: how much of my traffic goes to networks I could reach across this fabric?</p>
+<p><strong>4.</strong> Model answer: "We activated our existing port at the exchange and now exchange routes directly with the other members. Traffic to the content network there dropped from around 2 ms to under 1 ms and no longer depends on our upstream provider. The change affects only destinations present at the exchange; the rest of our traffic is unchanged."</p></details>
+</article>
+<article id="activity4" class="page" data-title="Activity 4, Scenario 1: The Slow Neighbour"><h1>Activity 4, Scenario 1: The Slow Neighbour</h1>
+<p><strong>Maps to:</strong> Module 2.6 (Troubleshooting with Measurements)
+<strong>Time:</strong> 30 minutes, plus 10 for the optional mitigation
+<strong>Start state:</strong> lab deployed, <code>lab-check.sh</code> all green, congestion stopped, peering down.
+<strong>Do not read</strong> the files under <code>scripts/scenarios/</code>; they contain the answer.</p>
+<p>From here on, the training wheels come off. Nobody tells you what broke. You get a symptom report, your own four machines, the looking glass, and the measurement skills from Activities 1 to 3. Your deliverable is not a fix, because the fault is not in your network and you cannot log in to anyone else's. Your deliverable is an incident summary that names the responsible network and proves it with measurements. That is the daily reality of operating a network: most problems you observe live in somebody else's AS, and your job is knowing whom to call, with what evidence.</p>
+<h2>The ticket</h2>
+<blockquote>
+<p>Since this morning, users report that target2 (10.50.10.10 / 3fff:50:10::10) feels sluggish. It worked fine yesterday. target1 seems unaffected. Please investigate.</p>
+</blockquote>
+<p>Start the incident on your own machine in the lab folder:</p>
+<pre><code>sudo ./scripts/scenario.sh 1 on
+</code></pre>
+<p>Wait a minute, then investigate. Work through your own method before reading the suggested one below.</p>
+<h2>Suggested investigation, if you want structure</h2>
+<p>Confirm the symptom first: ping and traceroute to target2, both families, and compare against your Activity 1 and 3 records. A complaint is a hypothesis; a measurement is a fact.</p>
+<p>Bracket the fault second: measure target1 the same way. One destination degraded and one clean already excludes large parts of the path, including your own AS.</p>
+<p>Read the path third: your traceroute to target2 changed. Label every hop with its AS, note the new round-trip time, and read the AS path for 10.50.0.0/16 on r1. Something about that AS path looks artificial; it is a deliberate signal from dest-2, and worth explaining in your summary.</p>
+<p>Use the looking glass fourth: you cannot log in to other networks, but you can read them:</p>
+<pre><code>sudo ./scripts/lg.sh upstream-a &quot;show bgp ipv4 unicast 10.50.0.0/16&quot;
+sudo ./scripts/lg.sh route-server &quot;show bgp summary&quot;
+</code></pre>
+<p>The route server's summary is the IXP's member list with session states. Compare what you see there against the topology diagram.</p>
+<h2>Your incident summary</h2>
+<p>Write it before reading the model answer. Cover: the symptom quantified, the path change, the network you hold responsible, the evidence, and whom you would contact.</p>
+<p><strong>Optional mitigation.</strong> The fault is not yours, but the routing policy that steers your traffic into it is. Your r2 learns a clean route to dest-2 through upstream B, yet r1's higher local preference for upstream A wins. Lower it and watch your traffic escape the detour:</p>
+<pre><code>docker exec -it clab-measlab-r1 vtysh
+configure terminal
+route-map FROM-UPSTREAM-A permit 10
+ set local-preference 90
+exit
+exit
+clear bgp * soft in
+</code></pre>
+<p>Measure target2 again, confirm the recovery through upstream B, then restore the value to 200 the same way (and <code>clear bgp * soft in</code> again). You diagnosed remotely and mitigated locally, which is precisely the shape of real incident response between networks.</p>
+<p>Close the scenario:</p>
+<pre><code>sudo ./scripts/scenario.sh 1 off
+</code></pre>
+<details class="answers"><summary>Model incident summary (reveal after writing your own)</summary>
+<p>Reveal after writing your own.</p>
+<blockquote>
+<p><strong>Symptom.</strong> Round-trip time to target2 rose from under 2 ms to roughly 50 ms in both IPv4 and IPv6, with no packet loss. target1 measures unchanged, so the fault sits outside our network and outside the shared portion of the two paths.</p>
+<p><strong>Path change.</strong> Traffic to dest-2 previously crossed upstream A's port at the IXP directly to dest-2. It now detours through the transit carrier AS 65030 and enters dest-2 through its backup transit link (traceroute hop 100.64.35.2 instead of 100.64.99.50). The BGP path for 10.50.0.0/16 reads 65010 65030 65050 65050 65050 65050: dest-2 prepends its AS on this route to mark it as a path of last resort, and the Internet is nevertheless using it.</p>
+<p><strong>Root cause attribution.</strong> The IXP route server shows upstream A's sessions down while all other members remain established. Upstream A (AS 65010) has lost its presence at the exchange, so every route it previously learned across the peering LAN, including dest-2's, fell back to transit.</p>
+<p><strong>Action.</strong> Contact our account team at upstream A with this evidence and a request for their ETA. As local mitigation, we can prefer upstream B for the affected prefixes until the exchange sessions return.</p>
+</blockquote>
+<p>The name for this pattern is tromboning: traffic between two nearby networks detours through a distant third, out and back like the slide of a trombone. In Unit 3 you will find real trombones in RIPE Atlas traceroutes, and the evidence chain you built here, symptom, path, AS attribution, is the one you will use there.</p></details>
+</article>
+<article id="activity5" class="page" data-title="Activity 5, Scenario 2: Now You See It, Now You Don&#x27;t"><h1>Activity 5, Scenario 2: Now You See It, Now You Don&#x27;t</h1>
+<p><strong>Maps to:</strong> Module 2.6 (Troubleshooting with Measurements), with a direct bridge to Unit 3 (RIS and BGPlay)
+<strong>Time:</strong> 30 minutes
+<strong>Start state:</strong> lab deployed, <code>lab-check.sh</code> all green, congestion stopped, peering down, Scenario 1 off.
+<strong>Do not read</strong> the files under <code>scripts/scenarios/</code>; they contain the answer.</p>
+<p>Activity 4 gave you a degraded path. This scenario gives you something meaner: a fault that keeps disappearing while you look at it. Intermittent problems are the hardest class of network incident, because a single measurement can land in a good moment and declare everything healthy. Your tools against them are measurement over time and the routing control plane itself.</p>
+<h2>The ticket</h2>
+<blockquote>
+<p>target1 (10.40.10.10 / 3fff:40:10::10) keeps dropping out. It works, then it does not, then it works again. Monitoring shows the pattern started 20 minutes ago. target2 is fine. Please investigate and tell us whose problem this is.</p>
+</blockquote>
+<p>Start the incident on your own machine in the lab folder:</p>
+<pre><code>sudo ./scripts/scenario.sh 2 on
+</code></pre>
+<p>Wait a minute, then investigate. Try your own approach first.</p>
+<h2>Suggested investigation, if you want structure</h2>
+<p>Measure over time, not once. A 100-cycle mtr to target1 spans about two minutes, longer than one bad or good period, so its loss column tells the truth a single ping cannot:</p>
+<pre><code>mtr -n --report --report-cycles 100 10.40.10.10
+</code></pre>
+<p>Read the failure mode. During an outage window, ping target1 and look at the exact error. A timeout means your packet left and nothing came back; a "Network unreachable" means your own router had no route to offer. The two point at different layers, and this detail decides your whole diagnosis.</p>
+<p>Watch your control plane. On r1, check the route repeatedly for a few minutes:</p>
+<pre><code>docker exec -it clab-measlab-r1 vtysh
+show bgp ipv4 unicast 10.40.0.0/16
+</code></pre>
+<p>Run it during a good window and a bad window. Also look at r1's BGP log messages (<code>show logging</code> in vtysh, or repeat the lookup and note the changing age of the route). A route whose age keeps resetting to seconds is telling you its history.</p>
+<p>Attribute it. The looking glass shows you where the instability enters the Internet:</p>
+<pre><code>sudo ./scripts/lg.sh transit &quot;show bgp ipv4 unicast 10.40.0.0/16&quot;
+sudo ./scripts/lg.sh route-server &quot;show bgp summary&quot;
+</code></pre>
+<p>If the transit carrier's route to dest-1 also comes and goes while the IXP looks healthy, the boundary of the fault is drawn for you.</p>
+<h2>Your incident summary</h2>
+<p>Write it before reading the model answer: symptom with numbers, the evidence that this is a routing problem rather than a lossy link, the responsible network, and whom you would contact. Then close the scenario:</p>
+<pre><code>sudo ./scripts/scenario.sh 2 off
+</code></pre>
+<details class="answers"><summary>Model incident summary (reveal after writing your own)</summary>
+<p>Reveal after writing your own.</p>
+<blockquote>
+<p><strong>Symptom.</strong> target1 alternates between full reachability and total outage in a regular cycle of roughly 40 seconds each way, in both address families. Over a two-minute mtr, loss to target1 reads near 50%, while every intermediate hop up to the transit carrier stays clean. target2 is unaffected.</p>
+<p><strong>This is routing, not a lossy link.</strong> During outage windows our own routers hold no route to 10.40.0.0/16 or 3fff:40::/32 at all: pings fail with "Network unreachable" from our first hop rather than timing out, and the BGP table entry for the prefix vanishes and reappears with an age of seconds. Packet loss degrades a path; a withdrawn route removes it. We observed removal.</p>
+<p><strong>Root cause attribution.</strong> The transit carrier's own view (via its looking glass) shows its route to dest-1 appearing and disappearing on the same cycle, learned on its direct session to AS 65040. The IXP route server shows all member sessions stable. The instability therefore originates at dest-1's connection to its transit provider: either the dest-1 router, the link between them, or a misbehaving policy repeatedly resetting the session. From outside, we cannot distinguish which, and honest attribution stops at the boundary the evidence supports: AS 65040's transit connection.</p>
+<p><strong>Action.</strong> This is not our network and not our upstream's. We would report the evidence to dest-1's operations contact, and note that every network on the Internet observing this prefix sees the same churn.</p>
+</blockquote>
+<p>The name for this pattern is a route flap, and its signature, a prefix rhythmically announced and withdrawn, propagates through the routing system to every observer. That last point is the doorway to Unit 3: RIPE RIS records exactly these announcements and withdrawals from hundreds of vantage points, and BGPlay animates them, so the flap you just diagnosed from one AS with a looking glass is the flap you will next watch ripple across the whole Internet.</p></details>
+</article>
+<article id="cheatsheet" class="page" data-title="Cheatsheet"><h1>Cheatsheet</h1>
+<h2>Getting into your machines</h2>
+<table>
+<thead>
+<tr>
+<th>Where</th>
+<th>Command</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Workstation shell</td>
+<td><code>docker exec -it clab-measlab-host1 bash</code></td>
+</tr>
+<tr>
+<td>Router CLI (r1)</td>
+<td><code>docker exec -it clab-measlab-r1 vtysh</code></td>
+</tr>
+<tr>
+<td>Router CLI (r2)</td>
+<td><code>docker exec -it clab-measlab-r2 vtysh</code></td>
+</tr>
+<tr>
+<td>Router CLI (r3)</td>
+<td><code>docker exec -it clab-measlab-r3 vtysh</code></td>
+</tr>
+<tr>
+<td>Leave a router CLI</td>
+<td><code>exit</code> (twice)</td>
+</tr>
+</tbody>
+</table>
+<p>Only r1, r2, r3 and host1 are yours. Everything else refuses you, by design.</p>
+<h2>Measuring</h2>
+<table>
+<thead>
+<tr>
+<th>Purpose</th>
+<th>Command</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Reachability and round-trip time</td>
+<td><code>ping -c 10 10.40.10.10</code></td>
+</tr>
+<tr>
+<td>Same, IPv6</td>
+<td><code>ping -c 10 3fff:40:10::10</code></td>
+</tr>
+<tr>
+<td>Faster probing (5 per second)</td>
+<td><code>ping -c 100 -i 0.2 &lt;target&gt;</code></td>
+</tr>
+<tr>
+<td>Path discovery</td>
+<td><code>traceroute -n 10.40.10.10</code></td>
+</tr>
+<tr>
+<td>Path discovery, IPv6</td>
+<td><code>traceroute -n -6 3fff:40:10::10</code></td>
+</tr>
+<tr>
+<td>Per-hop loss, jitter and latency</td>
+<td><code>mtr -n --report --report-cycles 100 &lt;target&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<p>The <code>-n</code> flag skips name lookups and shows raw addresses. In <code>mtr</code> output, <code>StDev</code> expresses jitter and <code>Wrst</code> is the worst round trip seen.</p>
+<h2>Statistics one-liners</h2>
+<p>Collect one hundred round-trip times into a file:</p>
+<pre><code>ping -c 100 -i 0.2 10.40.10.10 | grep -oE 'time=[0-9.]+' | cut -d= -f2 &gt; rtt.txt
+</code></pre>
+<p>Mean, median, p95, min and max from that file:</p>
+<pre><code>sort -n rtt.txt | awk '{a[NR]=$1; s+=$1}
+  END {print &quot;count:&quot;, NR;
+       print &quot;mean:&quot;, s/NR;
+       print &quot;median:&quot;, a[int((NR+1)/2)];
+       print &quot;p95:&quot;, a[int(NR*0.95)];
+       print &quot;min:&quot;, a[1];
+       print &quot;max:&quot;, a[NR]}'
+</code></pre>
+<p>A shrinking count is your loss figure: lost pings produce no line.</p>
+<h2>Reading your routers</h2>
+<p>Run these inside <code>vtysh</code> on r1, r2 or r3.</p>
+<table>
+<thead>
+<tr>
+<th>Purpose</th>
+<th>Command</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>All BGP sessions and their state</td>
+<td><code>show bgp summary</code></td>
+</tr>
+<tr>
+<td>Best path and alternatives, one prefix</td>
+<td><code>show bgp ipv4 unicast 10.40.0.0/16</code></td>
+</tr>
+<tr>
+<td>Same, IPv6</td>
+<td><code>show bgp ipv6 unicast 3fff:40::/32</code></td>
+</tr>
+<tr>
+<td>Everything learned at the IXP</td>
+<td><code>show bgp ipv4 unicast</code></td>
+</tr>
+<tr>
+<td>The routing table actually in use</td>
+<td><code>show ip route</code> / <code>show ipv6 route</code></td>
+</tr>
+<tr>
+<td>Your OSPF neighbours</td>
+<td><code>show ip ospf neighbor</code></td>
+</tr>
+<tr>
+<td>Recent log messages</td>
+<td><code>show logging</code></td>
+</tr>
+</tbody>
+</table>
+<p>In BGP output, read the AS path right to left: the rightmost AS originated the prefix. <code>Idle (Admin)</code> means an operator shut the session on purpose; a session cycling between states on its own means trouble.</p>
+<h2>The looking glass</h2>
+<p>Read-only <code>show</code> commands on the Internet routers, from the lab folder:</p>
+<pre><code>sudo ./scripts/lg.sh upstream-a &quot;show bgp ipv4 unicast 10.50.0.0/16&quot;
+sudo ./scripts/lg.sh transit &quot;show bgp summary&quot;
+sudo ./scripts/lg.sh route-server &quot;show bgp summary&quot;
+</code></pre>
+<p>Routers: <code>upstream-a</code>, <code>upstream-b</code>, <code>transit</code>, <code>route-server</code>. The route server's summary is the IXP member list with session states.</p>
+<h2>Lab controls</h2>
+<p>Run from the lab folder on your own machine.</p>
+<table>
+<thead>
+<tr>
+<th>Purpose</th>
+<th>Command</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Deploy, impair, verify</td>
+<td><code>sudo ./lab.sh up</code></td>
+</tr>
+<tr>
+<td>Health check</td>
+<td><code>sudo ./lab.sh check</code></td>
+</tr>
+<tr>
+<td>Back to base state</td>
+<td><code>sudo ./lab.sh reset</code></td>
+</tr>
+<tr>
+<td>Tear down</td>
+<td><code>sudo ./lab.sh down</code></td>
+</tr>
+<tr>
+<td>Background load on or off</td>
+<td><code>sudo ./scripts/congestion.sh start</code> / <code>stop</code></td>
+</tr>
+<tr>
+<td>Your IXP peering on or off</td>
+<td><code>sudo ./scripts/peering.sh up</code> / <code>down</code></td>
+</tr>
+<tr>
+<td>Start or clear a fault scenario</td>
+<td><code>sudo ./scripts/scenario.sh &lt;1|2&gt; on</code> / <code>off</code></td>
+</tr>
+</tbody>
+</table>
+<p>Do not read the files under <code>scripts/scenarios/</code> before finishing Activities 4 and 5: they name the faults.</p>
+<h2>Addresses that matter</h2>
+<table>
+<thead>
+<tr>
+<th>Machine</th>
+<th>IPv4</th>
+<th>IPv6</th>
+<th>Network</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>host1 (you)</td>
+<td>10.1.10.10</td>
+<td>3fff:1:10::10</td>
+<td>AS 65001</td>
+</tr>
+<tr>
+<td>r3, LAN router</td>
+<td>10.1.10.1</td>
+<td>3fff:1:10::1</td>
+<td>AS 65001</td>
+</tr>
+<tr>
+<td>r1, border A</td>
+<td>10.1.1.1</td>
+<td>3fff:1:0:1::1</td>
+<td>AS 65001</td>
+</tr>
+<tr>
+<td>r2, border B</td>
+<td>10.1.2.1</td>
+<td>3fff:1:0:2::1</td>
+<td>AS 65001</td>
+</tr>
+<tr>
+<td>upstream A</td>
+<td>100.64.11.1</td>
+<td>3fff:10:0:11::1</td>
+<td>AS 65010</td>
+</tr>
+<tr>
+<td>transit, side facing A</td>
+<td>100.64.13.2</td>
+<td>3fff:30:0:13::2</td>
+<td>AS 65030</td>
+</tr>
+<tr>
+<td>dest-1 router</td>
+<td>100.64.34.2</td>
+<td>3fff:30:0:34::2</td>
+<td>AS 65040</td>
+</tr>
+<tr>
+<td>target1</td>
+<td>10.40.10.10</td>
+<td>3fff:40:10::10</td>
+<td>AS 65040</td>
+</tr>
+<tr>
+<td>dest-2, IXP port</td>
+<td>100.64.99.50</td>
+<td>3fff:ff::50</td>
+<td>AS 65050</td>
+</tr>
+<tr>
+<td>target2</td>
+<td>10.50.10.10</td>
+<td>3fff:50:10::10</td>
+<td>AS 65050</td>
+</tr>
+</tbody>
+</table>
+<p>Addresses beginning 100.64.99 or 3fff:ff: sit on the IXP peering LAN. Each AS holds one IPv4 /16 and one IPv6 /32 from 3fff::/20.</p>
+</article>
+</main>
+</div>
+<script>
+(function () {
+  var pages = Array.prototype.slice.call(document.querySelectorAll(".page"));
+  var navItems = Array.prototype.slice.call(document.querySelectorAll(".nav-item"));
+
+  function show(id) {
+    var target = document.getElementById(id) ? id : pages[0].id;
+    pages.forEach(function (p) { p.classList.toggle("visible", p.id === target); });
+    navItems.forEach(function (n) { n.classList.toggle("active", n.dataset.page === target); });
+    document.title = (document.getElementById(target).dataset.title || "Lab") + " · Internet Measurements Lab";
+    try { window.scrollTo(0, 0); } catch (e) {}
+  }
+  window.addEventListener("hashchange", function () { show(location.hash.slice(1)); });
+
+  // Copy buttons on every code block
+  document.querySelectorAll("pre").forEach(function (pre) {
+    var wrap = document.createElement("div");
+    wrap.className = "codewrap";
+    pre.parentNode.insertBefore(wrap, pre);
+    wrap.appendChild(pre);
+    var btn = document.createElement("button");
+    btn.className = "copy-btn"; btn.type = "button"; btn.textContent = "Copy";
+    btn.addEventListener("click", function () {
+      var text = pre.innerText;
+      function ok() { btn.textContent = "Copied"; setTimeout(function () { btn.textContent = "Copy"; }, 1400); }
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(ok);
+      } else {
+        var ta = document.createElement("textarea");
+        ta.value = text; document.body.appendChild(ta); ta.select();
+        try { document.execCommand("copy"); ok(); } catch (e) {}
+        document.body.removeChild(ta);
+      }
+    });
+    wrap.appendChild(btn);
+  });
+
+  // Task checkboxes with progress, persisted per browser
+  function store(key, val) { try { localStorage.setItem(key, val); } catch (e) {} }
+  function load(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
+
+  pages.forEach(function (page) {
+    var tasks = Array.prototype.slice.call(page.querySelectorAll("h2")).filter(function (h) {
+      return /^Task /.test(h.textContent);
+    });
+    var pill = document.querySelector('[data-progress="' + page.id + '"]');
+
+    function refresh() {
+      if (!pill) return;
+      if (!tasks.length) { pill.textContent = ""; return; }
+      var done = tasks.filter(function (h) { return h.querySelector("input").checked; }).length;
+      pill.textContent = done + "/" + tasks.length;
+      pill.classList.toggle("done", done === tasks.length);
+    }
+
+    tasks.forEach(function (h, i) {
+      var key = "measlab." + page.id + ".task" + i;
+      var box = document.createElement("input");
+      box.type = "checkbox"; box.className = "task-check";
+      box.setAttribute("aria-label", "Mark task complete");
+      box.checked = load(key) === "1";
+      var span = document.createElement("span");
+      span.className = "task-title"; span.textContent = h.textContent;
+      h.textContent = ""; h.appendChild(box); h.appendChild(span);
+      h.classList.toggle("task-done", box.checked);
+      box.addEventListener("change", function () {
+        store(key, box.checked ? "1" : "0");
+        h.classList.toggle("task-done", box.checked);
+        refresh();
+      });
+    });
+    refresh();
+  });
+
+  show(location.hash.slice(1));
+})();
+</script>
+</body>
+</html>
