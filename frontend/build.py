@@ -16,12 +16,49 @@ ROOT = Path(__file__).resolve().parent.parent
 PAGES_DIR = ROOT / "frontend" / "pages"
 ACTIVITIES_DIR = ROOT / "activities"
 SVG_PATH = ROOT / "topology-diagram.svg"
+FONT_PATH = ROOT / "frontend" / "assets" / "public-sans-400.woff2.b64"
 OUT = ROOT / "frontend" / "index.html"
 
 MD = markdown.Markdown(extensions=["tables", "fenced_code"])
 
 # Sections whose body must stay hidden until the learner opens them
 SPOILER_HEADINGS = ("Check your answers", "Model incident summary")
+
+# Nav icons: small, original, monochrome (currentColor) -- not copied from any
+# external icon set. Activities use a plain numbered badge instead (see CSS).
+ICON_GUIDE = (
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">'
+    '<path d="M4 5.5C4 4.7 4.7 4 5.5 4H12v16H5.5A1.5 1.5 0 0 1 4 18.5v-13Z"/>'
+    '<path d="M20 5.5c0-.8-.7-1.5-1.5-1.5H12v16h6.5a1.5 1.5 0 0 0 1.5-1.5v-13Z"/>'
+    "</svg>"
+)
+ICON_PORTAL = (
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">'
+    '<rect x="3.5" y="4.5" width="17" height="15" rx="1.8"/>'
+    '<path d="M7 9.5 10.2 12 7 14.5" stroke-linecap="round" stroke-linejoin="round"/>'
+    '<path d="M12.5 14.5h4.5" stroke-linecap="round"/>'
+    "</svg>"
+)
+ICON_CHEATSHEET = (
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">'
+    '<path d="M6 3.5h9l4 4v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-16a1 1 0 0 1 1-1Z"/>'
+    '<path d="M9 12h7M9 15.5h7M9 8.5h3"/>'
+    "</svg>"
+)
+
+# Nav subtitles, keyed by page id (kept as plain data so build.py stays the
+# single place nav copy lives -- edit here, not in the generated HTML)
+NAV_SUBTITLES = {
+    "lab-guide": "Topology, addressing, requirements",
+    "portal": "Start/stop the lab, live terminals",
+    "activity1": "Traceroute, ping, mtr, BGP tables",
+    "activity2": "Congestion, jitter, loss under load",
+    "activity3": "Enable peering, measure the difference",
+    "activity4": "Diagnose a degraded path",
+    "activity5": "Diagnose an intermittent fault",
+    "cheatsheet": "Command reference",
+}
+NAV_ICONS = {"lab-guide": ICON_GUIDE, "portal": ICON_PORTAL, "cheatsheet": ICON_CHEATSHEET}
 
 PORTAL_HTML = r"""
 <p>Start and stop the lab and its activities from here, and use real terminals
@@ -76,21 +113,58 @@ same rule as <code>lg.sh</code>: observe only.</p>
 <pre id="portal-output">Output will appear here.</pre>
 
 <h2>Terminals</h2>
-<p>Live shells into the nodes you're allowed to touch: r1, r2, r3, host1.
-Each opens where <code>docker exec -it clab-measlab-&lt;node&gt; sh</code> would
-have dropped you &mdash; run <code>vtysh</code>, <code>ping</code>,
-<code>traceroute</code>, <code>mtr</code> directly, no prefix needed.</p>
-<div class="term-tabs">
-  <button class="term-tab active" data-term="host1" type="button">host1</button>
-  <button class="term-tab" data-term="r1" type="button">r1</button>
-  <button class="term-tab" data-term="r2" type="button">r2</button>
-  <button class="term-tab" data-term="r3" type="button">r3</button>
-</div>
-<div class="term-frames">
-  <iframe class="term-frame visible" data-term="host1" src="http://localhost:7681" title="host1 terminal"></iframe>
-  <iframe class="term-frame" data-term="r1" src="http://localhost:7682" title="r1 terminal"></iframe>
-  <iframe class="term-frame" data-term="r2" src="http://localhost:7683" title="r2 terminal"></iframe>
-  <iframe class="term-frame" data-term="r3" src="http://localhost:7684" title="r3 terminal"></iframe>
+<p>Live shells into the nodes you're allowed to touch, side by side. Each opens
+where <code>docker exec -it clab-measlab-&lt;node&gt; sh</code> would have
+dropped you &mdash; run <code>vtysh</code>, <code>ping</code>,
+<code>traceroute</code>, <code>mtr</code> directly, no prefix needed. Drag a
+console's bottom-right corner to resize it.</p>
+<div class="console-grid">
+  <div class="console" data-port="7681">
+    <div class="console-head">
+      <span class="console-name">host1</span>
+      <a href="#" class="console-action" data-act="reconnect">reconnect</a>
+      <a href="http://localhost:7681" target="_blank" class="console-action">pop out</a>
+    </div>
+    <div class="console-resizer"><iframe src="http://localhost:7681" title="host1 terminal"></iframe></div>
+  </div>
+  <div class="console" data-port="7682">
+    <div class="console-head">
+      <span class="console-name">r1</span>
+      <a href="#" class="console-action" data-act="reconnect">reconnect</a>
+      <a href="http://localhost:7682" target="_blank" class="console-action">pop out</a>
+    </div>
+    <div class="console-resizer"><iframe src="http://localhost:7682" title="r1 terminal"></iframe></div>
+  </div>
+  <div class="console" data-port="7683">
+    <div class="console-head">
+      <span class="console-name">r2</span>
+      <a href="#" class="console-action" data-act="reconnect">reconnect</a>
+      <a href="http://localhost:7683" target="_blank" class="console-action">pop out</a>
+    </div>
+    <div class="console-resizer"><iframe src="http://localhost:7683" title="r2 terminal"></iframe></div>
+  </div>
+  <div class="console" data-port="7684">
+    <div class="console-head">
+      <span class="console-name">r3</span>
+      <a href="#" class="console-action" data-act="reconnect">reconnect</a>
+      <a href="http://localhost:7684" target="_blank" class="console-action">pop out</a>
+    </div>
+    <div class="console-resizer"><iframe src="http://localhost:7684" title="r3 terminal"></iframe></div>
+  </div>
+  <div class="console-aside">
+    <div class="hints-box">
+      <h3>Hints</h3>
+      <ul>
+        <li>Drag a console's bottom-right corner to resize it (not supported in Firefox).</li>
+        <li>If the first character typed into a freshly opened console looks garbled, press Ctrl-C and retype &mdash; a one-time artifact per console, it will not recur.</li>
+        <li>"pop out" opens the same console full-page, useful on small screens.</li>
+      </ul>
+    </div>
+    <div class="scratch-pad">
+      <h3>Scratch-pad</h3>
+      <textarea id="scratchpad" placeholder="Notes or commands to copy back in. Saved in this browser only."></textarea>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -130,16 +204,22 @@ have dropped you &mdash; run <code>vtysh</code>, <code>ping</code>,
     });
   });
 
-  var tabs = Array.prototype.slice.call(document.querySelectorAll(".term-tab"));
-  var frames = Array.prototype.slice.call(document.querySelectorAll(".term-frame"));
-  tabs.forEach(function (tab) {
-    tab.addEventListener("click", function () {
-      tabs.forEach(function (t) { t.classList.toggle("active", t === tab); });
-      frames.forEach(function (f) {
-        f.classList.toggle("visible", f.dataset.term === tab.dataset.term);
-      });
+  document.querySelectorAll('.console-action[data-act="reconnect"]').forEach(function (link) {
+    link.addEventListener("click", function (e) {
+      e.preventDefault();
+      var iframe = link.closest(".console").querySelector("iframe");
+      iframe.src = iframe.src;
     });
   });
+
+  var pad = document.getElementById("scratchpad");
+  if (pad) {
+    var padKey = "measlab.scratchpad";
+    try { pad.value = localStorage.getItem(padKey) || ""; } catch (e) {}
+    pad.addEventListener("input", function () {
+      try { localStorage.setItem(padKey, pad.value); } catch (e) {}
+    });
+  }
 })();
 </script>
 """
@@ -204,10 +284,27 @@ def main():
     svg = SVG_PATH.read_text(encoding="utf-8")
     svg = re.sub(r"<\?xml.*?\?>", "", svg, flags=re.S).strip()
 
+    font_b64 = FONT_PATH.read_text(encoding="utf-8").strip()
+
+    def nav_icon(pid: str) -> str:
+        if pid in NAV_ICONS:
+            return f'<span class="nav-icon">{NAV_ICONS[pid]}</span>'
+        m = re.match(r"activity(\d)", pid)
+        num = m.group(1) if m else "?"
+        return f'<span class="nav-icon nav-badge">{num}</span>'
+
     nav_items = "\n".join(
         f'<a class="nav-item" href="#{pid}" data-page="{pid}">'
-        f'<span class="nav-label">{htmlmod.escape(label)}</span>'
-        f'<span class="nav-progress" data-progress="{pid}"></span></a>'
+        + nav_icon(pid)
+        + '<span class="nav-text">'
+        + f'<span class="nav-label">{htmlmod.escape(label)}</span>'
+        + (
+            f'<span class="nav-subtitle">{htmlmod.escape(NAV_SUBTITLES[pid])}</span>'
+            if pid in NAV_SUBTITLES
+            else ""
+        )
+        + "</span>"
+        + f'<span class="nav-progress" data-progress="{pid}"></span></a>'
         for pid, label, _, _ in pages
     )
 
@@ -223,7 +320,11 @@ def main():
         '<div class="diagram">' + svg + "</div>",
     )
 
-    out = TEMPLATE.replace("{{NAV}}", nav_items).replace("{{ARTICLES}}", articles)
+    out = (
+        TEMPLATE.replace("{{NAV}}", nav_items)
+        .replace("{{ARTICLES}}", articles)
+        .replace("{{FONT_B64}}", font_b64)
+    )
     OUT.write_text(out, encoding="utf-8")
     print(f"wrote {OUT} ({len(out)//1024} KB, {len(pages)} pages)")
 
@@ -235,6 +336,13 @@ TEMPLATE = r"""<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Internet Measurements Lab</title>
 <style>
+@font-face {
+  font-family: "Public Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(data:font/woff2;base64,{{FONT_B64}}) format("woff2");
+}
 :root {
   --bg: #0d1226;
   --panel: #151d3b;
@@ -246,7 +354,7 @@ TEMPLATE = r"""<!DOCTYPE html>
   --orange: #f36b21;
   --grey: #c9c9c9;
   --mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, "Liberation Mono", monospace;
-  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --sans: "Public Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
@@ -266,14 +374,28 @@ nav {
 .brand::before { content: "learner@as65001:~$ "; color: var(--orange); }
 .brand-title { font-family: var(--mono); font-size: 18px; font-weight: 700; color: var(--text); margin: 0 0 22px; letter-spacing: .3px; }
 .nav-item {
-  display: flex; justify-content: space-between; align-items: baseline; gap: 8px;
+  display: flex; align-items: flex-start; gap: 10px;
   padding: 9px 10px; margin: 2px 0; border-radius: 6px;
-  color: var(--blue); text-decoration: none; font-size: 14.5px;
+  color: var(--blue); text-decoration: none;
   border-left: 3px solid transparent;
 }
 .nav-item:hover { background: var(--panel-2); }
 .nav-item.active { background: var(--panel-2); color: var(--text); border-left-color: var(--orange); }
-.nav-progress { font-family: var(--mono); font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+.nav-icon {
+  flex: none; width: 20px; height: 20px; margin-top: 1px; color: var(--muted);
+}
+.nav-item.active .nav-icon { color: var(--orange); }
+.nav-icon svg { width: 100%; height: 100%; }
+.nav-badge {
+  display: flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid currentColor;
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+}
+.nav-text { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; }
+.nav-label { font-size: 14.5px; }
+.nav-subtitle { font-size: 12px; color: var(--muted); font-weight: 400; }
+.nav-item.active .nav-subtitle { color: var(--blue); }
+.nav-progress { flex: none; font-family: var(--mono); font-size: 11.5px; color: var(--muted); white-space: nowrap; }
 .nav-progress.done { color: var(--orange); }
 nav .foot { margin-top: 26px; padding-top: 14px; border-top: 1px solid var(--line);
   font-size: 12.5px; color: var(--muted); }
@@ -281,6 +403,7 @@ nav .foot a { color: var(--blue); }
 
 /* ---- content ---- */
 main { padding: 42px clamp(24px, 5vw, 72px); max-width: 900px; }
+main:has(#portal.visible) { max-width: none; }
 .page { display: none; }
 .page.visible { display: block; }
 h1 { font-family: var(--mono); font-size: 26px; line-height: 1.3; margin: 0 0 6px; }
@@ -353,16 +476,36 @@ details.answers[open] { border-style: solid; padding-bottom: 8px; }
   padding: 14px 16px; font-family: var(--mono); font-size: 13px; color: #e8eefb;
   white-space: pre-wrap; word-break: break-word; max-height: 360px; overflow-y: auto;
 }
-.term-tabs { display: flex; gap: 6px; margin: 16px 0 0; }
-.term-tab {
-  font-family: var(--mono); font-size: 13.5px; color: var(--muted);
-  background: var(--panel); border: 1px solid var(--line); border-bottom: none;
-  border-radius: 6px 6px 0 0; padding: 8px 16px; cursor: pointer;
+.console-grid { display: flex; flex-wrap: wrap; gap: 16px; margin: 16px 0 0; align-items: flex-start; }
+.console {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+  overflow: hidden; flex: none;
 }
-.term-tab.active { color: var(--text); background: var(--panel-2); }
-.term-frames { border: 1px solid var(--line); border-radius: 0 8px 8px 8px; overflow: hidden; }
-.term-frame { display: none; width: 100%; height: 480px; border: 0; background: #000; }
-.term-frame.visible { display: block; }
+.console-head {
+  display: flex; align-items: center; gap: 12px; padding: 8px 12px;
+  background: var(--panel-2); border-bottom: 1px solid var(--line);
+}
+.console-name { font-family: var(--mono); font-size: 13.5px; color: var(--text); font-weight: 700; }
+.console-action { font-family: var(--mono); font-size: 12px; color: var(--blue); text-decoration: none; }
+.console-action:hover { color: var(--orange); }
+.console-resizer {
+  resize: both; overflow: auto; width: 420px; height: 300px; min-width: 280px; min-height: 160px;
+  display: flex;
+}
+.console-resizer iframe { flex: 1; width: 100%; height: 100%; border: 0; background: #000; }
+.console-aside { flex: 1; min-width: 240px; display: flex; flex-direction: column; gap: 16px; }
+.hints-box, .scratch-pad {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px;
+}
+.hints-box h3, .scratch-pad h3 { margin: 0 0 8px; font-size: 14px; color: var(--muted);
+  font-family: var(--mono); text-transform: uppercase; letter-spacing: .04em; }
+.hints-box ul { margin: 0; padding-left: 18px; font-size: 13.5px; }
+.hints-box li { margin: 6px 0; color: var(--muted); }
+.scratch-pad textarea {
+  width: 100%; min-height: 140px; resize: vertical; background: #0a0f1f; color: var(--text);
+  border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px;
+  font-family: var(--mono); font-size: 13px;
+}
 
 /* mobile */
 @media (max-width: 860px) {
