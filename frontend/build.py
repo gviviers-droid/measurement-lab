@@ -17,6 +17,7 @@ PAGES_DIR = ROOT / "frontend" / "pages"
 ACTIVITIES_DIR = ROOT / "activities"
 SVG_PATH = ROOT / "topology-diagram.svg"
 FONT_PATH = ROOT / "frontend" / "assets" / "public-sans-400.woff2.b64"
+LOGO_PATH = ROOT / "frontend" / "assets" / "ripe-ncc-logo.svg"
 OUT = ROOT / "frontend" / "index.html"
 
 MD = markdown.Markdown(extensions=["tables", "fenced_code"])
@@ -285,6 +286,7 @@ def main():
     svg = re.sub(r"<\?xml.*?\?>", "", svg, flags=re.S).strip()
 
     font_b64 = FONT_PATH.read_text(encoding="utf-8").strip()
+    logo_svg = LOGO_PATH.read_text(encoding="utf-8").strip()
 
     def nav_icon(pid: str) -> str:
         if pid in NAV_ICONS:
@@ -324,6 +326,7 @@ def main():
         TEMPLATE.replace("{{NAV}}", nav_items)
         .replace("{{ARTICLES}}", articles)
         .replace("{{FONT_B64}}", font_b64)
+        .replace("{{RIPE_LOGO}}", logo_svg)
     )
     OUT.write_text(out, encoding="utf-8")
     print(f"wrote {OUT} ({len(out)//1024} KB, {len(pages)} pages)")
@@ -351,7 +354,7 @@ TEMPLATE = r"""<!DOCTYPE html>
   --text: #dfe6f5;
   --muted: #8fa0c9;
   --blue: #8fb7e1;
-  --orange: #f36b21;
+  --orange: #f26b21;
   --grey: #c9c9c9;
   --mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, "Liberation Mono", monospace;
   --sans: "Public Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
@@ -370,9 +373,10 @@ nav {
   background: var(--panel); border-right: 1px solid var(--line);
   padding: 22px 18px; position: sticky; top: 0; height: 100vh; overflow-y: auto;
 }
-.brand { font-family: var(--mono); font-size: 14px; color: var(--muted); margin: 0 0 2px; }
-.brand::before { content: "learner@as65001:~$ "; color: var(--orange); }
-.brand-title { font-family: var(--mono); font-size: 18px; font-weight: 700; color: var(--text); margin: 0 0 22px; letter-spacing: .3px; }
+.brand-logo { color: var(--text); margin: 0 0 16px; width: 148px; }
+.brand-logo svg { width: 100%; height: auto; display: block; }
+.brand-title { font-family: var(--mono); font-size: 17px; font-weight: 700; color: var(--text); margin: 0 0 2px; letter-spacing: .3px; }
+.brand-sub { font-size: 12.5px; color: var(--muted); margin: 0 0 22px; }
 .nav-item {
   display: flex; align-items: flex-start; gap: 10px;
   padding: 9px 10px; margin: 2px 0; border-radius: 6px;
@@ -525,8 +529,9 @@ details.answers[open] { border-style: solid; padding-bottom: 8px; }
 <body>
 <div class="shell">
 <nav aria-label="Lab pages">
-  <p class="brand">measlab</p>
+  <div class="brand-logo">{{RIPE_LOGO}}</div>
   <p class="brand-title">Internet Measurements Lab</p>
+  <p class="brand-sub">RIPE NCC Academy</p>
   {{NAV}}
   <p class="foot">Progress is saved in this browser only. Answers stay hidden until you open them; open them only after committing to your own answers in writing.</p>
 </nav>
