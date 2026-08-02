@@ -115,7 +115,9 @@ The impairment values in `scripts/impairments.sh` are the ground truth for the m
 
 ## Open items in this draft
 
-- The frontend logic is smoke-tested but the page has not yet been opened in a real browser: do that once and adjust spacing to taste.
-- Untested against a live Containerlab install. Deploy once and run `lab-check.sh` before circulating; expect small fixes around FRR image behaviour and exec ordering on the ixp-sw bridge container.
+- Testing status of `install.sh` / `install.ps1`:
+  - **macOS (Podman machine path): tested end-to-end**, including a real browser session against the Control Portal (buttons, side-by-side terminals, reconnect/pop-out).
+  - **Native Linux / WSL2 path: tested end-to-end on fresh Ubuntu 22.04 VMs** (deploy, `lab-check.sh` 17/17, Control Portal, idempotent reruns). This is also the path WSL2 exercises, since it reports as Linux to the script.
+  - **Windows (`install.ps1`'s own WSL2 bootstrap): not tested on real Windows** -- no ARM64-capable Windows VM was available in the environment used to build this. Syntax-checked and run under PowerShell Core on macOS far enough to validate error handling, but the actual `wsl --install` success path, the reboot/re-run cycle, and the handoff into a live WSL2 session are unverified. Test this before relying on it for a Windows-heavy cohort.
 - The topology figure (`topology-diagram.svg`) is the learner version and hides impairments, the cross-traffic host and dest-1's dormant IXP port.
 - Planned extensions, decided but not built: DNS names for targets via a small resolver, and a measurement logger writing ping statistics to CSV for the Module 2.5 and 2.7 activities.
