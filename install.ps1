@@ -22,7 +22,19 @@ function Test-WSLReady {
 
 if (-not (Test-WSLReady)) {
     Write-Host "WSL2 isn't set up yet. Installing WSL2 with Ubuntu..." -ForegroundColor Cyan
-    wsl.exe --install -d Ubuntu
+    try {
+        wsl.exe --install -d Ubuntu
+    } catch {
+        Write-Host ""
+        Write-Host "Couldn't run 'wsl.exe --install'. This needs Windows 10 (2004+) or" -ForegroundColor Red
+        Write-Host "Windows 11 with the Windows Subsystem for Linux feature available." -ForegroundColor Red
+        Write-Host "Install WSL2 manually (https://learn.microsoft.com/windows/wsl/install)" -ForegroundColor Red
+        Write-Host "then re-run this script, or use the GitHub Codespaces / VS Code Dev" -ForegroundColor Red
+        Write-Host "Container route from the README instead." -ForegroundColor Red
+        Write-Host ""
+        Write-Host "Underlying error: $_" -ForegroundColor DarkGray
+        exit 1
+    }
     Write-Host ""
     Write-Host "WSL2/Ubuntu is installing. If this is the first time WSL has been used on" -ForegroundColor Yellow
     Write-Host "this machine, Windows may need a restart, and Ubuntu may ask you to create" -ForegroundColor Yellow
