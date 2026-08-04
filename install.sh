@@ -193,12 +193,21 @@ install_podman_linux() {
     install_podman_via_linuxbrew
   fi
 
-  # Our scripts call `docker exec` directly (matching the README/Containerlab
-  # convention). Make sure that command exists and points at whichever podman
-  # we're actually using. Skip the podman-docker *package* if we're on the
-  # Linuxbrew podman (this run or a previous one) -- that package depends on
-  # (and would silently reinstall) the distro's own podman, undoing that
-  # removal and reintroducing the exact conflict the fallback avoids.
+  # This lab's actual runtime is Podman (`containerlab ... --runtime podman`
+  # in lab.sh), but every learner-facing command -- the activity sheets,
+  # README, and scripts/*.sh -- calls `docker exec`, matching the
+  # README/Containerlab convention rather than the runtime underneath. Podman
+  # is drop-in compatible with the Docker CLI, so the fix is just making sure
+  # a `docker` command exists and resolves to whichever podman we're actually
+  # using. This step is Linux/WSL2-only: on macOS, commands run inside the
+  # Podman machine VM via `podman machine ssh` (see lab_already_deployed and
+  # deploy_lab below), where `docker` already resolves correctly without any
+  # extra setup from this script.
+  #
+  # Skip the podman-docker *package* if we're on the Linuxbrew podman (this
+  # run or a previous one) -- that package depends on (and would silently
+  # reinstall) the distro's own podman, undoing that removal and
+  # reintroducing the exact conflict the fallback avoids.
   log "Adding a docker -> podman compatibility alias"
   podman_path="$(command -v podman)"
   if podman_is_linuxbrew || ! pkg_install podman-docker 2>/dev/null || [ ! -x /usr/bin/podman ]; then
