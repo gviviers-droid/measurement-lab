@@ -1,0 +1,44 @@
+#cloud-config
+autoinstall:
+  version: 1
+  locale: en_US.UTF-8
+  keyboard:
+    layout: us
+  identity:
+    hostname: measlab
+    username: learner
+    password: "$6$measlabsalt$UgkNI1M5mtNDb1f/YoXGatm1TCRNOwGIKapUXuMua3wxndOMn46vy897S37yMu1ttXBvW3WKGBX9s7CkWYy5B0"
+  ssh:
+    install-server: true
+    allow-pw: true
+  network:
+    network:
+      version: 2
+      ethernets:
+        all-en:
+          match:
+            name: "en*"
+          dhcp4: true
+        all-eth:
+          match:
+            name: "eth*"
+          dhcp4: true
+  storage:
+    layout:
+      name: direct
+  packages:
+    - sudo
+    - curl
+    - wget
+    - git
+    - openssh-server
+    - ca-certificates
+    - gnupg
+    - lsb-release
+    - qemu-guest-agent
+    - cloud-guest-utils
+  user-data:
+    disable_root: false
+  late-commands:
+    - echo 'learner ALL=(ALL) NOPASSWD:ALL' > /target/etc/sudoers.d/learner
+    - chmod 0440 /target/etc/sudoers.d/learner

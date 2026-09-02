@@ -32,7 +32,7 @@ ANSI_RE = re.compile(r"\x1b\[[0-9;]*[a-zA-Z]")
 
 
 def _load_runtime():
-    hop, machine = "direct", "podman-machine-default"
+    hop, machine, host = "direct", "podman-machine-default", "127.0.0.1"
     if RUNTIME_CONFIG.exists():
         for line in RUNTIME_CONFIG.read_text().splitlines():
             if "=" not in line:
@@ -42,10 +42,12 @@ def _load_runtime():
                 hop = value.strip()
             elif key == "MEASLAB_MACHINE":
                 machine = value.strip()
-    return hop, machine
+            elif key == "MEASLAB_HOST":
+                host = value.strip()
+    return hop, machine, host
 
 
-HOP, PODMAN_MACHINE = _load_runtime()
+HOP, PODMAN_MACHINE, BIND_HOST = _load_runtime()
 
 # Fixed, argument-free actions only -- each maps to an existing script call.
 ACTIONS = {
@@ -143,8 +145,9 @@ class Handler(SimpleHTTPRequestHandler):
 
 def main():
     port = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
-    server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
-    print(f"Serving the activity frontend + control API at http://localhost:{port}")
+    host = sys.argv[2] if len(sys.argv) > 2 else BIND_HOST
+    server = ThreadingHTTPServer((host, port), Handler)
+    print(f"Serving the activity frontend + control API at http://{host}:{port}")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

@@ -1,0 +1,18 @@
+[Unit]
+Description=Internet Measurements Lab Control Portal & Terminals
+After=network.target docker.service
+Requires=docker.service
+
+[Service]
+Type=simple
+User=learner
+Group=learner
+WorkingDirectory=/home/learner/measurement-lab
+Environment="MEASLAB_HOP=direct"
+Environment="MEASLAB_HOST=0.0.0.0"
+ExecStart=/home/learner/measurement-lab/portal.sh
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

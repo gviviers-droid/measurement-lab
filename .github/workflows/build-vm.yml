@@ -1,0 +1,126 @@
+name: Build and Release VM Appliances
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Build target architecture'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - x86_64
+          - arm64
+
+permissions:
+  contents: write
+
+jobs:
+  build-x86_64:
+    name: Build x86_64 Appliance (QEMU / KVM)
+    if: github.event.inputs.target == 'all' || github.event.inputs.target == 'x86_64' || github.event_name == 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up KVM permissions
+        run: |
+          sudo usermod -aG kvm $USER || true
+          sudo chmod 666 /dev/kvm || true
+
+      - name: Install QEMU and dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq qemu-system-x86 qemu-utils ovmf
+
+      - name: Setup HashiCorp Packer
+        uses: hashicorp/setup-packer@main
+        with:
+          version: 'latest'
+
+      - name: Initialize Packer
+        working-directory: packer
+        run: packer init measlab.pkr.hcl
+
+      - name: Build x86_64 QEMU Image
+        working-directory: packer
+        run: |
+          packer build -var-file=pkrvars/x86_64.pkrvars.hcl -only="qemu.measlab-x86_64" measlab.pkr.hcl
+
+      - name: Compress Image & Generate Checksum
+        working-directory: packer
+        run: |
+          cd output-qemu-x86_64
+          echo "Compressing measlab-x86_64.qcow2..."
+          gzip -9 -c measlab-x86_64.qcow2 > measlab-x86_64.qcow2.gz
+          sha256sum measlab-x86_64.qcow2.gz > measlab-x86_64.qcow2.gz.sha256
+
+      - name: Upload x86_64 Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: measlab-x86_64-appliance
+          path: |
+            packer/output-qemu-x86_64/measlab-x86_64.qcow2.gz
+            packer/output-qemu-x86_64/measlab-x86_64.qcow2.gz.sha256
+          retention-days: 7
+
+  build-arm64:
+    name: Build ARM64 Appliance (Apple Silicon / UTM)
+    if: github.event.inputs.target == 'all' || github.event.inputs.target == 'arm64' || github.event_name == 'release'
+    runs-on: macos-14 # Apple Silicon M1 runner on GitHub Actions
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install QEMU and Packer via Homebrew
+        run: |
+          brew update
+          brew install qemu packer
+
+      - name: Initialize Packer
+        working-directory: packer
+        run: packer init measlab.pkr.hcl
+
+      - name: Build ARM64 QEMU Image
+        working-directory: packer
+        run: |
+          packer build -var-file=pkrvars/arm64.pkrvars.hcl -only="qemu.measlab-arm64" measlab.pkr.hcl
+
+      - name: Compress Image & Generate Checksum
+        working-directory: packer
+        run: |
+          cd output-qemu-arm64
+          echo "Compressing measlab-arm64.qcow2..."
+          gzip -9 -c measlab-arm64.qcow2 > measlab-arm64.qcow2.gz
+          shasum -a 256 measlab-arm64.qcow2.gz > measlab-arm64.qcow2.gz.sha256
+
+      - name: Upload ARM64 Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: measlab-arm64-appliance
+          path: |
+            packer/output-qemu-arm64/measlab-arm64.qcow2.gz
+            packer/output-qemu-arm64/measlab-arm64.qcow2.gz.sha256
+          retention-days: 7
+
+  release:
+    name: Attach VM Images to GitHub Release
+    needs: [build-x86_64, build-arm64]
+    if: github.event_name == 'release' && always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Publish Assets to GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Finding release assets..."
+          find artifacts -type f \( -name "*.gz" -o -name "*.sha256" \) -exec gh release upload ${{ github.event.release.tag_name }} {} --clobber \;

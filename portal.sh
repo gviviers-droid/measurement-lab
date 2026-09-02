@@ -16,6 +16,7 @@ cd "${DIR}"
 
 MEASLAB_HOP=direct
 MEASLAB_MACHINE=podman-machine-default
+MEASLAB_HOST=127.0.0.1
 [ -f .measlab/runtime.env ] && . .measlab/runtime.env
 
 TERMINALS="host1:7681 r1:7682 r2:7683 r3:7684"
@@ -33,16 +34,16 @@ for entry in ${TERMINALS}; do
   port="${entry##*:}"
   shell_cmd="sudo docker exec -it clab-measlab-${node} sh"
   if [ "${MEASLAB_HOP}" = "podman-machine" ]; then
-    ttyd -p "${port}" -i 127.0.0.1 -W -t titleFixed="${node}" \
+    ttyd -p "${port}" -i "${MEASLAB_HOST}" -W -t titleFixed="${node}" \
       podman machine ssh "${MEASLAB_MACHINE}" -- "${shell_cmd}" \
       > /dev/null 2>&1 &
   else
-    ttyd -p "${port}" -i 127.0.0.1 -W -t titleFixed="${node}" \
+    ttyd -p "${port}" -i "${MEASLAB_HOST}" -W -t titleFixed="${node}" \
       bash -c "${shell_cmd}" \
       > /dev/null 2>&1 &
   fi
   PIDS="${PIDS} $!"
-  echo "Terminal for ${node} at http://localhost:${port}"
+  echo "Terminal for ${node} at http://${MEASLAB_HOST}:${port}"
 done
 
 echo "Control panel + frontend at http://localhost:8080 (Ctrl-C to stop everything)."

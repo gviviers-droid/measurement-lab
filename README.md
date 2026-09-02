@@ -31,7 +31,14 @@ IPv6 uses the documentation prefix 3fff::/20 ([RFC 9637](https://www.rfc-editor.
 
 Inter-AS point-to-point links use 100.64.0.0/10 for IPv4 and /64s from the relevant AS's /32 for IPv6.
 
-## Getting the lab (four routes)
+## Getting the lab (five routes)
+
+**GitHub Codespaces, nothing installed (recommended for courses).** The repository ships a `.devcontainer/` configuration built on Containerlab's official Dev Container image, so a learner can open the repo on GitHub, create a Codespace, and get a browser-based VS Code with Docker and Containerlab pre-installed. GitHub's free allowance (120 core-hours per month at the time of writing) comfortably covers the unit. See [containerlab.dev/manual/codespaces](https://containerlab.dev/manual/codespaces/).
+
+**Pre-packaged Virtual Machine Appliance (offline & zero host setup).** For workshops without reliable internet access or learners who prefer not to install container tools on their host OS:
+- **Windows / Linux / Intel Mac:** Import `measlab-x86_64.ova` into VirtualBox (see [VirtualBox Setup Guide](docs/vm-guide-windows-virtualbox.md)) or VMware (see [VMware Guide](docs/vm-guide-vmware.md)).
+- **Apple Silicon Mac (M1-M4):** Open `measlab-arm64.qcow2` in UTM (see [macOS UTM Guide](docs/vm-guide-mac-utm.md)).
+- Once powered on, the VM automatically deploys the lab and starts the portal. Simply open `http://localhost:8080` in your host browser. See [`packer/README.md`](file:///Users/gerardo/Projects/measurement-lab/packer/README.md) for automated image build instructions.
 
 **One-command install on your own machine.** Clone the repo, then:
 
@@ -40,13 +47,11 @@ Inter-AS point-to-point links use 100.64.0.0/10 for IPv4 and /64s from the relev
 
 This installs whatever's missing (Podman, Containerlab, ttyd), deploys the lab, and leaves you ready to run `./portal.sh`. See [Installer internals](#installer-internals) below for what it actually does on each platform.
 
-**GitHub Codespaces, nothing installed.** The repository ships a `.devcontainer/` configuration built on Containerlab's official Dev Container image, so a learner can open the repo on GitHub, create a Codespace, and get a browser-based VS Code with Docker and Containerlab pre-installed. GitHub's free allowance (120 core-hours per month at the time of writing) comfortably covers the unit. See [containerlab.dev/manual/codespaces](https://containerlab.dev/manual/codespaces/).
-
 **VS Code Dev Container on the learner's own machine.** The same `.devcontainer/` works locally on Windows, macOS and Linux with [Docker Desktop](https://www.docker.com/products/docker-desktop/) and the Dev Containers extension. This is Containerlab's recommended route on macOS and Windows.
 
 **Native Linux, by hand.** Docker Engine or Podman plus [Containerlab](https://containerlab.dev/install/), then work in the folder directly (this is what `install.sh` automates).
 
-All four routes converge on `sudo ./lab.sh up` / `check` / `reset` / `down`, and `sudo ./lab.sh docs` serves the activity frontend on port 8080 (auto-forwarded in Codespaces).
+All routes converge on `sudo ./lab.sh up` / `check` / `reset` / `down`, and `sudo ./lab.sh docs` (or `./portal.sh`) serves the activity frontend on port 8080 (auto-forwarded in Codespaces and the VM appliance).
 
 ### Installer internals
 
