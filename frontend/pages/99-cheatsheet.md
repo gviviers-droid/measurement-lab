@@ -88,9 +88,9 @@ Run from the lab folder on your own machine.
 | Background load on or off | `sudo ./scripts/congestion.sh start` / `stop` |
 | Continuous CSV logger | `sudo ./scripts/logger.sh start` / `stop` / `dump` |
 | Your IXP peering on or off | `sudo ./scripts/peering.sh up` / `down` |
-| Start or clear a fault scenario | `sudo ./scripts/scenario.sh <1|2> on` / `off` |
+| Start or clear a fault scenario | `sudo ./scripts/scenario.sh <1|2|3> on` / `off` |
 
-Do not read the files under `scripts/scenarios/` before finishing Activities 4 and 5: they name the faults.
+Do not read the files under `scripts/scenarios/` before finishing Activities 4, 5 and 6: they name the faults.
 
 ## Addresses & DNS Names that matter
 

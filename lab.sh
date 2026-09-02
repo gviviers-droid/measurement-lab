@@ -26,6 +26,7 @@ case "${1:-}" in
     ./scripts/peering.sh down || true
     ./scripts/scenario.sh 1 off || true
     ./scripts/scenario.sh 2 off || true
+    ./scripts/scenario.sh 3 off || true
     echo "Base state restored. Verifying:"
     sleep 20
     ./scripts/lab-check.sh

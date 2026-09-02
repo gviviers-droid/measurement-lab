@@ -59,6 +59,8 @@ ACTIONS = {
     "scenario1_off": ("scripts/scenario.sh", ["1", "off"]),
     "scenario2_on": ("scripts/scenario.sh", ["2", "on"]),
     "scenario2_off": ("scripts/scenario.sh", ["2", "off"]),
+    "scenario3_on": ("scripts/scenario.sh", ["3", "on"]),
+    "scenario3_off": ("scripts/scenario.sh", ["3", "off"]),
     "peering_up": ("scripts/peering.sh", ["up"]),
     "peering_down": ("scripts/peering.sh", ["down"]),
     "peering_status": ("scripts/peering.sh", ["status"]),

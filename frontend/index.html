@@ -205,6 +205,7 @@ details.answers[open] { border-style: solid; padding-bottom: 8px; }
 <a class="nav-item" href="#activity3" data-page="activity3"><span class="nav-icon nav-badge">3</span><span class="nav-text"><span class="nav-label">3 · Turn On Peering</span><span class="nav-subtitle">Enable peering, measure the difference</span></span><span class="nav-progress" data-progress="activity3"></span></a>
 <a class="nav-item" href="#activity4" data-page="activity4"><span class="nav-icon nav-badge">4</span><span class="nav-text"><span class="nav-label">4 · The Slow Neighbour</span><span class="nav-subtitle">Diagnose a degraded path</span></span><span class="nav-progress" data-progress="activity4"></span></a>
 <a class="nav-item" href="#activity5" data-page="activity5"><span class="nav-icon nav-badge">5</span><span class="nav-text"><span class="nav-label">5 · Now You See It, Now You Don&#x27;t</span><span class="nav-subtitle">Diagnose an intermittent fault</span></span><span class="nav-progress" data-progress="activity5"></span></a>
+<a class="nav-item" href="#activity6" data-page="activity6"><span class="nav-icon nav-badge">6</span><span class="nav-text"><span class="nav-label">6 · Double Trouble</span><span class="nav-subtitle">Diagnose simultaneous multi-variable faults</span></span><span class="nav-progress" data-progress="activity6"></span></a>
 <a class="nav-item" href="#cheatsheet" data-page="cheatsheet"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 3.5h9l4 4v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-16a1 1 0 0 1 1-1Z"/><path d="M9 12h7M9 15.5h7M9 8.5h3"/></svg></span><span class="nav-text"><span class="nav-label">Cheatsheet</span><span class="nav-subtitle">Command reference</span></span><span class="nav-progress" data-progress="cheatsheet"></span></a>
   <p class="foot">Progress is saved in this browser only. Answers stay hidden until you open them; open them only after committing to your own answers in writing.</p>
 </nav>
@@ -385,12 +386,14 @@ lab), then reload this page from <code>http://localhost:8080</code>.</p>
   <button class="portal-btn" data-action="peering_status">Status</button>
 </div>
 
-<h2>Activities 4 &amp; 5 &middot; scenarios</h2>
+<h2>Activities 4, 5 &amp; 6 &middot; scenarios</h2>
 <div class="btn-row">
   <button class="portal-btn" data-action="scenario1_on">Scenario 1 on</button>
   <button class="portal-btn" data-action="scenario1_off">Scenario 1 off</button>
   <button class="portal-btn" data-action="scenario2_on">Scenario 2 on</button>
   <button class="portal-btn" data-action="scenario2_off">Scenario 2 off</button>
+  <button class="portal-btn" data-action="scenario3_on">Scenario 3 on</button>
+  <button class="portal-btn" data-action="scenario3_off">Scenario 3 off</button>
 </div>
 
 <h2>Looking glass</h2>
@@ -850,6 +853,78 @@ sudo ./scripts/lg.sh route-server &quot;show bgp summary&quot;
 </blockquote>
 <p>The name for this pattern is a route flap, and its signature, a prefix rhythmically announced and withdrawn, propagates through the routing system to every observer. That last point is the doorway to Unit 3: RIPE RIS records exactly these announcements and withdrawals from hundreds of vantage points, and BGPlay animates them, so the flap you just diagnosed from one AS with a looking glass is the flap you will next watch ripple across the whole Internet.</p></details>
 </article>
+<article id="activity6" class="page" data-title="Activity 6, Scenario 3: Double Trouble"><h1>Activity 6, Scenario 3: Double Trouble</h1>
+<p><strong>Maps to:</strong> Modules 2.3, 2.5 (Analysing Measurement Data) and 2.6 (Troubleshooting with Measurements)
+<strong>Time:</strong> 35 to 45 minutes
+<strong>Start state:</strong> lab deployed, <code>lab-check.sh</code> all green, congestion stopped, peering down, Scenarios 1 and 2 off.
+<strong>Do not read</strong> the files under <code>scripts/scenarios/</code>; they contain the answer.</p>
+<p>Activities 4 and 5 presented single, isolated incidents. On the real Internet, incidents rarely wait in line: multiple independent faults often occur simultaneously, or one failure triggers secondary degradation elsewhere. This stretch scenario challenges you to analyze a multi-variable incident where two distinct destinations suffer degradation at the same time.</p>
+<p>Your deliverable is a comprehensive incident summary proving whether these symptoms share a common cause or represent independent problems, identifying the responsible networks, and proposing concrete actions.</p>
+<h2>The ticket</h2>
+<blockquote>
+<p><strong>Urgent:</strong> Users are reporting widespread degradation across multiple external services. Connectivity to target1 (10.40.10.10 / 3fff:40:10::10) is experiencing severe packet loss and jitter. Simultaneously, target2 (10.50.10.10 / 3fff:50:10::10) has become noticeably sluggish. Management suspects our border connection to Upstream A is failing. Please investigate, isolate the root cause(s), and submit an incident report.</p>
+</blockquote>
+<p>Start the incident on your own machine in the lab folder:</p>
+<pre><code>sudo ./scripts/scenario.sh 3 on
+</code></pre>
+<p>Wait a minute for conditions to stabilize, then investigate.</p>
+<h2>Suggested investigation, if you want structure</h2>
+<h3>Step 1: Disentangle the symptoms</h3>
+<p>Do not assume both targets suffer from the same underlying fault just because the complaints arrived together. Collect measurements for both targets from host1:</p>
+<pre><code>ping -c 100 -i 0.2 10.40.10.10 | grep -oE 'time=[0-9.]+' | cut -d= -f2 &gt; target1.txt
+ping -c 100 -i 0.2 10.50.10.10 | grep -oE 'time=[0-9.]+' | cut -d= -f2 &gt; target2.txt
+</code></pre>
+<p>Compute statistics for each:</p>
+<pre><code>sort -n target1.txt | awk '{a[NR]=$1; s+=$1} END {print &quot;t1 count:&quot;, NR, &quot;mean:&quot;, s/NR, &quot;median:&quot;, a[int((NR+1)/2)], &quot;p95:&quot;, a[int(NR*0.95)], &quot;min:&quot;, a[1], &quot;max:&quot;, a[NR]}'
+sort -n target2.txt | awk '{a[NR]=$1; s+=$1} END {print &quot;t2 count:&quot;, NR, &quot;mean:&quot;, s/NR, &quot;median:&quot;, a[int((NR+1)/2)], &quot;p95:&quot;, a[int(NR*0.95)], &quot;min:&quot;, a[1], &quot;max:&quot;, a[NR]}'
+</code></pre>
+<p>Compare the distributions:
+* Which target exhibits high variance, large difference between mean and median, and packet loss?
+* Which target exhibits a stable distribution whose baseline has simply shifted upwards?</p>
+<h3>Step 2: Trace and locate each path</h3>
+<p>Run <code>mtr</code> and <code>traceroute</code> for each target:</p>
+<pre><code>mtr -n --report --report-cycles 50 10.40.10.10
+mtr -n --report --report-cycles 50 10.50.10.10
+</code></pre>
+<ul>
+<li>On target1, at which specific link do the jitter and packet loss begin?</li>
+<li>On target2, compare the sequence of hops against your baseline from Activity 1. Has the path changed?</li>
+</ul>
+<h3>Step 3: Consult the control plane and looking glass</h3>
+<p>Check your BGP table on r1 (<code>docker exec -it clab-measlab-r1 vtysh</code>):</p>
+<pre><code>show bgp ipv4 unicast 10.40.0.0/16
+show bgp ipv4 unicast 10.50.0.0/16
+</code></pre>
+<p>Then query the looking glass from your lab folder:</p>
+<pre><code>sudo ./scripts/lg.sh route-server &quot;show bgp summary&quot;
+sudo ./scripts/lg.sh upstream-a &quot;show bgp ipv4 unicast 10.50.0.0/16&quot;
+</code></pre>
+<ul>
+<li>Are both routes learned through the same upstream?</li>
+<li>Does the route server show any peering sessions down?</li>
+</ul>
+<h3>Step 4: Optional local mitigation</h3>
+<p>Can you mitigate either symptom locally without waiting for external providers?
+* Does changing local preference on r1 towards Upstream B improve reachability for target2?
+* Does local routing policy have any effect on target1's congested transit link?</p>
+<p>Restore baseline when finished:</p>
+<pre><code>sudo ./scripts/scenario.sh 3 off
+</code></pre>
+<details class="answers"><summary>Model incident summary (reveal after writing your own)</summary>
+<p>Reveal after writing your own.</p>
+<blockquote>
+<p><strong>Executive Summary.</strong> The reported issues are two distinct, concurrent faults occurring in separate Autonomous Systems. Our own AS network, local border links, and Upstream A connection are fully operational.</p>
+<p><strong>Fault 1 (target1 · AS 65040): Congestion &amp; Queueing Loss</strong>
+* <strong>Symptom:</strong> Mean RTT increased with high jitter (p95 &gt; 100 ms) and ~10% packet loss. Median RTT remains close to the baseline (~45 ms), and minimum RTT is unchanged.
+* <strong>Root Cause:</strong> Buffer saturation and queueing delay on the rate-limited transit link between AS 65030 (transit) and AS 65040 (<code>100.64.34.2</code>). The routing path itself is unchanged.
+* <strong>Action:</strong> Report link saturation to AS 65040 (dest-1) and transit provider AS 65030. No local routing change can bypass this link, as dest-1 has only this single transit path active.</p>
+<p><strong>Fault 2 (target2 · AS 65050): Routing Detour (Tromboning)</strong>
+* <strong>Symptom:</strong> Clean latency increase from &lt;2 ms to ~50 ms across both IPv4 and IPv6, with 0% packet loss and negligible jitter (mean ≈ median ≈ 50 ms).
+* <strong>Root Cause:</strong> Upstream A (AS 65010) lost its BGP peering sessions with the IXP route server (AS 65100). Traffic to dest-2 therefore detoured through the transit carrier AS 65030 and dest-2's prepended backup path (<code>65010 65030 65050 65050 65050 65050</code>).
+* <strong>Action &amp; Local Mitigation:</strong> Open a ticket with Upstream A requesting restoration of their IXP peering. In the interim, lower local preference on r1 for Upstream A (<code>set local-preference 90</code>) to steer outbound traffic through Upstream B (AS 65020), which maintains active IXP peering, immediately restoring &lt;2 ms latency.</p>
+</blockquote>
+<p>This scenario reinforces the core lesson of Unit 2: <strong>latency is not a single number, and performance degradation is not a single phenomenon</strong>. A shift in minimum RTT points to propagation distance and path changes; a shift in mean/p95 with steady minimum points to queueing and link saturation.</p></details>
+</article>
 <article id="cheatsheet" class="page" data-title="Cheatsheet"><h1>Cheatsheet</h1>
 <h2>Getting into your machines</h2>
 <table>
@@ -1021,11 +1096,11 @@ sudo ./scripts/lg.sh route-server &quot;show bgp summary&quot;
 </tr>
 <tr>
 <td>Start or clear a fault scenario</td>
-<td><code>sudo ./scripts/scenario.sh &lt;1|2&gt; on</code> / <code>off</code></td>
+<td><code>sudo ./scripts/scenario.sh &lt;1|2|3&gt; on</code> / <code>off</code></td>
 </tr>
 </tbody>
 </table>
-<p>Do not read the files under <code>scripts/scenarios/</code> before finishing Activities 4 and 5: they name the faults.</p>
+<p>Do not read the files under <code>scripts/scenarios/</code> before finishing Activities 4, 5 and 6: they name the faults.</p>
 <h2>Addresses &amp; DNS Names that matter</h2>
 <table>
 <thead>

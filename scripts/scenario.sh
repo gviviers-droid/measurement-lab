@@ -36,7 +36,17 @@ case "${1:-}-${2:-}" in
       -c "no neighbor 3fff:30:0:34::1 shutdown" > /dev/null 2>&1 || true
     echo "Scenario 2 cleared. Allow up to a minute for the network to settle."
     ;;
+  3-on)
+    "${DIR}/scenarios/trombone.sh" on > /dev/null
+    "${DIR}/congestion.sh" start > /dev/null
+    echo "Scenario 3 is active. Allow up to a minute for symptoms to appear."
+    ;;
+  3-off)
+    "${DIR}/scenarios/trombone.sh" off > /dev/null
+    "${DIR}/congestion.sh" stop > /dev/null
+    echo "Scenario 3 cleared. Allow up to a minute for the network to settle."
+    ;;
   *)
-    echo "Usage: $0 <1|2> <on|off>"; exit 1
+    echo "Usage: $0 <1|2|3> <on|off>"; exit 1
     ;;
 esac

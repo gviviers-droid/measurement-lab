@@ -107,13 +107,13 @@ sudo ./lab.sh down
 - `scripts/logger.sh start|stop|status|dump` runs a continuous ping logger recording timestamped RTT stats, jitter, and loss to `measurements.csv` (Module 2.5).
 - `scripts/peering.sh up|down` enables the learner AS's sessions at the route server, for the measure-then-peer-then-measure activity.
 - `scripts/lg.sh <router> "show ..."` is the looking glass: read-only visibility into the Internet routers without breaking the observe-only rule.
-- `scripts/scenario.sh <1|2> on|off` is the learner-facing scenario switch with neutral output.
+- `scripts/scenario.sh <1|2|3> on|off` is the learner-facing scenario switch with neutral output.
 - `scripts/scenarios/trombone.sh on|off` detours local traffic through distant transit (maintainer script, spoiler).
 - `scripts/scenarios/routeflap.sh` bounces dest-1's transit sessions until stopped with Ctrl-C.
 
 ## Activities
 
-The five task sheets and their overview live in `activities/`. Learners work from the sheets; `activities/overview.md` maps each activity to modules, scripts and required lab state.
+The six task sheets and their overview live in `activities/`. Learners work from the sheets; `activities/overview.md` maps each activity to modules, scripts and required lab state.
 
 ## For maintainers
 

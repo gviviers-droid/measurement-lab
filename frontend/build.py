@@ -57,6 +57,7 @@ NAV_SUBTITLES = {
     "activity3": "Enable peering, measure the difference",
     "activity4": "Diagnose a degraded path",
     "activity5": "Diagnose an intermittent fault",
+    "activity6": "Diagnose simultaneous multi-variable faults",
     "cheatsheet": "Command reference",
 }
 NAV_ICONS = {"lab-guide": ICON_GUIDE, "portal": ICON_PORTAL, "cheatsheet": ICON_CHEATSHEET}
@@ -98,12 +99,14 @@ lab), then reload this page from <code>http://localhost:8080</code>.</p>
   <button class="portal-btn" data-action="peering_status">Status</button>
 </div>
 
-<h2>Activities 4 &amp; 5 &middot; scenarios</h2>
+<h2>Activities 4, 5 &amp; 6 &middot; scenarios</h2>
 <div class="btn-row">
   <button class="portal-btn" data-action="scenario1_on">Scenario 1 on</button>
   <button class="portal-btn" data-action="scenario1_off">Scenario 1 off</button>
   <button class="portal-btn" data-action="scenario2_on">Scenario 2 on</button>
   <button class="portal-btn" data-action="scenario2_off">Scenario 2 off</button>
+  <button class="portal-btn" data-action="scenario3_on">Scenario 3 on</button>
+  <button class="portal-btn" data-action="scenario3_off">Scenario 3 off</button>
 </div>
 
 <h2>Looking glass</h2>
