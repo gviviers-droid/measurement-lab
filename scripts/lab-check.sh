@@ -78,6 +78,16 @@ check "RTT to target1 exceeds 40 ms (transit path impaired)"  rtt_above host1 10
 check "RTT to target2 below 15 ms (IXP path clean)"           rtt_below host1 10.50.10.10 15
 check "IPv6 RTT to target1 exceeds 40 ms"                     rtt_above host1 3fff:40:10::10 40
 
+# 6. DNS target resolution (dual-stack)
+check "DNS: target1.measlab resolves to 10.40.10.10 (A)" \
+  docker exec clab-${LAB}-host1 sh -c "getent ahostsv4 target1.measlab | grep -q '10.40.10.10'"
+check "DNS: target1.measlab resolves to 3fff:40:10::10 (AAAA)" \
+  docker exec clab-${LAB}-host1 sh -c "getent ahostsv6 target1.measlab | grep -q '3fff:40:10::10'"
+check "DNS: target2.measlab resolves to 10.50.10.10 (A)" \
+  docker exec clab-${LAB}-host1 sh -c "getent ahostsv4 target2.measlab | grep -q '10.50.10.10'"
+check "DNS: target2.measlab resolves to 3fff:50:10::10 (AAAA)" \
+  docker exec clab-${LAB}-host1 sh -c "getent ahostsv6 target2.measlab | grep -q '3fff:50:10::10'"
+
 echo
 echo "Result: ${PASS} passed, ${FAIL} failed."
 [ "$FAIL" -eq 0 ]

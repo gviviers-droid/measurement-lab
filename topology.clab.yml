@@ -36,11 +36,17 @@ topology:
         - sysctl -w net.ipv6.conf.all.forwarding=1
     host1:
       image: ghcr.io/srl-labs/network-multitool
+      binds:
+        - configs/dns/hosts:/etc/hosts.measlab
+        - configs/dns/dnsmasq.conf:/etc/dnsmasq.conf
       exec:
         - ip address add 10.1.10.10/24 dev eth1
         - ip route replace default via 10.1.10.1 metric 1
         - ip -6 address add 3fff:1:10::10/64 dev eth1
         - ip -6 route replace default via 3fff:1:10::1 metric 1
+        - sh -c 'dnsmasq -C /etc/dnsmasq.conf'
+        - sh -c 'echo "nameserver 127.0.0.1" > /etc/resolv.conf'
+        - sh -c 'echo "nameserver ::1" >> /etc/resolv.conf'
 
     # ----- The "Internet" (observe-only) -----
     ra:   # upstream A, AS 65010: 10.10.0.0/16, 3fff:10::/32

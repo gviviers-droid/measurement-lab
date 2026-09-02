@@ -1013,11 +1013,12 @@ sudo ./scripts/lg.sh route-server &quot;show bgp summary&quot;
 </tbody>
 </table>
 <p>Do not read the files under <code>scripts/scenarios/</code> before finishing Activities 4 and 5: they name the faults.</p>
-<h2>Addresses that matter</h2>
+<h2>Addresses &amp; DNS Names that matter</h2>
 <table>
 <thead>
 <tr>
 <th>Machine</th>
+<th>DNS Name</th>
 <th>IPv4</th>
 <th>IPv6</th>
 <th>Network</th>
@@ -1026,67 +1027,77 @@ sudo ./scripts/lg.sh route-server &quot;show bgp summary&quot;
 <tbody>
 <tr>
 <td>host1 (you)</td>
+<td><code>host1.measlab</code></td>
 <td>10.1.10.10</td>
 <td>3fff:1:10::10</td>
 <td>AS 65001</td>
 </tr>
 <tr>
 <td>r3, LAN router</td>
+<td><code>r3.measlab</code></td>
 <td>10.1.10.1</td>
 <td>3fff:1:10::1</td>
 <td>AS 65001</td>
 </tr>
 <tr>
 <td>r1, border A</td>
+<td><code>r1.measlab</code></td>
 <td>10.1.1.1</td>
 <td>3fff:1:0:1::1</td>
 <td>AS 65001</td>
 </tr>
 <tr>
 <td>r2, border B</td>
+<td><code>r2.measlab</code></td>
 <td>10.1.2.1</td>
 <td>3fff:1:0:2::1</td>
 <td>AS 65001</td>
 </tr>
 <tr>
 <td>upstream A</td>
+<td><code>ra.measlab</code></td>
 <td>100.64.11.1</td>
 <td>3fff:10:0:11::1</td>
 <td>AS 65010</td>
 </tr>
 <tr>
 <td>transit, side facing A</td>
+<td><code>rt.measlab</code></td>
 <td>100.64.13.2</td>
 <td>3fff:30:0:13::2</td>
 <td>AS 65030</td>
 </tr>
 <tr>
 <td>dest-1 router</td>
+<td><code>rd1.measlab</code></td>
 <td>100.64.34.2</td>
 <td>3fff:30:0:34::2</td>
 <td>AS 65040</td>
 </tr>
 <tr>
 <td>target1</td>
+<td><code>target1.measlab</code></td>
 <td>10.40.10.10</td>
 <td>3fff:40:10::10</td>
 <td>AS 65040</td>
 </tr>
 <tr>
 <td>dest-2, IXP port</td>
+<td><code>rd2.measlab</code></td>
 <td>100.64.99.50</td>
 <td>3fff:ff::50</td>
 <td>AS 65050</td>
 </tr>
 <tr>
 <td>target2</td>
+<td><code>target2.measlab</code></td>
 <td>10.50.10.10</td>
 <td>3fff:50:10::10</td>
 <td>AS 65050</td>
 </tr>
 </tbody>
 </table>
-<p>Addresses beginning 100.64.99 or 3fff:ff: sit on the IXP peering LAN. Each AS holds one IPv4 /16 and one IPv6 /32 from 3fff::/20.</p>
+<p>Addresses beginning 100.64.99 or 3fff:ff: sit on the IXP peering LAN. Each AS holds one IPv4 /16 and one IPv6 /32 from 3fff::/20. All DNS names resolve forward and reverse dual-stack records locally.</p>
 </article>
 </main>
 </div>

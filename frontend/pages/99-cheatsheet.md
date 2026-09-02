@@ -91,19 +91,19 @@ Run from the lab folder on your own machine.
 
 Do not read the files under `scripts/scenarios/` before finishing Activities 4 and 5: they name the faults.
 
-## Addresses that matter
+## Addresses & DNS Names that matter
 
-| Machine | IPv4 | IPv6 | Network |
-|---|---|---|---|
-| host1 (you) | 10.1.10.10 | 3fff:1:10::10 | AS 65001 |
-| r3, LAN router | 10.1.10.1 | 3fff:1:10::1 | AS 65001 |
-| r1, border A | 10.1.1.1 | 3fff:1:0:1::1 | AS 65001 |
-| r2, border B | 10.1.2.1 | 3fff:1:0:2::1 | AS 65001 |
-| upstream A | 100.64.11.1 | 3fff:10:0:11::1 | AS 65010 |
-| transit, side facing A | 100.64.13.2 | 3fff:30:0:13::2 | AS 65030 |
-| dest-1 router | 100.64.34.2 | 3fff:30:0:34::2 | AS 65040 |
-| target1 | 10.40.10.10 | 3fff:40:10::10 | AS 65040 |
-| dest-2, IXP port | 100.64.99.50 | 3fff:ff::50 | AS 65050 |
-| target2 | 10.50.10.10 | 3fff:50:10::10 | AS 65050 |
+| Machine | DNS Name | IPv4 | IPv6 | Network |
+|---|---|---|---|---|
+| host1 (you) | `host1.measlab` | 10.1.10.10 | 3fff:1:10::10 | AS 65001 |
+| r3, LAN router | `r3.measlab` | 10.1.10.1 | 3fff:1:10::1 | AS 65001 |
+| r1, border A | `r1.measlab` | 10.1.1.1 | 3fff:1:0:1::1 | AS 65001 |
+| r2, border B | `r2.measlab` | 10.1.2.1 | 3fff:1:0:2::1 | AS 65001 |
+| upstream A | `ra.measlab` | 100.64.11.1 | 3fff:10:0:11::1 | AS 65010 |
+| transit, side facing A | `rt.measlab` | 100.64.13.2 | 3fff:30:0:13::2 | AS 65030 |
+| dest-1 router | `rd1.measlab` | 100.64.34.2 | 3fff:30:0:34::2 | AS 65040 |
+| target1 | `target1.measlab` | 10.40.10.10 | 3fff:40:10::10 | AS 65040 |
+| dest-2, IXP port | `rd2.measlab` | 100.64.99.50 | 3fff:ff::50 | AS 65050 |
+| target2 | `target2.measlab` | 10.50.10.10 | 3fff:50:10::10 | AS 65050 |
 
-Addresses beginning 100.64.99 or 3fff:ff: sit on the IXP peering LAN. Each AS holds one IPv4 /16 and one IPv6 /32 from 3fff::/20.
+Addresses beginning 100.64.99 or 3fff:ff: sit on the IXP peering LAN. Each AS holds one IPv4 /16 and one IPv6 /32 from 3fff::/20. All DNS names resolve forward and reverse dual-stack records locally.

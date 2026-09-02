@@ -1,0 +1,37 @@
+# Learner AS 65001
+10.1.10.10       host1.learner.measlab host1.measlab host1
+3fff:1:10::10     host1.learner.measlab host1.measlab host1
+10.1.10.1        r3.learner.measlab r3.measlab r3
+3fff:1:10::1      r3.learner.measlab r3.measlab r3
+10.1.1.1         r1.learner.measlab r1.measlab r1
+3fff:1:0:1::1    r1.learner.measlab r1.measlab r1
+10.1.2.1         r2.learner.measlab r2.measlab r2
+3fff:1:0:2::1    r2.learner.measlab r2.measlab r2
+
+# Upstream A (AS 65010) & Upstream B (AS 65020)
+100.64.11.1      ra.upstream-a.measlab ra.measlab ra
+3fff:10:0:11::1  ra.upstream-a.measlab ra.measlab ra
+100.64.22.1      rb.upstream-b.measlab rb.measlab rb
+3fff:20:0:22::1  rb.upstream-b.measlab rb.measlab rb
+
+# Transit Carrier (AS 65030)
+100.64.13.2      rt.transit.measlab rt.measlab rt
+3fff:30:0:13::2  rt.transit.measlab rt.measlab rt
+
+# Destination 1 (AS 65040) & Target 1
+100.64.34.2      rd1.dest-1.measlab rd1.measlab rd1
+3fff:30:0:34::2  rd1.dest-1.measlab rd1.measlab rd1
+10.40.10.10      target1.dest-1.measlab target1.measlab target1
+3fff:40:10::10   target1.dest-1.measlab target1.measlab target1
+
+# Destination 2 (AS 65050) & Target 2
+100.64.99.50     rd2.dest-2.measlab rd2.measlab rd2
+3fff:ff::50      rd2.dest-2.measlab rd2.measlab rd2
+100.64.35.2      rd2-transit.dest-2.measlab rd2-transit.measlab
+3fff:30:0:35::2  rd2-transit.dest-2.measlab rd2-transit.measlab
+10.50.10.10      target2.dest-2.measlab target2.measlab target2
+3fff:50:10::10   target2.dest-2.measlab target2.measlab target2
+
+# IXP Route Server (AS 65100)
+100.64.99.1      rs.ixp.measlab rs.measlab rs
+3fff:ff::1       rs.ixp.measlab rs.measlab rs
