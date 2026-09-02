@@ -82,6 +82,15 @@ lab), then reload this page from <code>http://localhost:8080</code>.</p>
   <button class="portal-btn" data-action="congestion_status">Status</button>
 </div>
 
+<h2>Measurement logger &middot; CSV export</h2>
+<p>Periodically probes targets from <code>host1</code> and appends latency, jitter and loss to <code>measurements.csv</code> for time-series analysis (Module 2.5).</p>
+<div class="btn-row">
+  <button class="portal-btn" data-action="logger_start">Start logging</button>
+  <button class="portal-btn" data-action="logger_stop">Stop logging</button>
+  <button class="portal-btn" data-action="logger_status">Status</button>
+  <button class="portal-btn" data-action="logger_dump">Show recent records</button>
+</div>
+
 <h2>Activity 3 &middot; peering</h2>
 <div class="btn-row">
   <button class="portal-btn" data-action="peering_up">Enable peering</button>

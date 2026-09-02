@@ -65,6 +65,10 @@ ACTIONS = {
     "congestion_start": ("scripts/congestion.sh", ["start"]),
     "congestion_stop": ("scripts/congestion.sh", ["stop"]),
     "congestion_status": ("scripts/congestion.sh", ["status"]),
+    "logger_start": ("scripts/logger.sh", ["start"]),
+    "logger_stop": ("scripts/logger.sh", ["stop"]),
+    "logger_status": ("scripts/logger.sh", ["status"]),
+    "logger_dump": ("scripts/logger.sh", ["dump"]),
 }
 
 LG_ROUTERS = {"upstream-a", "upstream-b", "transit", "route-server"}

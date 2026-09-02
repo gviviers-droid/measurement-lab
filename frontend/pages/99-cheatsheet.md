@@ -86,6 +86,7 @@ Run from the lab folder on your own machine.
 | Back to base state | `sudo ./lab.sh reset` |
 | Tear down | `sudo ./lab.sh down` |
 | Background load on or off | `sudo ./scripts/congestion.sh start` / `stop` |
+| Continuous CSV logger | `sudo ./scripts/logger.sh start` / `stop` / `dump` |
 | Your IXP peering on or off | `sudo ./scripts/peering.sh up` / `down` |
 | Start or clear a fault scenario | `sudo ./scripts/scenario.sh <1|2> on` / `off` |
 

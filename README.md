@@ -104,6 +104,7 @@ sudo ./lab.sh down
 - `scripts/impairments.sh` applies the base link conditions. Its header documents the ground truth for the measurement questions.
 - `scripts/lab-check.sh` verifies BGP sessions, dormant ports, dual-stack reachability and the expected latency profile.
 - `scripts/congestion.sh start|stop` switches real cross traffic onto the rate-limited transit link, producing genuine queueing delay, jitter and loss on demand.
+- `scripts/logger.sh start|stop|status|dump` runs a continuous ping logger recording timestamped RTT stats, jitter, and loss to `measurements.csv` (Module 2.5).
 - `scripts/peering.sh up|down` enables the learner AS's sessions at the route server, for the measure-then-peer-then-measure activity.
 - `scripts/lg.sh <router> "show ..."` is the looking glass: read-only visibility into the Internet routers without breaking the observe-only rule.
 - `scripts/scenario.sh <1|2> on|off` is the learner-facing scenario switch with neutral output.
@@ -122,7 +123,6 @@ The impairment values in `scripts/impairments.sh` are the ground truth for the m
 
 - Testing status of `install.sh` / `install.ps1`:
   - **macOS (Podman machine path): tested end-to-end**, including a real browser session against the Control Portal (buttons, side-by-side terminals, reconnect/pop-out).
-  - **Native Linux / WSL2 path: tested end-to-end on fresh Ubuntu 22.04 VMs** (deploy, `lab-check.sh` 17/17, Control Portal, idempotent reruns). This is also the path WSL2 exercises, since it reports as Linux to the script.
+  - **Native Linux / WSL2 path: tested end-to-end on fresh Ubuntu 22.04 VMs** (deploy, `lab-check.sh` 21/21, Control Portal, idempotent reruns). This is also the path WSL2 exercises, since it reports as Linux to the script.
   - **Windows (`install.ps1`'s own WSL2 bootstrap): not tested on real Windows** -- no ARM64-capable Windows VM was available in the environment used to build this. Syntax-checked and run under PowerShell Core on macOS far enough to validate error handling, but the actual `wsl --install` success path, the reboot/re-run cycle, and the handoff into a live WSL2 session are unverified. Test this before relying on it for a Windows-heavy cohort.
 - The topology figure (`topology-diagram.svg`) is the learner version and hides impairments, the cross-traffic host and dest-1's dormant IXP port.
-- Planned extensions: a measurement logger writing ping statistics to CSV for the Module 2.5 and 2.7 activities. (DNS names for targets are implemented via `configs/dns/`).
