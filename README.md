@@ -88,15 +88,17 @@ Around 4 GiB of RAM covers the whole lab plus some headroom; on macOS that's the
 ## Start the lab
 
 ```
-sudo ./lab.sh up
+./lab.sh up
 ```
 
-This deploys the topology, applies the impairments and runs the health check in one step (the underlying scripts remain individually runnable).
+(or `sudo ./lab.sh up` on Linux/WSL2; on macOS, `./lab.sh` automatically routes into the Podman machine VM).
+
+This deploys the topology, applies the impairments, waits for BGP sessions to settle, and runs the health check in one step (the underlying scripts remain individually runnable).
 
 `lab-check.sh` must report every check as PASS before a learner starts. Stop and remove everything with:
 
 ```
-sudo ./lab.sh down
+./lab.sh down
 ```
 
 ## Scripts

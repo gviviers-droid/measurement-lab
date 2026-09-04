@@ -66,7 +66,7 @@ Reveal after writing your own.
 
 > **Symptom.** Round-trip time to target2 rose from under 2 ms to roughly 50 ms in both IPv4 and IPv6, with no packet loss. target1 measures unchanged, so the fault sits outside our network and outside the shared portion of the two paths.
 >
-> **Path change.** Traffic to dest-2 previously crossed upstream A's port at the IXP directly to dest-2. It now detours through the transit carrier AS 65030 and enters dest-2 through its backup transit link (traceroute hop 100.64.35.2 instead of 100.64.99.50). The BGP path for 10.50.0.0/16 reads 65010 65030 65050 65050 65050 65050: dest-2 prepends its AS on this route to mark it as a path of last resort, and the Internet is nevertheless using it.
+> **Path change.** Traffic to dest-2 previously crossed upstream A's port at the IXP directly to dest-2. It now detours through the transit carrier AS 65030 and enters dest-2 through its backup transit link (entering via 100.64.35.2 instead of 100.64.99.50; note that depending on Linux kernel ICMP address selection with asymmetric return routing via upstream B, traceroute hop 5 may report either 100.64.99.50 or 100.64.35.2, but with the elevated ~30-50 ms transit RTT). The BGP path for 10.50.0.0/16 reads 65010 65030 65050 65050 65050 65050: dest-2 prepends its AS on this route to mark it as a path of last resort, and the Internet is nevertheless using it.
 >
 > **Root cause attribution.** The IXP route server shows upstream A's sessions down while all other members remain established. Upstream A (AS 65010) has lost its presence at the exchange, so every route it previously learned across the peering LAN, including dest-2's, fell back to transit.
 >

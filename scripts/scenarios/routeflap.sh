@@ -16,7 +16,7 @@ restore () {
     -c "no neighbor 3fff:30:0:34::1 shutdown" || true
   echo; echo "Flapping stopped, sessions restored."
 }
-trap restore EXIT
+trap restore EXIT INT TERM
 
 echo "Flapping dest-1's transit sessions every 40 s. Ctrl-C to stop."
 while true; do

@@ -11,11 +11,25 @@ set -euo pipefail
 DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "${DIR}"
 
+MEASLAB_HOP=direct
+MEASLAB_MACHINE=podman-machine-default
+[ -f .measlab/runtime.env ] && . .measlab/runtime.env
+
+if [ "${MEASLAB_HOP}" = "podman-machine" ] && [ "$(uname -s)" = "Darwin" ] && [ "${1:-}" != "docs" ]; then
+  if [ -n "${SUDO_USER:-}" ]; then
+    exec sudo -u "${SUDO_USER}" podman machine ssh "${MEASLAB_MACHINE}" -- "cd '${DIR}' && sudo ./lab.sh $*"
+  else
+    exec podman machine ssh "${MEASLAB_MACHINE}" -- "cd '${DIR}' && sudo ./lab.sh $*"
+  fi
+fi
+
 case "${1:-}" in
   up)
     containerlab deploy -t topology.clab.yml --runtime podman
     ./scripts/impairments.sh
     echo
+    echo "Waiting for routing and BGP sessions to settle..."
+    sleep 20
     ./scripts/lab-check.sh
     ;;
   check)

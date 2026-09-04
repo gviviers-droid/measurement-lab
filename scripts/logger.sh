@@ -13,6 +13,7 @@ DIR="$(cd "$(dirname "$0")"/.. && pwd)"
 LAB=measlab
 NODE=clab-${LAB}-host1
 PIDFILE=/tmp/measlab-logger.pid
+FILE_PATH=/tmp/measlab-logger.file
 CSV_DEFAULT="${DIR}/measurements.csv"
 
 case "${1:-}" in
@@ -72,6 +73,7 @@ case "${1:-}" in
     ) >/dev/null 2>&1 &
 
     echo $! > "${PIDFILE}"
+    echo "${OUTFILE}" > "${FILE_PATH}"
     echo "Measurement logger started (PID: $!, interval: ${INTERVAL}s). Logging to ${OUTFILE}"
     ;;
 
@@ -81,7 +83,7 @@ case "${1:-}" in
       if [ -n "${PID}" ]; then
         kill "${PID}" 2>/dev/null || true
       fi
-      rm -f "${PIDFILE}"
+      rm -f "${PIDFILE}" "${FILE_PATH}"
       echo "Measurement logger stopped."
     else
       echo "Measurement logger is not running."
@@ -90,7 +92,9 @@ case "${1:-}" in
 
   status)
     if [ -f "${PIDFILE}" ] && kill -0 "$(cat "${PIDFILE}" 2>/dev/null)" 2>/dev/null; then
-      echo "Measurement logger is running (PID: $(cat "${PIDFILE}"))."
+      CSV="${CSV_DEFAULT}"
+      [ -f "${FILE_PATH}" ] && CSV="$(cat "${FILE_PATH}")"
+      echo "Measurement logger is running (PID: $(cat "${PIDFILE}"), logging to ${CSV})."
     else
       echo "Measurement logger is not running."
     fi
@@ -98,11 +102,13 @@ case "${1:-}" in
 
   dump)
     LINES="${2:-15}"
-    if [ -f "${CSV_DEFAULT}" ]; then
-      echo "=== Recent records from ${CSV_DEFAULT} ==="
-      tail -n "${LINES}" "${CSV_DEFAULT}"
+    CSV="${CSV_DEFAULT}"
+    [ -f "${FILE_PATH}" ] && CSV="$(cat "${FILE_PATH}")"
+    if [ -f "${CSV}" ]; then
+      echo "=== Recent records from ${CSV} ==="
+      tail -n "${LINES}" "${CSV}"
     else
-      echo "No log file found (${CSV_DEFAULT}). Run '$0 start' first."
+      echo "No log file found (${CSV}). Run '$0 start' first."
     fi
     ;;
 
