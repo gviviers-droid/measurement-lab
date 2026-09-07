@@ -10,7 +10,7 @@ You may log in to your own four machines: routers r1, r2 and r3, and the worksta
 
 ## Ways to run the lab
 
-**In your browser, nothing installed (GitHub Codespaces).** Open the lab repository on GitHub, press the green Code button, choose Codespaces, and create one. A cloud machine with everything pre-installed opens in your browser, terminal included. The free allowance covers all five activities comfortably.
+**In your browser, nothing installed (GitHub Codespaces).** Open the lab repository on GitHub, press the green Code button, choose Codespaces, and create one. A cloud machine with everything pre-installed opens in your browser, terminal included. The free allowance covers all six activities comfortably.
 
 **As a pre-packaged Virtual Machine Appliance.** Download the pre-built VM image (`.ova` for VirtualBox/VMware or `.qcow2` for UTM on Apple Silicon). Start the VM and open `http://localhost:8080` in your host browser. All 14 containers and the Control Portal run inside the VM with no host installation needed.
 

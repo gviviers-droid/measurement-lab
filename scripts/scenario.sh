@@ -3,7 +3,7 @@
 # scripts in scenarios/ document what each fault is, and reading them spoils the
 # diagnosis. Learners run this wrapper; maintainers read the scenario scripts.
 #
-# Usage: ./scenario.sh <1|2> <on|off>
+# Usage: ./scenario.sh <1|2|3> <on|off>
 
 set -euo pipefail
 DIR="$(cd "$(dirname "$0")" && pwd)"

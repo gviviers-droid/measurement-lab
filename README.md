@@ -63,7 +63,7 @@ Either script writes `.measlab/runtime.env`, recording whether the lab needs tha
 
 ## The activity frontend
 
-`frontend/index.html` is a self-contained page (no network access needed, except the Control Portal page below) with the lab guide, all five activity sheets, a command cheatsheet, the topology diagram, and the Control Portal. Model answers sit behind closed disclosure panels, every command block has a copy button, and task progress persists in the learner's browser. Learners open the file directly, via `sudo ./lab.sh docs`, or via `./portal.sh` for the interactive controls and terminals.
+`frontend/index.html` is a self-contained page (no network access needed, except the Control Portal page below) with the lab guide, all six activity sheets, a command cheatsheet, the topology diagram, and the Control Portal. Model answers sit behind closed disclosure panels, every command block has a copy button, and task progress persists in the learner's browser. Learners open the file directly, via `sudo ./lab.sh docs`, or via `./portal.sh` for the interactive controls and terminals.
 
 The markdown sheets remain the single source of truth: after editing anything in `activities/` or `frontend/pages/`, regenerate with `python3 frontend/build.py` (requires `pip install markdown`).
 

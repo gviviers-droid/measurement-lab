@@ -1,6 +1,6 @@
 # Unit 2 Activities: Overview
 
-Five activities run on the one base topology, escalating from guided measurement to independent fault diagnosis. Learners install the lab once; every activity starts from the same base state and any scenario switches on and off by script.
+Six activities run on the one base topology, escalating from guided measurement to independent fault diagnosis. Learners install the lab once; every activity starts from the same base state and any scenario switches on and off by script.
 
 | # | Activity | Modules | Type | Scripts used | Time |
 |---|---|---|---|---|---|
