@@ -11,6 +11,11 @@
 
 $ErrorActionPreference = "Stop"
 
+function Test-IsAdmin {
+    $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
+    return $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+}
+
 function Test-WSLReady {
     try {
         $distros = wsl.exe -l -q 2>$null
@@ -21,6 +26,13 @@ function Test-WSLReady {
 }
 
 if (-not (Test-WSLReady)) {
+    if (-not (Test-IsAdmin)) {
+        Write-Host "WSL2 is not installed yet. To install WSL2 automatically, please re-run PowerShell as Administrator:" -ForegroundColor Yellow
+        Write-Host "  Right-click Windows Terminal or PowerShell -> 'Run as administrator', then re-run: .\install.ps1" -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "Alternatively, install WSL manually: https://learn.microsoft.com/windows/wsl/install" -ForegroundColor Cyan
+        exit 1
+    }
     Write-Host "WSL2 isn't set up yet. Installing WSL2 with Ubuntu..." -ForegroundColor Cyan
     try {
         wsl.exe --install -d Ubuntu
@@ -51,6 +63,10 @@ $repoPathWsl = (wsl.exe wslpath -a "$repoPathWindows").Trim()
 wsl.exe bash -lc "cd '$repoPathWsl' && chmod +x ./install.sh && ./install.sh"
 
 Write-Host ""
-Write-Host "Done. From inside WSL2 (run 'wsl' to get a shell), start the portal with:" -ForegroundColor Green
+Write-Host "Done! To start the lab, you can run directly from PowerShell:" -ForegroundColor Green
+Write-Host "  wsl.exe bash -lc `"cd '$repoPathWsl' && ./portal.sh`"" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Or launch WSL by running 'wsl' and enter:" -ForegroundColor Green
 Write-Host "  cd '$repoPathWsl' && ./portal.sh" -ForegroundColor Green
-Write-Host "then open http://localhost:8080 in your Windows browser." -ForegroundColor Green
+Write-Host ""
+Write-Host "Then open http://localhost:8080 in your Windows browser." -ForegroundColor Green

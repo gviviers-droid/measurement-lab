@@ -125,6 +125,17 @@ details.answers[open] { border-style: solid; padding-bottom: 8px; }
 .diagram svg { width: 100%; height: auto; display: block; }
 
 /* control portal */
+.status-bar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+  padding: 10px 14px; margin: 14px 0 20px; font-family: var(--mono); font-size: 13px;
+}
+.status-pill { display: flex; align-items: center; gap: 8px; color: var(--text); }
+.status-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; }
+.dot-ok { background: #4cd964; box-shadow: 0 0 6px #4cd96488; }
+.dot-warn { background: #f26b21; box-shadow: 0 0 6px #f26b2188; }
+.dot-err { background: #f36b6b; box-shadow: 0 0 6px #f36b6b88; }
+.dot-gray { background: #6b7796; }
 .btn-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0 20px; }
 .portal-btn {
   font-family: var(--mono); font-size: 13.5px; color: var(--blue);
@@ -355,6 +366,13 @@ into your own network instead of typing <code>docker exec</code> commands by
 hand. Run <code>./portal.sh</code> on your own machine first (not inside the
 lab), then reload this page from <code>http://localhost:8080</code>.</p>
 
+<div class="status-bar" id="status-bar">
+  <div class="status-pill"><span class="status-dot dot-gray" id="dot-cong"></span> Congestion: <strong id="lbl-cong">checking...</strong></div>
+  <div class="status-pill"><span class="status-dot dot-gray" id="dot-peer"></span> IXP Peering: <strong id="lbl-peer">checking...</strong></div>
+  <div class="status-pill"><span class="status-dot dot-gray" id="dot-scen"></span> Fault Scenarios: <strong id="lbl-scen">checking...</strong></div>
+  <button class="portal-btn" id="btn-refresh-status" style="margin-left:auto;padding:4px 10px;font-size:12px;">Refresh</button>
+</div>
+
 <h2>Lab lifecycle</h2>
 <div class="btn-row">
   <button class="portal-btn" data-action="lab_up">Start lab (up)</button>
@@ -423,33 +441,33 @@ console's bottom-right corner to resize it.</p>
     <div class="console-head">
       <span class="console-name">host1</span>
       <a href="#" class="console-action" data-act="reconnect">reconnect</a>
-      <a href="http://localhost:7681" target="_blank" class="console-action">pop out</a>
+      <a href="#" target="_blank" class="console-action" data-act="popout">pop out</a>
     </div>
-    <div class="console-resizer"><iframe src="http://localhost:7681" title="host1 terminal"></iframe></div>
+    <div class="console-resizer"><iframe src="about:blank" title="host1 terminal"></iframe></div>
   </div>
   <div class="console" data-port="7682">
     <div class="console-head">
       <span class="console-name">r1</span>
       <a href="#" class="console-action" data-act="reconnect">reconnect</a>
-      <a href="http://localhost:7682" target="_blank" class="console-action">pop out</a>
+      <a href="#" target="_blank" class="console-action" data-act="popout">pop out</a>
     </div>
-    <div class="console-resizer"><iframe src="http://localhost:7682" title="r1 terminal"></iframe></div>
+    <div class="console-resizer"><iframe src="about:blank" title="r1 terminal"></iframe></div>
   </div>
   <div class="console" data-port="7683">
     <div class="console-head">
       <span class="console-name">r2</span>
       <a href="#" class="console-action" data-act="reconnect">reconnect</a>
-      <a href="http://localhost:7683" target="_blank" class="console-action">pop out</a>
+      <a href="#" target="_blank" class="console-action" data-act="popout">pop out</a>
     </div>
-    <div class="console-resizer"><iframe src="http://localhost:7683" title="r2 terminal"></iframe></div>
+    <div class="console-resizer"><iframe src="about:blank" title="r2 terminal"></iframe></div>
   </div>
   <div class="console" data-port="7684">
     <div class="console-head">
       <span class="console-name">r3</span>
       <a href="#" class="console-action" data-act="reconnect">reconnect</a>
-      <a href="http://localhost:7684" target="_blank" class="console-action">pop out</a>
+      <a href="#" target="_blank" class="console-action" data-act="popout">pop out</a>
     </div>
-    <div class="console-resizer"><iframe src="http://localhost:7684" title="r3 terminal"></iframe></div>
+    <div class="console-resizer"><iframe src="about:blank" title="r3 terminal"></iframe></div>
   </div>
   <div class="console-aside">
     <div class="hints-box">
@@ -473,6 +491,63 @@ console's bottom-right corner to resize it.</p>
 
   function show(text) { out.textContent = text; }
 
+  // Set up dynamic terminal URLs based on current host & environment
+  var hostname = window.location.hostname || "localhost";
+  var proto = window.location.protocol;
+  document.querySelectorAll(".console[data-port]").forEach(function (con) {
+    var port = con.dataset.port;
+    var url;
+    if (hostname.endsWith(".app.github.dev") && hostname.includes("-8080")) {
+      url = proto + "//" + hostname.replace("-8080", "-" + port);
+    } else {
+      url = proto + "//" + hostname + ":" + port;
+    }
+    var iframe = con.querySelector("iframe");
+    var popout = con.querySelector('a[data-act="popout"]');
+    if (iframe) iframe.src = url;
+    if (popout) popout.href = url;
+  });
+
+  function updateStatus() {
+    fetch("/api/status").then(function (r) { return r.json(); }).then(function (res) {
+      if (!res.ok) return;
+      var lblCong = document.getElementById("lbl-cong");
+      var dotCong = document.getElementById("dot-cong");
+      var lblPeer = document.getElementById("lbl-peer");
+      var dotPeer = document.getElementById("dot-peer");
+      var lblScen = document.getElementById("lbl-scen");
+      var dotScen = document.getElementById("dot-scen");
+
+      if (lblCong) {
+        lblCong.textContent = res.congestion === "running" ? "Active (10.5M)" : "Stopped";
+        dotCong.className = "status-dot " + (res.congestion === "running" ? "dot-warn" : "dot-ok");
+      }
+      if (lblPeer) {
+        lblPeer.textContent = res.peering === "active" ? "Enabled (IXP)" : "Disabled (Transit)";
+        dotPeer.className = "status-dot " + (res.peering === "active" ? "dot-ok" : "dot-gray");
+      }
+      if (lblScen) {
+        if (res.scenario3 === "on") {
+          lblScen.textContent = "Scenario 3 (Double Trouble)";
+          dotScen.className = "status-dot dot-err";
+        } else if (res.scenario1 === "on") {
+          lblScen.textContent = "Scenario 1 (Detour)";
+          dotScen.className = "status-dot dot-warn";
+        } else if (res.scenario2 === "on") {
+          lblScen.textContent = "Scenario 2 (Flapping)";
+          dotScen.className = "status-dot dot-warn";
+        } else {
+          lblScen.textContent = "None (Base State)";
+          dotScen.className = "status-dot dot-ok";
+        }
+      }
+    }).catch(function () {});
+  }
+
+  var refreshBtn = document.getElementById("btn-refresh-status");
+  if (refreshBtn) refreshBtn.addEventListener("click", updateStatus);
+  setTimeout(updateStatus, 500);
+
   function post(url, body) {
     return fetch(url, {
       method: "POST",
@@ -491,6 +566,7 @@ console's bottom-right corner to resize it.</p>
       post("/api/run", { action: action }).then(function (res) {
         btn.disabled = false;
         show((res.ok ? "" : "[failed]\n") + res.output);
+        setTimeout(updateStatus, 1500);
       });
     });
   });

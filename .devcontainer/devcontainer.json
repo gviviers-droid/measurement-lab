@@ -5,9 +5,14 @@
     "cpus": 2,
     "memory": "8gb"
   },
-  "forwardPorts": [8080],
+  "forwardPorts": [8080, 7681, 7682, 7683, 7684],
   "portsAttributes": {
-    "8080": { "label": "Activity frontend", "onAutoForward": "openBrowser" }
+    "8080": { "label": "Activity frontend & Portal", "onAutoForward": "openBrowser" },
+    "7681": { "label": "Terminal: host1", "onAutoForward": "silent" },
+    "7682": { "label": "Terminal: r1", "onAutoForward": "silent" },
+    "7683": { "label": "Terminal: r2", "onAutoForward": "silent" },
+    "7684": { "label": "Terminal: r3", "onAutoForward": "silent" }
   },
-  "postAttachCommand": "echo 'Start the lab with: sudo ./lab.sh up   Then open the activities: sudo ./lab.sh docs'"
+  "postCreateCommand": "sudo apt-get update -qq && sudo apt-get install -y -qq ttyd python3 python3-markdown >/dev/null 2>&1 || true",
+  "postAttachCommand": "echo '==> Welcome! Deploy and launch the interactive portal with: sudo ./lab.sh up && ./portal.sh'"
 }

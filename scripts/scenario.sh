@@ -46,7 +46,20 @@ case "${1:-}-${2:-}" in
     "${DIR}/congestion.sh" stop > /dev/null
     echo "Scenario 3 cleared. Allow up to a minute for the network to settle."
     ;;
+  status|status-)
+    s1="off"; s2="off"; s3="off"
+    if docker exec clab-${LAB}-ra vtysh -c "show bgp summary" 2>/dev/null | grep '100.64.99.1' | grep -qi 'Admin'; then
+      s1="on"
+    fi
+    if [ -f "${PIDFILE}" ] && kill -0 "$(cat "${PIDFILE}" 2>/dev/null)" 2>/dev/null; then
+      s2="on"
+    fi
+    if [ "${s1}" = "on" ] && docker exec clab-${LAB}-ct1 pgrep iperf3 > /dev/null 2>&1; then
+      s3="on"
+    fi
+    echo "scenario1=${s1} scenario2=${s2} scenario3=${s3}"
+    ;;
   *)
-    echo "Usage: $0 <1|2|3> <on|off>"; exit 1
+    echo "Usage: $0 <1|2|3> <on|off> | status"; exit 1
     ;;
 esac

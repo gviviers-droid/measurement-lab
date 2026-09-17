@@ -9,3 +9,7 @@ clab-measlab/
 
 # OS cruft
 .DS_Store
+
+# Python artifacts
+__pycache__/
+*.py[cod]

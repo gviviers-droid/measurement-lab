@@ -71,6 +71,7 @@ ACTIONS = {
     "logger_stop": ("scripts/logger.sh", ["stop"]),
     "logger_status": ("scripts/logger.sh", ["status"]),
     "logger_dump": ("scripts/logger.sh", ["dump"]),
+    "scenario_status": ("scripts/scenario.sh", ["status"]),
 }
 
 LG_ROUTERS = {"upstream-a", "upstream-b", "transit", "route-server"}
@@ -116,6 +117,34 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
+
+    def do_GET(self):
+        if self.path == "/api/status":
+            _, out_cong = run_in_vm("scripts/congestion.sh", ["status"])
+            _, out_peer = run_in_vm("scripts/peering.sh", ["status"])
+            _, out_scen = run_in_vm("scripts/scenario.sh", ["status"])
+
+            congestion = "running" if "is running" in out_cong.lower() else "stopped"
+            peering = "active" if ("100.64.99.1" in out_peer and "Admin" not in out_peer) else "down"
+
+            s1, s2, s3 = "off", "off", "off"
+            for token in out_scen.split():
+                if token.startswith("scenario1="):
+                    s1 = token.split("=")[1]
+                elif token.startswith("scenario2="):
+                    s2 = token.split("=")[1]
+                elif token.startswith("scenario3="):
+                    s3 = token.split("=")[1]
+
+            return self._json(200, {
+                "ok": True,
+                "congestion": congestion,
+                "peering": peering,
+                "scenario1": s1,
+                "scenario2": s2,
+                "scenario3": s3
+            })
+        return super().do_GET()
 
     def do_POST(self):
         if self.path == "/api/run":

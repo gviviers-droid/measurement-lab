@@ -271,7 +271,9 @@ install_ttyd_linux() {
 # ---------------------------------------------------------------- macOS ----
 
 install_podman_macos() {
-  command -v brew >/dev/null 2>&1 || die "Homebrew is required on macOS: https://brew.sh"
+  if ! command -v brew >/dev/null 2>&1; then
+    die "Homebrew is required on macOS. Install it by running:\n  /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"\nThen re-run ./install.sh. Learn more: https://brew.sh"
+  fi
   if command -v podman >/dev/null 2>&1; then
     log "Podman already installed"
   else
