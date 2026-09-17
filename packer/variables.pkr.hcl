@@ -54,3 +54,15 @@ variable "headless" {
   type    = bool
   default = true
 }
+
+variable "efi_firmware_code" {
+  type        = string
+  description = "Path to EFI firmware code file"
+  default     = null
+}
+
+variable "efi_firmware_vars" {
+  type        = string
+  description = "Path to EFI firmware vars template file"
+  default     = null
+}

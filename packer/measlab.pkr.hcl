@@ -66,8 +66,10 @@ source "qemu" "measlab-arm64" {
   headless         = var.headless
   disk_size        = "${var.disk_size}M"
   accelerator      = "hvf" # use "kvm" on Linux ARM64, "tcg" on x86 emulation
-  machine_type     = "virt"
-  efi_boot         = true
+  machine_type      = "virt"
+  efi_boot          = true
+  efi_firmware_code = var.efi_firmware_code
+  efi_firmware_vars = var.efi_firmware_vars
 
   http_directory = "http"
 

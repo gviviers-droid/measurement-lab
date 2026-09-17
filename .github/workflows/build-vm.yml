@@ -88,7 +88,14 @@ jobs:
       - name: Build ARM64 QEMU Image
         working-directory: packer
         run: |
-          packer build -var-file=pkrvars/arm64.pkrvars.hcl -only="qemu.measlab-arm64" .
+          CODE_FD="$(find /opt/homebrew -name 'edk2-aarch64-code.fd' 2>/dev/null | head -n 1)"
+          VARS_FD="$(find /opt/homebrew -name 'edk2-arm-vars.fd' 2>/dev/null | head -n 1)"
+          echo "Using EFI code: $CODE_FD"
+          echo "Using EFI vars: $VARS_FD"
+          packer build -var-file=pkrvars/arm64.pkrvars.hcl \
+            -var="efi_firmware_code=${CODE_FD}" \
+            -var="efi_firmware_vars=${VARS_FD}" \
+            -only="qemu.measlab-arm64" .
 
       - name: Compress Image & Generate Checksum
         working-directory: packer
