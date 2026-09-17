@@ -44,12 +44,12 @@ jobs:
 
       - name: Initialize Packer
         working-directory: packer
-        run: packer init measlab.pkr.hcl
+        run: packer init .
 
       - name: Build x86_64 QEMU Image
         working-directory: packer
         run: |
-          packer build -var-file=pkrvars/x86_64.pkrvars.hcl -only="qemu.measlab-x86_64" measlab.pkr.hcl
+          packer build -var-file=pkrvars/x86_64.pkrvars.hcl -only="qemu.measlab-x86_64" .
 
       - name: Compress Image & Generate Checksum
         working-directory: packer
@@ -83,12 +83,12 @@ jobs:
 
       - name: Initialize Packer
         working-directory: packer
-        run: packer init measlab.pkr.hcl
+        run: packer init .
 
       - name: Build ARM64 QEMU Image
         working-directory: packer
         run: |
-          packer build -var-file=pkrvars/arm64.pkrvars.hcl -only="qemu.measlab-arm64" measlab.pkr.hcl
+          packer build -var-file=pkrvars/arm64.pkrvars.hcl -only="qemu.measlab-arm64" .
 
       - name: Compress Image & Generate Checksum
         working-directory: packer
