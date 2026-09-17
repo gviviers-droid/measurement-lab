@@ -5,7 +5,7 @@ variable "vm_name" {
 
 variable "os_version" {
   type    = string
-  default = "24.04.1"
+  default = "24.04.5"
 }
 
 variable "cpus" {
@@ -41,7 +41,7 @@ variable "ssh_timeout" {
 variable "iso_url" {
   type        = string
   description = "URL to the Ubuntu Server Live ISO"
-  default     = "https://releases.ubuntu.com/noble/ubuntu-24.04.1-live-server-amd64.iso"
+  default     = "https://releases.ubuntu.com/noble/ubuntu-24.04.5-live-server-amd64.iso"
 }
 
 variable "iso_checksum" {

@@ -64,8 +64,6 @@ source "qemu" "measlab-arm64" {
   iso_url          = var.iso_url
   iso_checksum     = var.iso_checksum
   headless         = var.headless
-  cpus             = var.cpus
-  memory           = var.memory
   disk_size        = "${var.disk_size}M"
   accelerator      = "hvf" # use "kvm" on Linux ARM64, "tcg" on x86 emulation
   machine_type     = "virt"
@@ -90,6 +88,8 @@ source "qemu" "measlab-arm64" {
 
   qemuargs = [
     ["-cpu", "host"],
+    ["-smp", "${var.cpus}"],
+    ["-m", "${var.memory}M"],
     ["-netdev", "user,id=net0,hostfwd=tcp::8080-:8080,hostfwd=tcp::7681-:7681,hostfwd=tcp::7682-:7682,hostfwd=tcp::7683-:7683,hostfwd=tcp::7684-:7684,hostfwd=tcp::2222-:22"],
     ["-device", "virtio-net-pci,netdev=net0"]
   ]
@@ -106,8 +106,6 @@ source "qemu" "measlab-x86_64" {
   iso_url          = var.iso_url
   iso_checksum     = var.iso_checksum
   headless         = var.headless
-  cpus             = var.cpus
-  memory           = var.memory
   disk_size        = "${var.disk_size}M"
   accelerator      = "kvm" # "tcg" on macOS without nested KVM
 
@@ -129,6 +127,8 @@ source "qemu" "measlab-x86_64" {
   shutdown_command = "echo 'measlab' | sudo -S shutdown -P now"
 
   qemuargs = [
+    ["-smp", "${var.cpus}"],
+    ["-m", "${var.memory}M"],
     ["-netdev", "user,id=net0,hostfwd=tcp::8080-:8080,hostfwd=tcp::7681-:7681,hostfwd=tcp::7682-:7682,hostfwd=tcp::7683-:7683,hostfwd=tcp::7684-:7684,hostfwd=tcp::2222-:22"],
     ["-device", "virtio-net-pci,netdev=net0"]
   ]
