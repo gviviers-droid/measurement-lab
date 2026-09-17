@@ -26,6 +26,7 @@ Fourteen containers emulate seven Autonomous Systems plus an Internet Exchange P
 ## 📑 Table of Contents
 
 - [🚀 Quick Start: Choose Your Route](#-quick-start-choose-your-route)
+- [📋 Non-Technical Tester Setup Guide](docs/tester-setup-guide.md)
 - [🖥️ The Interactive Control Portal](#️-the-interactive-control-portal)
 - [🌐 Network Architecture & Addressing](#-network-architecture--addressing)
 - [📚 Curriculum & Activities](#-curriculum--activities)
@@ -37,6 +38,9 @@ Fourteen containers emulate seven Autonomous Systems plus an Internet Exchange P
 ---
 
 ## 🚀 Quick Start: Choose Your Route
+
+> [!TIP]
+> **Testing this lab or not familiar with Git & CLI?** Check out our step-by-step **[Non-Technical Tester Setup Guide](docs/tester-setup-guide.md)** for a beginner-friendly walkthrough with direct ZIP download links and simple copy-paste commands.
 
 Select the deployment method that fits your environment:
 
@@ -75,7 +79,7 @@ Clone the repository, open a terminal, and run:
   ```powershell
   .\install.ps1
   ```
-*(Sets up WSL2 if needed, installs dependencies, deploys the lab, and prepares the portal).*
+*(Sets up WSL2 if needed, installs dependencies, deploys the lab, and prepares the portal. For a beginner-friendly walkthrough with screenshots and direct ZIP download, see the [Non-Technical Tester Setup Guide](docs/tester-setup-guide.md)).*
 
 ### Route 4: Local VS Code Dev Container
 Open the cloned repository folder in VS Code. When prompted with *"Reopen in Container"*, accept. The `.devcontainer/` specification builds directly from Containerlab's official image.
