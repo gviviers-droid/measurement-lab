@@ -685,6 +685,12 @@ traceroute -n -6 3fff:50:10::10
 <p><strong>Question 1a.</strong> How many ASes does your traffic cross to reach target1? And to reach target2?</p>
 <p><strong>Question 1b.</strong> For each target, do IPv4 and IPv6 follow the same sequence of machines?</p>
 <p><strong>Question 1c.</strong> The path to target2 crosses the IXP. Which single hop in the traceroute tells you that, and what is odd about how the exchange itself appears?</p>
+<details class="answers">
+<summary>Check your answers for Task 1 (reveal after writing your own)</summary>
+<p><strong>1a.</strong> target1: four ASes, your 65001, upstream A (65010), transit (65030) and 65040. target2: three, your 65001, upstream A (65010) and 65050.</p>
+<p><strong>1b.</strong> Yes. In this lab's base state, IPv4 and IPv6 cross the same machines for both targets, which you can verify by matching each v6 hop to the same router's v4 address in the table. On the real Internet the two families sometimes take different paths; a later activity creates that situation.</p>
+<p><strong>1c.</strong> The hop 100.64.99.50 (IPv6: 3fff:ff::50) is dest-2's port on the IXP peering LAN, so your packet went straight from upstream A's IXP port to dest-2's. The odd part: the exchange itself never appears. An IXP is a shared LAN, a layer-2 fabric, so it adds no router hop of its own and, as Task 5 shows, no AS either.</p>
+</details>
 <h2>Task 2: Locate the latency</h2>
 <p>Ping both targets, ten packets each, and note the average round-trip times:</p>
 <pre><code>ping -c 10 10.40.10.10
@@ -694,6 +700,12 @@ ping -c 10 10.50.10.10
 <p><strong>Question 2a.</strong> Between which two hops does the round-trip time to target1 make its first large jump? And its second?</p>
 <p><strong>Question 2b.</strong> target2 sits behind the same upstream as target1, yet answers far faster. Using your per-hop data, express in two sentences why.</p>
 <p><strong>Question 2c.</strong> A colleague concludes that the router at the first jump is overloaded, because latency rises there. Give an alternative explanation for a latency jump between two hops that has nothing to do with router load.</p>
+<details class="answers">
+<summary>Check your answers for Task 2 (reveal after writing your own)</summary>
+<p><strong>2a.</strong> First jump: between upstream A (100.64.11.1) and the transit router (100.64.13.2), where the average rises by roughly 20 ms. Second jump: between the transit router and the dest-1 router (100.64.34.2), roughly 25 ms more.</p>
+<p><strong>2b.</strong> target2 skips transit. Traffic crosses the IXP peering LAN directly from upstream A to dest-2, avoiding both impaired long-haul links, so the round trip stays within a few milliseconds. Peering shortens paths, and your measurements have now quantified by how much.</p>
+<p><strong>2c.</strong> Distance. A link spanning a long physical distance adds propagation delay on every packet regardless of how busy the routers at either end are. In this lab the two jumps represent long-haul links, and both were injected on purpose; the routers themselves are idle.</p>
+</details>
 <h2>Task 3: Jitter and loss</h2>
 <p>A ping average hides variation. Run mtr, which probes every hop at once and keeps per-hop statistics:</p>
 <pre><code>mtr -n --report --report-cycles 100 10.40.10.10
@@ -701,6 +713,11 @@ ping -c 10 10.50.10.10
 <p>This takes about two minutes. Read the columns: <code>Loss%</code>, <code>Avg</code>, <code>Best</code>, <code>Wrst</code> (worst) and <code>StDev</code> (the spread of round-trip times, one way to express jitter). Repeat for target2 and compare.</p>
 <p><strong>Question 3a.</strong> On the target1 path, at which hop does packet loss first appear, and does it persist to the destination?</p>
 <p><strong>Question 3b.</strong> Which hop shows the largest StDev? Express in one sentence what that number tells you about the path beyond that hop.</p>
+<details class="answers">
+<summary>Check your answers for Task 3 (reveal after writing your own)</summary>
+<p><strong>3a.</strong> Loss of around 1% first appears at the dest-1 router (100.64.34.2) and persists to target1. Loss that starts at one hop and continues to the destination points at a real problem on the path. Loss appearing at a single middle hop and then vanishing usually means that router deprioritises replies addressed to itself while forwarding your traffic without harm. The target2 path shows no loss.</p>
+<p><strong>3b.</strong> The final hops of the target1 path show the largest StDev, because they sit behind both jittery links and jitter accumulates along a path. The number tells you how much individual round-trip times swing around the average: unstable delivery, even when the average looks acceptable.</p>
+</details>
 <h2>Task 4: One ping is not a measurement</h2>
 <p>Send a longer stream to target1 and read the summary line:</p>
 <pre><code>ping -c 100 -i 0.2 10.40.10.10
@@ -708,6 +725,11 @@ ping -c 10 10.50.10.10
 <p>The final line reports <code>min/avg/max/mdev</code>.</p>
 <p><strong>Question 4a.</strong> How far apart are your minimum and maximum? If you had sent one ping and it happened to hit the maximum, how wrong would your latency estimate have been?</p>
 <p><strong>Question 4b.</strong> For this path, which single number would you report to a colleague as "the latency", and why? Keep your answer; Module 2.5 and the next activity return to this question with better tools.</p>
+<details class="answers">
+<summary>Check your answers for Task 4 (reveal after writing your own)</summary>
+<p><strong>4a.</strong> Expect a spread of roughly 10 to 20 ms between minimum and maximum. A single ping landing at the maximum would have overstated typical latency by around a quarter to a third.</p>
+<p><strong>4b.</strong> There is no single correct answer, and that is the point. The minimum approximates the clean path latency, the average reflects typical experience, and neither captures the spread. Any honest report needs at least two numbers.</p>
+</details>
 <h2>Task 5: Read your own BGP table</h2>
 <p>Your routers learned all these paths through BGP. Open the CLI of your border router r1:</p>
 <pre><code>docker exec -it clab-measlab-r1 vtysh
@@ -722,21 +744,12 @@ show bgp ipv6 unicast 3fff:50::/32
 <p><strong>Question 5b.</strong> Compare the AS paths with your traceroutes from Task 1. The traceroute shows individual routers; the AS path shows networks. Do the two views agree?</p>
 <p><strong>Question 5c.</strong> Every AS in this lab announces one IPv4 /16 and one IPv6 /32. A /16 holds 65,536 addresses. Using prefix arithmetic, how many /64 subnets fit in your 3fff:1::/32?</p>
 <p>Type <code>exit</code> twice to leave the router.</p>
-<details class="answers"><summary>Check your answers (reveal after writing your own)</summary>
-<p>Reveal these after you have committed to your own answers in writing.</p>
-<p><strong>1a.</strong> target1: four ASes, your 65001, upstream A (65010), transit (65030) and 65040. target2: three, your 65001, upstream A (65010) and 65050.</p>
-<p><strong>1b.</strong> Yes. In this lab's base state, IPv4 and IPv6 cross the same machines for both targets, which you can verify by matching each v6 hop to the same router's v4 address in the table. On the real Internet the two families sometimes take different paths; a later activity creates that situation.</p>
-<p><strong>1c.</strong> The hop 100.64.99.50 (IPv6: 3fff:ff::50) is dest-2's port on the IXP peering LAN, so your packet went straight from upstream A's IXP port to dest-2's. The odd part: the exchange itself never appears. An IXP is a shared LAN, a layer-2 fabric, so it adds no router hop of its own and, as Task 5 shows, no AS either.</p>
-<p><strong>2a.</strong> First jump: between upstream A (100.64.11.1) and the transit router (100.64.13.2), where the average rises by roughly 20 ms. Second jump: between the transit router and the dest-1 router (100.64.34.2), roughly 25 ms more.</p>
-<p><strong>2b.</strong> target2 skips transit. Traffic crosses the IXP peering LAN directly from upstream A to dest-2, avoiding both impaired long-haul links, so the round trip stays within a few milliseconds. Peering shortens paths, and your measurements have now quantified by how much.</p>
-<p><strong>2c.</strong> Distance. A link spanning a long physical distance adds propagation delay on every packet regardless of how busy the routers at either end are. In this lab the two jumps represent long-haul links, and both were injected on purpose; the routers themselves are idle.</p>
-<p><strong>3a.</strong> Loss of around 1% first appears at the dest-1 router (100.64.34.2) and persists to target1. Loss that starts at one hop and continues to the destination points at a real problem on the path. Loss appearing at a single middle hop and then vanishing usually means that router deprioritises replies addressed to itself while forwarding your traffic without harm. The target2 path shows no loss.</p>
-<p><strong>3b.</strong> The final hops of the target1 path show the largest StDev, because they sit behind both jittery links and jitter accumulates along a path. The number tells you how much individual round-trip times swing around the average: unstable delivery, even when the average looks acceptable.</p>
-<p><strong>4a.</strong> Expect a spread of roughly 10 to 20 ms between minimum and maximum. A single ping landing at the maximum would have overstated typical latency by around a quarter to a third.</p>
-<p><strong>4b.</strong> There is no single correct answer, and that is the point. The minimum approximates the clean path latency, the average reflects typical experience, and neither captures the spread. Any honest report needs at least two numbers.</p>
+<details class="answers">
+<summary>Check your answers for Task 5 (reveal after writing your own)</summary>
 <p><strong>5a.</strong> dest-1: <code>65010 65030 65040</code> in both address families. dest-2: <code>65010 65050</code>. The IXP's route server (AS 65100) appears in neither path: route servers pass routes between members without inserting themselves, so the exchange stays invisible at the BGP level too.</p>
 <p><strong>5b.</strong> Yes. Each group of traceroute hops falls inside one AS from the BGP path, in the same order, with the IXP LAN forming the invisible seam between 65010 and 65050. BGP gives you the network-level map; traceroute fills in the routers. Unit 3 builds on both views: RIPE Atlas gives you traceroutes from thousands of vantage points, and RIPEstat and RIS give you the BGP view of the whole Internet.</p>
-<p><strong>5c.</strong> A /32 leaves 32 bits before the /64 boundary, so 2^32 subnets: 4,294,967,296 /64s, each holding more host addresses than the entire IPv4 Internet. Your single IPv6 allocation contains as many /64 networks as IPv4 has addresses in total.</p></details>
+<p><strong>5c.</strong> A /32 leaves 32 bits before the /64 boundary, so 2^32 subnets: 4,294,967,296 /64s, each holding more host addresses than the entire IPv4 Internet. Your single IPv6 allocation contains as many /64 networks as IPv4 has addresses in total.</p>
+</details>
 </article>
 <article id="activity2" class="page" data-title="Activity 2: When the Path Gets Busy"><h1>Activity 2: When the Path Gets Busy</h1>
 <p><strong>Maps to:</strong> Modules 2.3 (Core Performance Metrics) and 2.5 (Analysing Measurement Data)
@@ -773,6 +786,12 @@ show bgp ipv6 unicast 3fff:50::/32
 <p><strong>Question 3a.</strong> Compare baseline and busy: which moved more, the mean or the median? Which single statistic changed the most?</p>
 <p><strong>Question 3b.</strong> In Activity 1 you explained the baseline latency with distance. Distance has not changed. Name the delay component that has, and state where along the path it lives (use the mtr output as evidence).</p>
 <p><strong>Question 3c.</strong> Did loss change, and at the same hop as in Activity 1 or elsewhere?</p>
+<details class="answers">
+<summary>Check your answers for Task 3 (reveal after writing your own)</summary>
+<p><strong>3a.</strong> The mean moves more than the median, because the mean absorbs the tail of queueing spikes while the median only shifts with the typical packet. The largest single change appears at the top of the distribution: p95 and max grow by far the most, from tens of milliseconds to potentially hundreds. Exact values vary between machines; the pattern does not.</p>
+<p><strong>3b.</strong> Queueing delay. Packets wait in the buffer of the loaded transit link before transmission, and the mtr report shows the inflation starting at the transit-to-dest-1 hop (100.64.34.2) while earlier hops keep their baseline figures. Propagation delay is physics and constant; queueing delay is load and variable. Telling them apart is one of the most useful skills in latency analysis.</p>
+<p><strong>3c.</strong> Yes. On top of the constant 1% you found in Activity 1, the loaded link drops packets whenever its queue overflows, so loss rises at the same hop and persists to the destination. Congestion loss and the baseline loss share a location but differ in behaviour: one vanishes when the load stops.</p>
+</details>
 <h2>Task 4: Report honestly</h2>
 <p>Switch the load off and confirm recovery with a short ping:</p>
 <pre><code>sudo ./scripts/congestion.sh stop
@@ -780,14 +799,12 @@ show bgp ipv6 unicast 3fff:50::/32
 <p><strong>Question 4a.</strong> Your monitoring system samples this path once per hour with a single ping. Sketch what its latency graph would show across a day with two busy periods, and name what it would miss.</p>
 <p><strong>Question 4b.</strong> You may report exactly two numbers per measurement window to describe this path. Which two do you choose, and why those?</p>
 <p><strong>Question 4c.</strong> On the real Internet, load on a link follows the waking hours of the people behind it. Express in two sentences why a measurement campaign for this path must span at least 24 hours, and what a measurement taken only at 04:00 would falsely conclude.</p>
-<details class="answers"><summary>Check your answers (reveal after writing your own)</summary>
-<p>Reveal these after committing to your own answers.</p>
-<p><strong>3a.</strong> The mean moves more than the median, because the mean absorbs the tail of queueing spikes while the median only shifts with the typical packet. The largest single change appears at the top of the distribution: p95 and max grow by far the most, from tens of milliseconds to potentially hundreds. Exact values vary between machines; the pattern does not.</p>
-<p><strong>3b.</strong> Queueing delay. Packets wait in the buffer of the loaded transit link before transmission, and the mtr report shows the inflation starting at the transit-to-dest-1 hop (100.64.34.2) while earlier hops keep their baseline figures. Propagation delay is physics and constant; queueing delay is load and variable. Telling them apart is one of the most useful skills in latency analysis.</p>
-<p><strong>3c.</strong> Yes. On top of the constant 1% you found in Activity 1, the loaded link drops packets whenever its queue overflows, so loss rises at the same hop and persists to the destination. Congestion loss and the baseline loss share a location but differ in behaviour: one vanishes when the load stops.</p>
+<details class="answers">
+<summary>Check your answers for Task 4 (reveal after writing your own)</summary>
 <p><strong>4a.</strong> The graph would show mostly flat baseline values with, at best, one or two elevated samples, depending on whether the hourly probe happened to land inside a busy period. It would miss the shape, depth and duration of both congestion windows entirely, and could miss them altogether. Sampling frequency bounds what a measurement can see; Module 2.5 calls this the resolution of a measurement campaign, and RIPE Atlas anchors this lesson at Internet scale in Unit 3.</p>
 <p><strong>4b.</strong> Median and 95th percentile is the defensible pair: the median describes the typical experience and resists outliers, while p95 exposes the tail that users feel as slowness. Mean plus maximum is the common wrong answer, since one lucky or unlucky packet distorts both.</p>
-<p><strong>4c.</strong> A path measured only during quiet hours describes the link, and a path measured across a full day describes the service people receive from it. A campaign sampling only at 04:00 would conclude the path is fast, clean and stable, and it would be right about the cable and wrong about the Internet.</p></details>
+<p><strong>4c.</strong> A path measured only during quiet hours describes the link, and a path measured across a full day describes the service people receive from it. A campaign sampling only at 04:00 would conclude the path is fast, clean and stable, and it would be right about the cable and wrong about the Internet.</p>
+</details>
 </article>
 <article id="activity3" class="page" data-title="Activity 3: Turn On Peering"><h1>Activity 3: Turn On Peering</h1>
 <p><strong>Maps to:</strong> Modules 2.1 and 2.3, and the Unit 1 material on IXPs and Internet flattening
@@ -810,6 +827,10 @@ show bgp ipv6 unicast 3fff:50::/32
 <pre><code>show bgp summary
 </code></pre>
 <p><strong>Question 1a.</strong> What state does r2 report for the two sessions towards 100.64.99.1 and 3fff:ff::1, and what does that state mean?</p>
+<details class="answers">
+<summary>Check your answer for Task 1 (reveal after writing your own)</summary>
+<p><strong>1a.</strong> Idle (Admin): the sessions exist in configuration but an operator shut them down on purpose. Configured-but-disabled is a normal state on real routers, and it differs from a session that is down because of a fault.</p>
+</details>
 <h2>Task 2: Become a peer</h2>
 <p>On your own machine in the lab folder:</p>
 <pre><code>sudo ./scripts/peering.sh up
@@ -819,24 +840,31 @@ show bgp ipv6 unicast 3fff:50::/32
 show bgp ipv6 unicast
 </code></pre>
 <p><strong>Question 2a.</strong> Which prefixes did the route server send you, and with what AS paths? One AS you expected to see in those paths is missing. Which, and why?</p>
+<details class="answers">
+<summary>Check your answer for Task 2 (reveal after writing your own)</summary>
+<p><strong>2a.</strong> The route server passes you the prefixes of the other members: upstream A (10.10.0.0/16, 3fff:10::/32), upstream B, and dest-2 (10.50.0.0/16, 3fff:50::/32), each with a path of a single AS. Missing: AS 65100, the route server itself. A route server distributes routes between members without inserting its own AS number, so peering through it looks, in BGP, like a direct adjacency with every member.</p>
+</details>
 <h2>Task 3: The after picture</h2>
 <p>Repeat every measurement from Task 1: both traceroutes, both pings, both BGP lookups.</p>
 <p><strong>Question 3a.</strong> Describe the new path to target2: which machines, how many hops, which of your border routers.</p>
 <p><strong>Question 3b.</strong> Quantify the improvement: round-trip time before versus after, in both address families.</p>
 <p><strong>Question 3c.</strong> Your router now knows two routes to 10.50.0.0/16. Read the BGP output on r2: which attribute makes the peering route win, and what is its value compared with the transit-learned route?</p>
 <p><strong>Question 3d.</strong> Measure target1 again. Did peering change anything for it? State the general rule this demonstrates.</p>
-<h2>Task 4: The business case</h2>
-<p>Write three sentences a manager would understand: what you enabled, what measurably improved, and for which destinations. Then restore the base state for the next activity:</p>
-<pre><code>sudo ./scripts/peering.sh down
-</code></pre>
-<details class="answers"><summary>Check your answers (reveal after writing your own)</summary>
-<p><strong>1a.</strong> Idle (Admin): the sessions exist in configuration but an operator shut them down on purpose. Configured-but-disabled is a normal state on real routers, and it differs from a session that is down because of a fault.</p>
-<p><strong>2a.</strong> The route server passes you the prefixes of the other members: upstream A (10.10.0.0/16, 3fff:10::/32), upstream B, and dest-2 (10.50.0.0/16, 3fff:50::/32), each with a path of a single AS. Missing: AS 65100, the route server itself. A route server distributes routes between members without inserting its own AS number, so peering through it looks, in BGP, like a direct adjacency with every member.</p>
+<details class="answers">
+<summary>Check your answers for Task 3 (reveal after writing your own)</summary>
 <p><strong>3a.</strong> host1 to r3, then r2, then straight to dest-2's IXP port (100.64.99.50, or 3fff:ff::50), then target2. Four hops, leaving through r2, with upstream A no longer involved.</p>
 <p><strong>3b.</strong> Before: a few milliseconds via upstream A's peering (the path found in Activity 1). After: below a millisecond in both families, since the path now crosses only your own AS and the exchange fabric. The improvement is modest here because the before path was already peered at one remove; the structural gain is independence: your traffic to dest-2 no longer depends on upstream A at all, which Scenario 1 in the next activity makes valuable.</p>
 <p><strong>3c.</strong> Local preference. The peering route carries 250 against 200 for the transit-learned route via r1, so it wins before AS path length is even compared. Your own policy, not the Internet, made this choice, which is the point: routing is policy, and you just set one.</p>
 <p><strong>3d.</strong> Nothing changed for target1. dest-1 is not present at the exchange, so your new sessions offer no route to it. The rule: peering improves reachability only to networks that are also at the exchange; everything else still rides transit. Real peering decisions weigh exactly this: how much of my traffic goes to networks I could reach across this fabric?</p>
-<p><strong>4.</strong> Model answer: "We activated our existing port at the exchange and now exchange routes directly with the other members. Traffic to the content network there dropped from around 2 ms to under 1 ms and no longer depends on our upstream provider. The change affects only destinations present at the exchange; the rest of our traffic is unchanged."</p></details>
+</details>
+<h2>Task 4: The business case</h2>
+<p>Write three sentences a manager would understand: what you enabled, what measurably improved, and for which destinations. Then restore the base state for the next activity:</p>
+<pre><code>sudo ./scripts/peering.sh down
+</code></pre>
+<details class="answers">
+<summary>Check your answer for Task 4 (reveal after writing your own)</summary>
+<p><strong>4.</strong> Model answer: "We activated our existing port at the exchange and now exchange routes directly with the other members. Traffic to the content network there dropped from around 2 ms to under 1 ms and no longer depends on our upstream provider. The change affects only destinations present at the exchange; the rest of our traffic is unchanged."</p>
+</details>
 </article>
 <article id="activity4" class="page" data-title="Activity 4, Scenario 1: The Slow Neighbour"><h1>Activity 4, Scenario 1: The Slow Neighbour</h1>
 <p><strong>Maps to:</strong> Module 2.6 (Troubleshooting with Measurements)

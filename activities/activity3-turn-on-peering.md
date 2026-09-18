@@ -33,6 +33,13 @@ show bgp summary
 
 **Question 1a.** What state does r2 report for the two sessions towards 100.64.99.1 and 3fff:ff::1, and what does that state mean?
 
+<details class="answers" markdown="1">
+<summary>Check your answer for Task 1 (reveal after writing your own)</summary>
+
+**1a.** Idle (Admin): the sessions exist in configuration but an operator shut them down on purpose. Configured-but-disabled is a normal state on real routers, and it differs from a session that is down because of a fault.
+
+</details>
+
 ## Task 2: Become a peer
 
 On your own machine in the lab folder:
@@ -50,6 +57,13 @@ show bgp ipv6 unicast
 
 **Question 2a.** Which prefixes did the route server send you, and with what AS paths? One AS you expected to see in those paths is missing. Which, and why?
 
+<details class="answers" markdown="1">
+<summary>Check your answer for Task 2 (reveal after writing your own)</summary>
+
+**2a.** The route server passes you the prefixes of the other members: upstream A (10.10.0.0/16, 3fff:10::/32), upstream B, and dest-2 (10.50.0.0/16, 3fff:50::/32), each with a path of a single AS. Missing: AS 65100, the route server itself. A route server distributes routes between members without inserting its own AS number, so peering through it looks, in BGP, like a direct adjacency with every member.
+
+</details>
+
 ## Task 3: The after picture
 
 Repeat every measurement from Task 1: both traceroutes, both pings, both BGP lookups.
@@ -62,19 +76,8 @@ Repeat every measurement from Task 1: both traceroutes, both pings, both BGP loo
 
 **Question 3d.** Measure target1 again. Did peering change anything for it? State the general rule this demonstrates.
 
-## Task 4: The business case
-
-Write three sentences a manager would understand: what you enabled, what measurably improved, and for which destinations. Then restore the base state for the next activity:
-
-```
-sudo ./scripts/peering.sh down
-```
-
-## Check your answers
-
-**1a.** Idle (Admin): the sessions exist in configuration but an operator shut them down on purpose. Configured-but-disabled is a normal state on real routers, and it differs from a session that is down because of a fault.
-
-**2a.** The route server passes you the prefixes of the other members: upstream A (10.10.0.0/16, 3fff:10::/32), upstream B, and dest-2 (10.50.0.0/16, 3fff:50::/32), each with a path of a single AS. Missing: AS 65100, the route server itself. A route server distributes routes between members without inserting its own AS number, so peering through it looks, in BGP, like a direct adjacency with every member.
+<details class="answers" markdown="1">
+<summary>Check your answers for Task 3 (reveal after writing your own)</summary>
 
 **3a.** host1 to r3, then r2, then straight to dest-2's IXP port (100.64.99.50, or 3fff:ff::50), then target2. Four hops, leaving through r2, with upstream A no longer involved.
 
@@ -84,4 +87,19 @@ sudo ./scripts/peering.sh down
 
 **3d.** Nothing changed for target1. dest-1 is not present at the exchange, so your new sessions offer no route to it. The rule: peering improves reachability only to networks that are also at the exchange; everything else still rides transit. Real peering decisions weigh exactly this: how much of my traffic goes to networks I could reach across this fabric?
 
+</details>
+
+## Task 4: The business case
+
+Write three sentences a manager would understand: what you enabled, what measurably improved, and for which destinations. Then restore the base state for the next activity:
+
+```
+sudo ./scripts/peering.sh down
+```
+
+<details class="answers" markdown="1">
+<summary>Check your answer for Task 4 (reveal after writing your own)</summary>
+
 **4.** Model answer: "We activated our existing port at the exchange and now exchange routes directly with the other members. Traffic to the content network there dropped from around 2 ms to under 1 ms and no longer depends on our upstream provider. The change affects only destinations present at the exchange; the rest of our traffic is unchanged."
+
+</details>

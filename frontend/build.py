@@ -20,7 +20,7 @@ FONT_PATH = ROOT / "frontend" / "assets" / "public-sans-400.woff2.b64"
 LOGO_PATH = ROOT / "frontend" / "assets" / "ripe-ncc-logo.svg"
 OUT = ROOT / "frontend" / "index.html"
 
-MD = markdown.Markdown(extensions=["tables", "fenced_code"])
+MD = markdown.Markdown(extensions=["tables", "fenced_code", "md_in_html"])
 
 # Sections whose body must stay hidden until the learner opens them
 SPOILER_HEADINGS = ("Check your answers", "Model incident summary")

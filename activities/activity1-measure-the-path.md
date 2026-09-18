@@ -54,6 +54,17 @@ Using the address table, label every hop with its machine and AS number.
 
 **Question 1c.** The path to target2 crosses the IXP. Which single hop in the traceroute tells you that, and what is odd about how the exchange itself appears?
 
+<details class="answers" markdown="1">
+<summary>Check your answers for Task 1 (reveal after writing your own)</summary>
+
+**1a.** target1: four ASes, your 65001, upstream A (65010), transit (65030) and 65040. target2: three, your 65001, upstream A (65010) and 65050.
+
+**1b.** Yes. In this lab's base state, IPv4 and IPv6 cross the same machines for both targets, which you can verify by matching each v6 hop to the same router's v4 address in the table. On the real Internet the two families sometimes take different paths; a later activity creates that situation.
+
+**1c.** The hop 100.64.99.50 (IPv6: 3fff:ff::50) is dest-2's port on the IXP peering LAN, so your packet went straight from upstream A's IXP port to dest-2's. The odd part: the exchange itself never appears. An IXP is a shared LAN, a layer-2 fabric, so it adds no router hop of its own and, as Task 5 shows, no AS either.
+
+</details>
+
 ## Task 2: Locate the latency
 
 Ping both targets, ten packets each, and note the average round-trip times:
@@ -71,6 +82,17 @@ Then walk the target1 path: ping each hop from Task 1 in order and record the av
 
 **Question 2c.** A colleague concludes that the router at the first jump is overloaded, because latency rises there. Give an alternative explanation for a latency jump between two hops that has nothing to do with router load.
 
+<details class="answers" markdown="1">
+<summary>Check your answers for Task 2 (reveal after writing your own)</summary>
+
+**2a.** First jump: between upstream A (100.64.11.1) and the transit router (100.64.13.2), where the average rises by roughly 20 ms. Second jump: between the transit router and the dest-1 router (100.64.34.2), roughly 25 ms more.
+
+**2b.** target2 skips transit. Traffic crosses the IXP peering LAN directly from upstream A to dest-2, avoiding both impaired long-haul links, so the round trip stays within a few milliseconds. Peering shortens paths, and your measurements have now quantified by how much.
+
+**2c.** Distance. A link spanning a long physical distance adds propagation delay on every packet regardless of how busy the routers at either end are. In this lab the two jumps represent long-haul links, and both were injected on purpose; the routers themselves are idle.
+
+</details>
+
 ## Task 3: Jitter and loss
 
 A ping average hides variation. Run mtr, which probes every hop at once and keeps per-hop statistics:
@@ -85,6 +107,15 @@ This takes about two minutes. Read the columns: `Loss%`, `Avg`, `Best`, `Wrst` (
 
 **Question 3b.** Which hop shows the largest StDev? Express in one sentence what that number tells you about the path beyond that hop.
 
+<details class="answers" markdown="1">
+<summary>Check your answers for Task 3 (reveal after writing your own)</summary>
+
+**3a.** Loss of around 1% first appears at the dest-1 router (100.64.34.2) and persists to target1. Loss that starts at one hop and continues to the destination points at a real problem on the path. Loss appearing at a single middle hop and then vanishing usually means that router deprioritises replies addressed to itself while forwarding your traffic without harm. The target2 path shows no loss.
+
+**3b.** The final hops of the target1 path show the largest StDev, because they sit behind both jittery links and jitter accumulates along a path. The number tells you how much individual round-trip times swing around the average: unstable delivery, even when the average looks acceptable.
+
+</details>
+
 ## Task 4: One ping is not a measurement
 
 Send a longer stream to target1 and read the summary line:
@@ -98,6 +129,15 @@ The final line reports `min/avg/max/mdev`.
 **Question 4a.** How far apart are your minimum and maximum? If you had sent one ping and it happened to hit the maximum, how wrong would your latency estimate have been?
 
 **Question 4b.** For this path, which single number would you report to a colleague as "the latency", and why? Keep your answer; Module 2.5 and the next activity return to this question with better tools.
+
+<details class="answers" markdown="1">
+<summary>Check your answers for Task 4 (reveal after writing your own)</summary>
+
+**4a.** Expect a spread of roughly 10 to 20 ms between minimum and maximum. A single ping landing at the maximum would have overstated typical latency by around a quarter to a third.
+
+**4b.** There is no single correct answer, and that is the point. The minimum approximates the clean path latency, the average reflects typical experience, and neither captures the spread. Any honest report needs at least two numbers.
+
+</details>
 
 ## Task 5: Read your own BGP table
 
@@ -124,32 +164,13 @@ show bgp ipv6 unicast 3fff:50::/32
 
 Type `exit` twice to leave the router.
 
-## Check your answers
-
-Reveal these after you have committed to your own answers in writing.
-
-**1a.** target1: four ASes, your 65001, upstream A (65010), transit (65030) and 65040. target2: three, your 65001, upstream A (65010) and 65050.
-
-**1b.** Yes. In this lab's base state, IPv4 and IPv6 cross the same machines for both targets, which you can verify by matching each v6 hop to the same router's v4 address in the table. On the real Internet the two families sometimes take different paths; a later activity creates that situation.
-
-**1c.** The hop 100.64.99.50 (IPv6: 3fff:ff::50) is dest-2's port on the IXP peering LAN, so your packet went straight from upstream A's IXP port to dest-2's. The odd part: the exchange itself never appears. An IXP is a shared LAN, a layer-2 fabric, so it adds no router hop of its own and, as Task 5 shows, no AS either.
-
-**2a.** First jump: between upstream A (100.64.11.1) and the transit router (100.64.13.2), where the average rises by roughly 20 ms. Second jump: between the transit router and the dest-1 router (100.64.34.2), roughly 25 ms more.
-
-**2b.** target2 skips transit. Traffic crosses the IXP peering LAN directly from upstream A to dest-2, avoiding both impaired long-haul links, so the round trip stays within a few milliseconds. Peering shortens paths, and your measurements have now quantified by how much.
-
-**2c.** Distance. A link spanning a long physical distance adds propagation delay on every packet regardless of how busy the routers at either end are. In this lab the two jumps represent long-haul links, and both were injected on purpose; the routers themselves are idle.
-
-**3a.** Loss of around 1% first appears at the dest-1 router (100.64.34.2) and persists to target1. Loss that starts at one hop and continues to the destination points at a real problem on the path. Loss appearing at a single middle hop and then vanishing usually means that router deprioritises replies addressed to itself while forwarding your traffic without harm. The target2 path shows no loss.
-
-**3b.** The final hops of the target1 path show the largest StDev, because they sit behind both jittery links and jitter accumulates along a path. The number tells you how much individual round-trip times swing around the average: unstable delivery, even when the average looks acceptable.
-
-**4a.** Expect a spread of roughly 10 to 20 ms between minimum and maximum. A single ping landing at the maximum would have overstated typical latency by around a quarter to a third.
-
-**4b.** There is no single correct answer, and that is the point. The minimum approximates the clean path latency, the average reflects typical experience, and neither captures the spread. Any honest report needs at least two numbers.
+<details class="answers" markdown="1">
+<summary>Check your answers for Task 5 (reveal after writing your own)</summary>
 
 **5a.** dest-1: `65010 65030 65040` in both address families. dest-2: `65010 65050`. The IXP's route server (AS 65100) appears in neither path: route servers pass routes between members without inserting themselves, so the exchange stays invisible at the BGP level too.
 
 **5b.** Yes. Each group of traceroute hops falls inside one AS from the BGP path, in the same order, with the IXP LAN forming the invisible seam between 65010 and 65050. BGP gives you the network-level map; traceroute fills in the routers. Unit 3 builds on both views: RIPE Atlas gives you traceroutes from thousands of vantage points, and RIPEstat and RIS give you the BGP view of the whole Internet.
 
 **5c.** A /32 leaves 32 bits before the /64 boundary, so 2^32 subnets: 4,294,967,296 /64s, each holding more host addresses than the entire IPv4 Internet. Your single IPv6 allocation contains as many /64 networks as IPv4 has addresses in total.
+
+</details>
