@@ -88,6 +88,40 @@ blockquote { margin: 14px 0; padding: 10px 18px; border-left: 3px solid var(--bl
   background: var(--panel); border-radius: 0 6px 6px 0; }
 blockquote p { color: var(--muted); }
 
+/* callouts & alerts */
+.callout {
+  margin: 18px 0; padding: 14px 18px; background: var(--panel);
+  border-left: 4px solid var(--blue); border-radius: 0 8px 8px 0;
+}
+.callout.tip {
+  border-left-color: #4cd964; background: rgba(76, 217, 100, 0.07);
+}
+.callout.note {
+  border-left-color: var(--blue); background: rgba(143, 183, 225, 0.07);
+}
+.callout.important {
+  border-left-color: var(--orange); background: rgba(242, 107, 33, 0.07);
+}
+.callout.warning, .callout.caution {
+  border-left-color: #f36b6b; background: rgba(243, 107, 107, 0.07);
+}
+.callout-header {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+  font-family: var(--mono); font-size: 13px; font-weight: 700; letter-spacing: .5px;
+}
+.callout.tip .callout-header { color: #4cd964; }
+.callout.note .callout-header { color: var(--blue); }
+.callout.important .callout-header { color: var(--orange); }
+.callout.warning .callout-header, .callout.caution .callout-header { color: #f36b6b; }
+.callout-badge {
+  display: inline-block; padding: 1px 7px; border-radius: 4px;
+  font-size: 11px; font-weight: 700; background: rgba(255, 255, 255, 0.08);
+}
+.callout p { margin: 6px 0; }
+.callout p:first-of-type { margin-top: 0; }
+.callout p:last-child { margin-bottom: 0; }
+.callout .codewrap { margin: 10px 0 4px; }
+
 /* code */
 code { font-family: var(--mono); font-size: 14px; background: var(--panel-2);
   padding: 1.5px 6px; border-radius: 4px; color: var(--blue); }
@@ -682,18 +716,18 @@ traceroute -n 10.50.10.10
 traceroute -n -6 3fff:50:10::10
 </code></pre>
 <p>Using the address table, label every hop with its machine and AS number.</p>
-<blockquote>
-<p>[!TIP]
-<strong>How to read traceroute output:</strong>
-<code>text
-Hop #   IP address        Probe 1      Probe 2      Probe 3
+<div class="callout tip">
+<div class="callout-header">💡 <span class="callout-badge">TIP</span></div>
+<p><strong>How to read traceroute output:</strong></p>
+<pre><code class="language-text">Hop #   IP address        Probe 1      Probe 2      Probe 3
  1      10.1.10.1         0.118 ms     0.095 ms     0.088 ms    &lt;- host1 gateway (r3)
  2      10.1.1.1          0.231 ms     0.210 ms     0.198 ms    &lt;- Border router A (r1)
  3      100.64.11.1       0.512 ms     0.485 ms     0.462 ms    &lt;- Upstream A (ra)
  4      100.64.13.2       20.851 ms    20.720 ms    20.690 ms   &lt;- Transit entry (rt)
  5      100.64.34.2       45.920 ms    45.810 ms    45.750 ms   &lt;- Dest-1 gateway (rd1)
- 6      10.40.10.10       46.150 ms    46.020 ms    45.980 ms   &lt;- Target 1</code></p>
-</blockquote>
+ 6      10.40.10.10       46.150 ms    46.020 ms    45.980 ms   &lt;- Target 1
+</code></pre>
+</div>
 <p><strong>Question 1a.</strong> How many ASes does your traffic cross to reach target1? And to reach target2?</p>
 <p><strong>Question 1b.</strong> For each target, do IPv4 and IPv6 follow the same sequence of machines?</p>
 <p><strong>Question 1c.</strong> The path to target2 crosses the IXP. Which single hop in the traceroute tells you that, and what is odd about how the exchange itself appears?</p>
@@ -748,11 +782,10 @@ rtt min/avg/max/mdev = 1.450/1.620/1.890/0.125 ms
 <pre><code>mtr -n --report --report-cycles 100 10.40.10.10
 </code></pre>
 <p>This takes about two minutes. Read the columns: <code>Loss%</code>, <code>Avg</code>, <code>Best</code>, <code>Wrst</code> (worst) and <code>StDev</code> (the spread of round-trip times, one way to express jitter). Repeat for target2 and compare.</p>
-<blockquote>
-<p>[!TIP]
-<strong>Anatomy of an MTR report:</strong>
-<code>text
-HOST: host1                       Loss%   Snt   Last   Avg  Best  Wrst StDev
+<div class="callout tip">
+<div class="callout-header">💡 <span class="callout-badge">TIP</span></div>
+<p><strong>Anatomy of an MTR report:</strong></p>
+<pre><code class="language-text">HOST: host1                       Loss%   Snt   Last   Avg  Best  Wrst StDev
   1.|-- 10.1.10.1                  0.0%   100    0.1   0.1   0.1   0.2   0.0
   2.|-- 10.1.1.1                   0.0%   100    0.2   0.2   0.2   0.3   0.0
   3.|-- 100.64.11.1                0.0%   100    0.5   0.5   0.4   0.7   0.1
@@ -761,8 +794,9 @@ HOST: host1                       Loss%   Snt   Last   Avg  Best  Wrst StDev
   6.|-- 10.40.10.10                1.0%   100   46.1  46.2  45.8  47.9   0.5
                                    ^^^^               ^^^               ^^^^^
                                 Packet loss         Average            Jitter
-                              (starts hop 5)        latency          (Std Dev)</code></p>
-</blockquote>
+                              (starts hop 5)        latency          (Std Dev)
+</code></pre>
+</div>
 <p><strong>Question 3a.</strong> On the target1 path, at which hop does packet loss first appear, and does it persist to the destination?</p>
 <p><strong>Question 3b.</strong> Which hop shows the largest StDev? Express in one sentence what that number tells you about the path beyond that hop.</p>
 <details class="answers">
@@ -813,16 +847,16 @@ show bgp ipv6 unicast 3fff:40::/32
 show bgp ipv4 unicast 10.50.0.0/16
 show bgp ipv6 unicast 3fff:50::/32
 </code></pre>
-<blockquote>
-<p>[!TIP]
-<strong>How to read BGP routing entries (<code>show bgp ipv4 unicast &lt;prefix&gt;</code>):</strong>
-<code>text
-BGP routing table entry for 10.40.0.0/16
+<div class="callout tip">
+<div class="callout-header">💡 <span class="callout-badge">TIP</span></div>
+<p><strong>How to read BGP routing entries (<code>show bgp ipv4 unicast &lt;prefix&gt;</code>):</strong></p>
+<pre><code class="language-text">BGP routing table entry for 10.40.0.0/16
 Paths: (1 available, best #1)
   65010 65030 65040                         &lt;-- AS Path (read right to left: origin -&gt; transit -&gt; upstream)
     100.64.11.1 from 100.64.11.1 (ra.measlab) &lt;-- Next hop router and advertising peer
-      Origin IGP, metric 0, valid, external, best (First path received)</code></p>
-</blockquote>
+      Origin IGP, metric 0, valid, external, best (First path received)
+</code></pre>
+</div>
 <p><strong>Question 5a.</strong> Read the AS path attribute for each destination. Which ASes appear, in what order, and does the IXP appear?</p>
 <p><strong>Question 5b.</strong> Compare the AS paths with your traceroutes from Task 1. The traceroute shows individual routers; the AS path shows networks. Do the two views agree?</p>
 <p><strong>Question 5c.</strong> Every AS in this lab announces one IPv4 /16 and one IPv6 /32. A /16 holds 65,536 addresses. Using prefix arithmetic, how many /64 subnets fit in your 3fff:1::/32?</p>

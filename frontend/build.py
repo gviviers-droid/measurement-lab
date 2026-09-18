@@ -327,11 +327,49 @@ def wrap_spoilers(html: str) -> str:
     return html
 
 
+def convert_alerts(text: str) -> str:
+    """Convert GitHub-style alerts (> [!TIP], etc.) into styled callout blocks."""
+    def repl(m):
+        kind = m.group(1).lower()
+        block = m.group(2)
+        lines = []
+        for line in block.split("\n"):
+            if line.startswith("> "):
+                lines.append(line[2:])
+            elif line.startswith(">"):
+                lines.append(line[1:])
+            else:
+                lines.append(line)
+        inner = "\n".join(lines).strip()
+        icon = ""
+        if kind == "tip":
+            icon = "💡 "
+        elif kind == "note":
+            icon = "ℹ️ "
+        elif kind in ("warning", "caution"):
+            icon = "⚠️ "
+        elif kind == "important":
+            icon = "❗ "
+        return (
+            f'\n<div class="callout {kind}" markdown="1">\n'
+            f'<div class="callout-header">{icon}<span class="callout-badge">{kind.upper()}</span></div>\n\n'
+            f'{inner}\n'
+            f'</div>\n'
+        )
+
+    pattern = re.compile(
+        r"^>[ \t]*\[!(TIP|NOTE|IMPORTANT|WARNING|CAUTION)\][ \t]*\n((?:>[ \t]*[^\n]*\n?)*)",
+        re.M,
+    )
+    return pattern.sub(repl, text)
+
+
 def load_page(path: Path):
     text = path.read_text(encoding="utf-8")
     title_match = re.search(r"^# (.+)$", text, re.M)
     title = title_match.group(1) if title_match else path.stem
     body = re.sub(r"^# .+$", "", text, count=1, flags=re.M)
+    body = convert_alerts(body)
     html = wrap_spoilers(md_to_html(body))
     return title, html
 
@@ -498,6 +536,40 @@ strong { color: #fff; }
 blockquote { margin: 14px 0; padding: 10px 18px; border-left: 3px solid var(--blue);
   background: var(--panel); border-radius: 0 6px 6px 0; }
 blockquote p { color: var(--muted); }
+
+/* callouts & alerts */
+.callout {
+  margin: 18px 0; padding: 14px 18px; background: var(--panel);
+  border-left: 4px solid var(--blue); border-radius: 0 8px 8px 0;
+}
+.callout.tip {
+  border-left-color: #4cd964; background: rgba(76, 217, 100, 0.07);
+}
+.callout.note {
+  border-left-color: var(--blue); background: rgba(143, 183, 225, 0.07);
+}
+.callout.important {
+  border-left-color: var(--orange); background: rgba(242, 107, 33, 0.07);
+}
+.callout.warning, .callout.caution {
+  border-left-color: #f36b6b; background: rgba(243, 107, 107, 0.07);
+}
+.callout-header {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+  font-family: var(--mono); font-size: 13px; font-weight: 700; letter-spacing: .5px;
+}
+.callout.tip .callout-header { color: #4cd964; }
+.callout.note .callout-header { color: var(--blue); }
+.callout.important .callout-header { color: var(--orange); }
+.callout.warning .callout-header, .callout.caution .callout-header { color: #f36b6b; }
+.callout-badge {
+  display: inline-block; padding: 1px 7px; border-radius: 4px;
+  font-size: 11px; font-weight: 700; background: rgba(255, 255, 255, 0.08);
+}
+.callout p { margin: 6px 0; }
+.callout p:first-of-type { margin-top: 0; }
+.callout p:last-child { margin-bottom: 0; }
+.callout .codewrap { margin: 10px 0 4px; }
 
 /* code */
 code { font-family: var(--mono); font-size: 14px; background: var(--panel-2);

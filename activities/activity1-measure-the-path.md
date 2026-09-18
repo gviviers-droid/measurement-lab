@@ -50,6 +50,7 @@ Using the address table, label every hop with its machine and AS number.
 
 > [!TIP]
 > **How to read traceroute output:**
+>
 > ```text
 > Hop #   IP address        Probe 1      Probe 2      Probe 3
 >  1      10.1.10.1         0.118 ms     0.095 ms     0.088 ms    <- host1 gateway (r3)
@@ -146,6 +147,7 @@ This takes about two minutes. Read the columns: `Loss%`, `Avg`, `Best`, `Wrst` (
 
 > [!TIP]
 > **Anatomy of an MTR report:**
+>
 > ```text
 > HOST: host1                       Loss%   Snt   Last   Avg  Best  Wrst StDev
 >   1.|-- 10.1.10.1                  0.0%   100    0.1   0.1   0.1   0.2   0.0
@@ -239,6 +241,7 @@ show bgp ipv6 unicast 3fff:50::/32
 
 > [!TIP]
 > **How to read BGP routing entries (`show bgp ipv4 unicast <prefix>`):**
+>
 > ```text
 > BGP routing table entry for 10.40.0.0/16
 > Paths: (1 available, best #1)
