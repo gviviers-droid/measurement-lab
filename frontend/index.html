@@ -1041,8 +1041,8 @@ Paths: (2 available, best #2)
 <p><strong>3c.</strong> Local preference. The peering route carries 250 against 200 for the transit-learned route via r1, so it wins before AS path length is even compared. Your own policy, not the Internet, made this choice, which is the point: routing is policy, and you just set one.</p>
 <p><strong>3d.</strong> Nothing changed for target1. dest-1 is not present at the exchange, so your new sessions offer no route to it. The rule: peering improves reachability only to networks that are also at the exchange; everything else still rides transit. Real peering decisions weigh exactly this: how much of my traffic goes to networks I could reach across this fabric?</p>
 </details>
-<h2>Task 4: The business case</h2>
-<p>Write three sentences a manager would understand: what you enabled, what measurably improved, and for which destinations. Then restore the base state for the next activity by clicking <strong>Disable peering</strong> in the Control Portal (or run):</p>
+<h2>Task 4: Summarise the findings and scope</h2>
+<p>Write three concise sentences suitable for non-specialist stakeholders: what you enabled, what measurably improved, and the exact scope of the improvement (which destinations improved and which did not). Then restore the base state for the next activity by clicking <strong>Disable peering</strong> in the Control Portal (or run):</p>
 <pre><code>sudo ./scripts/peering.sh down
 </code></pre>
 <details class="answers">

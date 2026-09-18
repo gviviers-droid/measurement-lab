@@ -119,9 +119,9 @@ Paths: (2 available, best #2)
 
 </details>
 
-## Task 4: The business case
+## Task 4: Summarise the findings and scope
 
-Write three sentences a manager would understand: what you enabled, what measurably improved, and for which destinations. Then restore the base state for the next activity by clicking **Disable peering** in the Control Portal (or run):
+Write three concise sentences suitable for non-specialist stakeholders: what you enabled, what measurably improved, and the exact scope of the improvement (which destinations improved and which did not). Then restore the base state for the next activity by clicking **Disable peering** in the Control Portal (or run):
 
 ```
 sudo ./scripts/peering.sh down
