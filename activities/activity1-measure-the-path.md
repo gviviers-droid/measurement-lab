@@ -48,6 +48,18 @@ traceroute -n -6 3fff:50:10::10
 
 Using the address table, label every hop with its machine and AS number.
 
+> [!TIP]
+> **How to read traceroute output:**
+> ```text
+> Hop #   IP address        Probe 1      Probe 2      Probe 3
+>  1      10.1.10.1         0.118 ms     0.095 ms     0.088 ms    <- host1 gateway (r3)
+>  2      10.1.1.1          0.231 ms     0.210 ms     0.198 ms    <- Border router A (r1)
+>  3      100.64.11.1       0.512 ms     0.485 ms     0.462 ms    <- Upstream A (ra)
+>  4      100.64.13.2       20.851 ms    20.720 ms    20.690 ms   <- Transit entry (rt)
+>  5      100.64.34.2       45.920 ms    45.810 ms    45.750 ms   <- Dest-1 gateway (rd1)
+>  6      10.40.10.10       46.150 ms    46.020 ms    45.980 ms   <- Target 1
+> ```
+
 **Question 1a.** How many ASes does your traffic cross to reach target1? And to reach target2?
 
 **Question 1b.** For each target, do IPv4 and IPv6 follow the same sequence of machines?
@@ -56,6 +68,23 @@ Using the address table, label every hop with its machine and AS number.
 
 <details class="answers" markdown="1">
 <summary>Check your answers for Task 1 (reveal after writing your own)</summary>
+
+```text
+Sample output (traceroute -n 10.40.10.10):
+ 1  10.1.10.1    0.118 ms  0.095 ms  0.088 ms
+ 2  10.1.1.1     0.231 ms  0.210 ms  0.198 ms
+ 3  100.64.11.1  0.512 ms  0.485 ms  0.462 ms
+ 4  100.64.13.2  20.851 ms 20.720 ms 20.690 ms
+ 5  100.64.34.2  45.920 ms 45.810 ms 45.750 ms
+ 6  10.40.10.10  46.150 ms 46.020 ms 45.980 ms
+
+Sample output (traceroute -n 10.50.10.10):
+ 1  10.1.10.1     0.115 ms  0.092 ms  0.085 ms
+ 2  10.1.1.1      0.228 ms  0.205 ms  0.192 ms
+ 3  100.64.11.1   0.508 ms  0.480 ms  0.458 ms
+ 4  100.64.99.50  1.482 ms  1.420 ms  1.390 ms  (dest-2 IXP port)
+ 5  10.50.10.10   1.750 ms  1.690 ms  1.650 ms
+```
 
 **1a.** target1: four ASes, your 65001, upstream A (65010), transit (65030) and 65040. target2: three, your 65001, upstream A (65010) and 65050.
 
@@ -85,6 +114,18 @@ Then walk the target1 path: ping each hop from Task 1 in order and record the av
 <details class="answers" markdown="1">
 <summary>Check your answers for Task 2 (reveal after writing your own)</summary>
 
+```text
+Sample output (ping -c 10 10.40.10.10):
+--- 10.40.10.10 ping statistics ---
+10 packets transmitted, 10 received, 0% packet loss, time 9014ms
+rtt min/avg/max/mdev = 45.812/46.104/47.230/0.412 ms
+
+Sample output (ping -c 10 10.50.10.10):
+--- 10.50.10.10 ping statistics ---
+10 packets transmitted, 10 received, 0% packet loss, time 9012ms
+rtt min/avg/max/mdev = 1.450/1.620/1.890/0.125 ms
+```
+
 **2a.** First jump: between upstream A (100.64.11.1) and the transit router (100.64.13.2), where the average rises by roughly 20 ms. Second jump: between the transit router and the dest-1 router (100.64.34.2), roughly 25 ms more.
 
 **2b.** target2 skips transit. Traffic crosses the IXP peering LAN directly from upstream A to dest-2, avoiding both impaired long-haul links, so the round trip stays within a few milliseconds. Peering shortens paths, and your measurements have now quantified by how much.
@@ -103,12 +144,46 @@ mtr -n --report --report-cycles 100 10.40.10.10
 
 This takes about two minutes. Read the columns: `Loss%`, `Avg`, `Best`, `Wrst` (worst) and `StDev` (the spread of round-trip times, one way to express jitter). Repeat for target2 and compare.
 
+> [!TIP]
+> **Anatomy of an MTR report:**
+> ```text
+> HOST: host1                       Loss%   Snt   Last   Avg  Best  Wrst StDev
+>   1.|-- 10.1.10.1                  0.0%   100    0.1   0.1   0.1   0.2   0.0
+>   2.|-- 10.1.1.1                   0.0%   100    0.2   0.2   0.2   0.3   0.0
+>   3.|-- 100.64.11.1                0.0%   100    0.5   0.5   0.4   0.7   0.1
+>   4.|-- 100.64.13.2                0.0%   100   20.7  20.8  20.4  21.9   0.3
+>   5.|-- 100.64.34.2                1.0%   100   45.8  46.0  45.5  48.2   0.6
+>   6.|-- 10.40.10.10                1.0%   100   46.1  46.2  45.8  47.9   0.5
+>                                    ^^^^               ^^^               ^^^^^
+>                                 Packet loss         Average            Jitter
+>                               (starts hop 5)        latency          (Std Dev)
+> ```
+
 **Question 3a.** On the target1 path, at which hop does packet loss first appear, and does it persist to the destination?
 
 **Question 3b.** Which hop shows the largest StDev? Express in one sentence what that number tells you about the path beyond that hop.
 
 <details class="answers" markdown="1">
 <summary>Check your answers for Task 3 (reveal after writing your own)</summary>
+
+```text
+Sample output (mtr -n --report --report-cycles 100 10.40.10.10):
+HOST: host1                       Loss%   Snt   Last   Avg  Best  Wrst StDev
+  1.|-- 10.1.10.1                  0.0%   100    0.1   0.1   0.1   0.2   0.0
+  2.|-- 10.1.1.1                   0.0%   100    0.2   0.2   0.2   0.3   0.0
+  3.|-- 100.64.11.1                0.0%   100    0.5   0.5   0.4   0.7   0.1
+  4.|-- 100.64.13.2                0.0%   100   20.8  20.8  20.4  22.1   0.3
+  5.|-- 100.64.34.2                1.0%   100   45.9  46.0  45.5  48.2   0.6
+  6.|-- 10.40.10.10                1.0%   100   46.1  46.2  45.8  48.5   0.5
+
+Sample output (mtr -n --report --report-cycles 100 10.50.10.10):
+HOST: host1                       Loss%   Snt   Last   Avg  Best  Wrst StDev
+  1.|-- 10.1.10.1                  0.0%   100    0.1   0.1   0.1   0.2   0.0
+  2.|-- 10.1.1.1                   0.0%   100    0.2   0.2   0.2   0.3   0.0
+  3.|-- 100.64.11.1                0.0%   100    0.5   0.5   0.4   0.7   0.1
+  4.|-- 100.64.99.50               0.0%   100    1.4   1.4   1.3   1.8   0.1
+  5.|-- 10.50.10.10                0.0%   100    1.7   1.7   1.5   2.1   0.1
+```
 
 **3a.** Loss of around 1% first appears at the dest-1 router (100.64.34.2) and persists to target1. Loss that starts at one hop and continues to the destination points at a real problem on the path. Loss appearing at a single middle hop and then vanishing usually means that router deprioritises replies addressed to itself while forwarding your traffic without harm. The target2 path shows no loss.
 
@@ -133,6 +208,12 @@ The final line reports `min/avg/max/mdev`.
 <details class="answers" markdown="1">
 <summary>Check your answers for Task 4 (reveal after writing your own)</summary>
 
+```text
+Sample output (ping -c 100 -i 0.2 10.40.10.10 summary):
+100 packets transmitted, 99 received, 1% packet loss, time 20025ms
+rtt min/avg/max/mdev = 45.712/46.185/58.420/1.340 ms
+```
+
 **4a.** Expect a spread of roughly 10 to 20 ms between minimum and maximum. A single ping landing at the maximum would have overstated typical latency by around a quarter to a third.
 
 **4b.** There is no single correct answer, and that is the point. The minimum approximates the clean path latency, the average reflects typical experience, and neither captures the spread. Any honest report needs at least two numbers.
@@ -156,6 +237,16 @@ show bgp ipv4 unicast 10.50.0.0/16
 show bgp ipv6 unicast 3fff:50::/32
 ```
 
+> [!TIP]
+> **How to read BGP routing entries (`show bgp ipv4 unicast <prefix>`):**
+> ```text
+> BGP routing table entry for 10.40.0.0/16
+> Paths: (1 available, best #1)
+>   65010 65030 65040                         <-- AS Path (read right to left: origin -> transit -> upstream)
+>     100.64.11.1 from 100.64.11.1 (ra.measlab) <-- Next hop router and advertising peer
+>       Origin IGP, metric 0, valid, external, best (First path received)
+> ```
+
 **Question 5a.** Read the AS path attribute for each destination. Which ASes appear, in what order, and does the IXP appear?
 
 **Question 5b.** Compare the AS paths with your traceroutes from Task 1. The traceroute shows individual routers; the AS path shows networks. Do the two views agree?
@@ -166,6 +257,22 @@ Type `exit` to return to the container shell (or twice to exit if you used `podm
 
 <details class="answers" markdown="1">
 <summary>Check your answers for Task 5 (reveal after writing your own)</summary>
+
+```text
+Sample output (show bgp ipv4 unicast 10.40.0.0/16):
+BGP routing table entry for 10.40.0.0/16
+Paths: (1 available, best #1)
+  65010 65030 65040
+    100.64.11.1 from 100.64.11.1 (ra.measlab)
+      Origin IGP, metric 0, valid, external, best (First path received)
+
+Sample output (show bgp ipv4 unicast 10.50.0.0/16):
+BGP routing table entry for 10.50.0.0/16
+Paths: (1 available, best #1)
+  65010 65050
+    100.64.11.1 from 100.64.11.1 (ra.measlab)
+      Origin IGP, metric 0, valid, external, best (First path received)
+```
 
 **5a.** dest-1: `65010 65030 65040` in both address families. dest-2: `65010 65050`. The IXP's route server (AS 65100) appears in neither path: route servers pass routes between members without inserting themselves, so the exchange stays invisible at the BGP level too.
 

@@ -682,11 +682,38 @@ traceroute -n 10.50.10.10
 traceroute -n -6 3fff:50:10::10
 </code></pre>
 <p>Using the address table, label every hop with its machine and AS number.</p>
+<blockquote>
+<p>[!TIP]
+<strong>How to read traceroute output:</strong>
+<code>text
+Hop #   IP address        Probe 1      Probe 2      Probe 3
+ 1      10.1.10.1         0.118 ms     0.095 ms     0.088 ms    &lt;- host1 gateway (r3)
+ 2      10.1.1.1          0.231 ms     0.210 ms     0.198 ms    &lt;- Border router A (r1)
+ 3      100.64.11.1       0.512 ms     0.485 ms     0.462 ms    &lt;- Upstream A (ra)
+ 4      100.64.13.2       20.851 ms    20.720 ms    20.690 ms   &lt;- Transit entry (rt)
+ 5      100.64.34.2       45.920 ms    45.810 ms    45.750 ms   &lt;- Dest-1 gateway (rd1)
+ 6      10.40.10.10       46.150 ms    46.020 ms    45.980 ms   &lt;- Target 1</code></p>
+</blockquote>
 <p><strong>Question 1a.</strong> How many ASes does your traffic cross to reach target1? And to reach target2?</p>
 <p><strong>Question 1b.</strong> For each target, do IPv4 and IPv6 follow the same sequence of machines?</p>
 <p><strong>Question 1c.</strong> The path to target2 crosses the IXP. Which single hop in the traceroute tells you that, and what is odd about how the exchange itself appears?</p>
 <details class="answers">
 <summary>Check your answers for Task 1 (reveal after writing your own)</summary>
+<pre><code class="language-text">Sample output (traceroute -n 10.40.10.10):
+ 1  10.1.10.1    0.118 ms  0.095 ms  0.088 ms
+ 2  10.1.1.1     0.231 ms  0.210 ms  0.198 ms
+ 3  100.64.11.1  0.512 ms  0.485 ms  0.462 ms
+ 4  100.64.13.2  20.851 ms 20.720 ms 20.690 ms
+ 5  100.64.34.2  45.920 ms 45.810 ms 45.750 ms
+ 6  10.40.10.10  46.150 ms 46.020 ms 45.980 ms
+
+Sample output (traceroute -n 10.50.10.10):
+ 1  10.1.10.1     0.115 ms  0.092 ms  0.085 ms
+ 2  10.1.1.1      0.228 ms  0.205 ms  0.192 ms
+ 3  100.64.11.1   0.508 ms  0.480 ms  0.458 ms
+ 4  100.64.99.50  1.482 ms  1.420 ms  1.390 ms  (dest-2 IXP port)
+ 5  10.50.10.10   1.750 ms  1.690 ms  1.650 ms
+</code></pre>
 <p><strong>1a.</strong> target1: four ASes, your 65001, upstream A (65010), transit (65030) and 65040. target2: three, your 65001, upstream A (65010) and 65050.</p>
 <p><strong>1b.</strong> Yes. In this lab's base state, IPv4 and IPv6 cross the same machines for both targets, which you can verify by matching each v6 hop to the same router's v4 address in the table. On the real Internet the two families sometimes take different paths; a later activity creates that situation.</p>
 <p><strong>1c.</strong> The hop 100.64.99.50 (IPv6: 3fff:ff::50) is dest-2's port on the IXP peering LAN, so your packet went straight from upstream A's IXP port to dest-2's. The odd part: the exchange itself never appears. An IXP is a shared LAN, a layer-2 fabric, so it adds no router hop of its own and, as Task 5 shows, no AS either.</p>
@@ -702,6 +729,16 @@ ping -c 10 10.50.10.10
 <p><strong>Question 2c.</strong> A colleague concludes that the router at the first jump is overloaded, because latency rises there. Give an alternative explanation for a latency jump between two hops that has nothing to do with router load.</p>
 <details class="answers">
 <summary>Check your answers for Task 2 (reveal after writing your own)</summary>
+<pre><code class="language-text">Sample output (ping -c 10 10.40.10.10):
+--- 10.40.10.10 ping statistics ---
+10 packets transmitted, 10 received, 0% packet loss, time 9014ms
+rtt min/avg/max/mdev = 45.812/46.104/47.230/0.412 ms
+
+Sample output (ping -c 10 10.50.10.10):
+--- 10.50.10.10 ping statistics ---
+10 packets transmitted, 10 received, 0% packet loss, time 9012ms
+rtt min/avg/max/mdev = 1.450/1.620/1.890/0.125 ms
+</code></pre>
 <p><strong>2a.</strong> First jump: between upstream A (100.64.11.1) and the transit router (100.64.13.2), where the average rises by roughly 20 ms. Second jump: between the transit router and the dest-1 router (100.64.34.2), roughly 25 ms more.</p>
 <p><strong>2b.</strong> target2 skips transit. Traffic crosses the IXP peering LAN directly from upstream A to dest-2, avoiding both impaired long-haul links, so the round trip stays within a few milliseconds. Peering shortens paths, and your measurements have now quantified by how much.</p>
 <p><strong>2c.</strong> Distance. A link spanning a long physical distance adds propagation delay on every packet regardless of how busy the routers at either end are. In this lab the two jumps represent long-haul links, and both were injected on purpose; the routers themselves are idle.</p>
@@ -711,10 +748,42 @@ ping -c 10 10.50.10.10
 <pre><code>mtr -n --report --report-cycles 100 10.40.10.10
 </code></pre>
 <p>This takes about two minutes. Read the columns: <code>Loss%</code>, <code>Avg</code>, <code>Best</code>, <code>Wrst</code> (worst) and <code>StDev</code> (the spread of round-trip times, one way to express jitter). Repeat for target2 and compare.</p>
+<blockquote>
+<p>[!TIP]
+<strong>Anatomy of an MTR report:</strong>
+<code>text
+HOST: host1                       Loss%   Snt   Last   Avg  Best  Wrst StDev
+  1.|-- 10.1.10.1                  0.0%   100    0.1   0.1   0.1   0.2   0.0
+  2.|-- 10.1.1.1                   0.0%   100    0.2   0.2   0.2   0.3   0.0
+  3.|-- 100.64.11.1                0.0%   100    0.5   0.5   0.4   0.7   0.1
+  4.|-- 100.64.13.2                0.0%   100   20.7  20.8  20.4  21.9   0.3
+  5.|-- 100.64.34.2                1.0%   100   45.8  46.0  45.5  48.2   0.6
+  6.|-- 10.40.10.10                1.0%   100   46.1  46.2  45.8  47.9   0.5
+                                   ^^^^               ^^^               ^^^^^
+                                Packet loss         Average            Jitter
+                              (starts hop 5)        latency          (Std Dev)</code></p>
+</blockquote>
 <p><strong>Question 3a.</strong> On the target1 path, at which hop does packet loss first appear, and does it persist to the destination?</p>
 <p><strong>Question 3b.</strong> Which hop shows the largest StDev? Express in one sentence what that number tells you about the path beyond that hop.</p>
 <details class="answers">
 <summary>Check your answers for Task 3 (reveal after writing your own)</summary>
+<pre><code class="language-text">Sample output (mtr -n --report --report-cycles 100 10.40.10.10):
+HOST: host1                       Loss%   Snt   Last   Avg  Best  Wrst StDev
+  1.|-- 10.1.10.1                  0.0%   100    0.1   0.1   0.1   0.2   0.0
+  2.|-- 10.1.1.1                   0.0%   100    0.2   0.2   0.2   0.3   0.0
+  3.|-- 100.64.11.1                0.0%   100    0.5   0.5   0.4   0.7   0.1
+  4.|-- 100.64.13.2                0.0%   100   20.8  20.8  20.4  22.1   0.3
+  5.|-- 100.64.34.2                1.0%   100   45.9  46.0  45.5  48.2   0.6
+  6.|-- 10.40.10.10                1.0%   100   46.1  46.2  45.8  48.5   0.5
+
+Sample output (mtr -n --report --report-cycles 100 10.50.10.10):
+HOST: host1                       Loss%   Snt   Last   Avg  Best  Wrst StDev
+  1.|-- 10.1.10.1                  0.0%   100    0.1   0.1   0.1   0.2   0.0
+  2.|-- 10.1.1.1                   0.0%   100    0.2   0.2   0.2   0.3   0.0
+  3.|-- 100.64.11.1                0.0%   100    0.5   0.5   0.4   0.7   0.1
+  4.|-- 100.64.99.50               0.0%   100    1.4   1.4   1.3   1.8   0.1
+  5.|-- 10.50.10.10                0.0%   100    1.7   1.7   1.5   2.1   0.1
+</code></pre>
 <p><strong>3a.</strong> Loss of around 1% first appears at the dest-1 router (100.64.34.2) and persists to target1. Loss that starts at one hop and continues to the destination points at a real problem on the path. Loss appearing at a single middle hop and then vanishing usually means that router deprioritises replies addressed to itself while forwarding your traffic without harm. The target2 path shows no loss.</p>
 <p><strong>3b.</strong> The final hops of the target1 path show the largest StDev, because they sit behind both jittery links and jitter accumulates along a path. The number tells you how much individual round-trip times swing around the average: unstable delivery, even when the average looks acceptable.</p>
 </details>
@@ -727,6 +796,10 @@ ping -c 10 10.50.10.10
 <p><strong>Question 4b.</strong> For this path, which single number would you report to a colleague as "the latency", and why? Keep your answer; Module 2.5 and the next activity return to this question with better tools.</p>
 <details class="answers">
 <summary>Check your answers for Task 4 (reveal after writing your own)</summary>
+<pre><code class="language-text">Sample output (ping -c 100 -i 0.2 10.40.10.10 summary):
+100 packets transmitted, 99 received, 1% packet loss, time 20025ms
+rtt min/avg/max/mdev = 45.712/46.185/58.420/1.340 ms
+</code></pre>
 <p><strong>4a.</strong> Expect a spread of roughly 10 to 20 ms between minimum and maximum. A single ping landing at the maximum would have overstated typical latency by around a quarter to a third.</p>
 <p><strong>4b.</strong> There is no single correct answer, and that is the point. The minimum approximates the clean path latency, the average reflects typical experience, and neither captures the spread. Any honest report needs at least two numbers.</p>
 </details>
@@ -740,12 +813,36 @@ show bgp ipv6 unicast 3fff:40::/32
 show bgp ipv4 unicast 10.50.0.0/16
 show bgp ipv6 unicast 3fff:50::/32
 </code></pre>
+<blockquote>
+<p>[!TIP]
+<strong>How to read BGP routing entries (<code>show bgp ipv4 unicast &lt;prefix&gt;</code>):</strong>
+<code>text
+BGP routing table entry for 10.40.0.0/16
+Paths: (1 available, best #1)
+  65010 65030 65040                         &lt;-- AS Path (read right to left: origin -&gt; transit -&gt; upstream)
+    100.64.11.1 from 100.64.11.1 (ra.measlab) &lt;-- Next hop router and advertising peer
+      Origin IGP, metric 0, valid, external, best (First path received)</code></p>
+</blockquote>
 <p><strong>Question 5a.</strong> Read the AS path attribute for each destination. Which ASes appear, in what order, and does the IXP appear?</p>
 <p><strong>Question 5b.</strong> Compare the AS paths with your traceroutes from Task 1. The traceroute shows individual routers; the AS path shows networks. Do the two views agree?</p>
 <p><strong>Question 5c.</strong> Every AS in this lab announces one IPv4 /16 and one IPv6 /32. A /16 holds 65,536 addresses. Using prefix arithmetic, how many /64 subnets fit in your 3fff:1::/32?</p>
 <p>Type <code>exit</code> to return to the container shell (or twice to exit if you used <code>podman exec</code>).</p>
 <details class="answers">
 <summary>Check your answers for Task 5 (reveal after writing your own)</summary>
+<pre><code class="language-text">Sample output (show bgp ipv4 unicast 10.40.0.0/16):
+BGP routing table entry for 10.40.0.0/16
+Paths: (1 available, best #1)
+  65010 65030 65040
+    100.64.11.1 from 100.64.11.1 (ra.measlab)
+      Origin IGP, metric 0, valid, external, best (First path received)
+
+Sample output (show bgp ipv4 unicast 10.50.0.0/16):
+BGP routing table entry for 10.50.0.0/16
+Paths: (1 available, best #1)
+  65010 65050
+    100.64.11.1 from 100.64.11.1 (ra.measlab)
+      Origin IGP, metric 0, valid, external, best (First path received)
+</code></pre>
 <p><strong>5a.</strong> dest-1: <code>65010 65030 65040</code> in both address families. dest-2: <code>65010 65050</code>. The IXP's route server (AS 65100) appears in neither path: route servers pass routes between members without inserting themselves, so the exchange stays invisible at the BGP level too.</p>
 <p><strong>5b.</strong> Yes. Each group of traceroute hops falls inside one AS from the BGP path, in the same order, with the IXP LAN forming the invisible seam between 65010 and 65050. BGP gives you the network-level map; traceroute fills in the routers. Unit 3 builds on both views: RIPE Atlas gives you traceroutes from thousands of vantage points, and RIPEstat and RIS give you the BGP view of the whole Internet.</p>
 <p><strong>5c.</strong> A /32 leaves 32 bits before the /64 boundary, so 2^32 subnets: 4,294,967,296 /64s, each holding more host addresses than the entire IPv4 Internet. Your single IPv6 allocation contains as many /64 networks as IPv4 has addresses in total.</p>
@@ -788,6 +885,19 @@ show bgp ipv6 unicast 3fff:50::/32
 <p><strong>Question 3c.</strong> Did loss change, and at the same hop as in Activity 1 or elsewhere?</p>
 <details class="answers">
 <summary>Check your answers for Task 3 (reveal after writing your own)</summary>
+<pre><code class="language-text">Sample statistical comparison:
+baseline.txt: count: 100 | mean:  46.12 | median: 46.05 | p95:  47.10 | min: 45.82 | max:  48.91
+busy.txt:     count:  88 | mean: 115.42 | median: 68.10 | p95: 295.30 | min: 45.90 | max: 418.50
+
+Sample MTR report under congestion (mtr -n --report --report-cycles 100 10.40.10.10):
+HOST: host1                       Loss%   Snt   Last   Avg  Best  Wrst StDev
+  1.|-- 10.1.10.1                  0.0%   100    0.1   0.1   0.1   0.2   0.0
+  2.|-- 10.1.1.1                   0.0%   100    0.2   0.2   0.2   0.3   0.0
+  3.|-- 100.64.11.1                0.0%   100    0.5   0.5   0.4   0.7   0.1
+  4.|-- 100.64.13.2                0.0%   100   20.8  20.8  20.4  22.1   0.3
+  5.|-- 100.64.34.2               12.0%   100  124.5 116.8  45.9 415.2  86.4
+  6.|-- 10.40.10.10               12.0%   100  125.1 117.2  46.1 418.5  86.1
+</code></pre>
 <p><strong>3a.</strong> The mean moves more than the median, because the mean absorbs the tail of queueing spikes while the median only shifts with the typical packet. The largest single change appears at the top of the distribution: p95 and max grow by far the most, from tens of milliseconds to potentially hundreds. Exact values vary between machines; the pattern does not.</p>
 <p><strong>3b.</strong> Queueing delay. Packets wait in the buffer of the loaded transit link before transmission, and the mtr report shows the inflation starting at the transit-to-dest-1 hop (100.64.34.2) while earlier hops keep their baseline figures. Propagation delay is physics and constant; queueing delay is load and variable. Telling them apart is one of the most useful skills in latency analysis.</p>
 <p><strong>3c.</strong> Yes. On top of the constant 1% you found in Activity 1, the loaded link drops packets whenever its queue overflows, so loss rises at the same hop and persists to the destination. Congestion loss and the baseline loss share a location but differ in behaviour: one vanishes when the load stops.</p>
@@ -829,6 +939,11 @@ show bgp ipv6 unicast 3fff:50::/32
 <p><strong>Question 1a.</strong> What state does r2 report for the two sessions towards 100.64.99.1 and 3fff:ff::1, and what does that state mean?</p>
 <details class="answers">
 <summary>Check your answer for Task 1 (reveal after writing your own)</summary>
+<pre><code class="language-text">Sample output (show bgp summary on r2):
+Neighbor        V    AS MsgRcvd MsgSent   TblVer  InQ OutQ  Up/Down State/PfxRcd
+100.64.99.1     4 65100       0       0        0    0    0    never Idle (Admin)
+3fff:ff::1      6 65100       0       0        0    0    0    never Idle (Admin)
+</code></pre>
 <p><strong>1a.</strong> Idle (Admin): the sessions exist in configuration but an operator shut them down on purpose. Configured-but-disabled is a normal state on real routers, and it differs from a session that is down because of a fault.</p>
 </details>
 <h2>Task 2: Become a peer</h2>
@@ -842,6 +957,12 @@ show bgp ipv6 unicast
 <p><strong>Question 2a.</strong> Which prefixes did the route server send you, and with what AS paths? One AS you expected to see in those paths is missing. Which, and why?</p>
 <details class="answers">
 <summary>Check your answer for Task 2 (reveal after writing your own)</summary>
+<pre><code class="language-text">Sample output (show bgp ipv4 unicast on r2):
+   Network          Next Hop            Metric LocPrf Weight Path
+*&gt; 10.10.0.0/16     100.64.99.10                             65010 ?
+*&gt; 10.20.0.0/16     100.64.99.20                             65020 ?
+*&gt; 10.50.0.0/16     100.64.99.50                             65050 ?
+</code></pre>
 <p><strong>2a.</strong> The route server passes you the prefixes of the other members: upstream A (10.10.0.0/16, 3fff:10::/32), upstream B, and dest-2 (10.50.0.0/16, 3fff:50::/32), each with a path of a single AS. Missing: AS 65100, the route server itself. A route server distributes routes between members without inserting its own AS number, so peering through it looks, in BGP, like a direct adjacency with every member.</p>
 </details>
 <h2>Task 3: The after picture</h2>
@@ -852,6 +973,19 @@ show bgp ipv6 unicast
 <p><strong>Question 3d.</strong> Measure target1 again. Did peering change anything for it? State the general rule this demonstrates.</p>
 <details class="answers">
 <summary>Check your answers for Task 3 (reveal after writing your own)</summary>
+<pre><code class="language-text">Sample output (traceroute -n 10.50.10.10):
+ 1  10.1.10.1     0.105 ms  0.088 ms  0.080 ms   (r3)
+ 2  10.1.2.1      0.210 ms  0.195 ms  0.180 ms   (r2 - border B!)
+ 3  100.64.99.50  0.550 ms  0.520 ms  0.490 ms   (dest-2 IXP port)
+ 4  10.50.10.10   0.780 ms  0.720 ms  0.690 ms   (target2)
+
+Sample excerpt (show bgp ipv4 unicast 10.50.0.0/16 on r2):
+Paths: (2 available, best #2)
+  65010 65050
+    10.1.1.1 (via iBGP from r1), LocPrf 200
+  65050
+    100.64.99.50 (via peering), LocPrf 250, best (Local Pref)
+</code></pre>
 <p><strong>3a.</strong> host1 to r3, then r2, then straight to dest-2's IXP port (100.64.99.50, or 3fff:ff::50), then target2. Four hops, leaving through r2, with upstream A no longer involved.</p>
 <p><strong>3b.</strong> Before: a few milliseconds via upstream A's peering (the path found in Activity 1). After: below a millisecond in both families, since the path now crosses only your own AS and the exchange fabric. The improvement is modest here because the before path was already peered at one remove; the structural gain is independence: your traffic to dest-2 no longer depends on upstream A at all, which Scenario 1 in the next activity makes valuable.</p>
 <p><strong>3c.</strong> Local preference. The peering route carries 250 against 200 for the transit-learned route via r1, so it wins before AS path length is even compared. Your own policy, not the Internet, made this choice, which is the point: routing is policy, and you just set one.</p>
@@ -906,6 +1040,27 @@ clear bgp * soft in
 </code></pre>
 <details class="answers"><summary>Model incident summary (reveal after writing your own)</summary>
 <p>Reveal after writing your own.</p>
+<pre><code class="language-text">Key diagnostic evidence:
+
+1. Detoured traceroute (traceroute -n 10.50.10.10):
+ 1  10.1.10.1      0.11 ms   (r3)
+ 2  10.1.1.1       0.22 ms   (r1)
+ 3  100.64.11.1    0.51 ms   (ra - Upstream A)
+ 4  100.64.13.2   20.85 ms   (rt - Transit carrier entry)
+ 5  100.64.35.2   50.92 ms   (rd2 backup transit link)
+ 6  10.50.10.10   51.15 ms   (target2 - RTT rose from &lt;2 ms to ~51 ms)
+
+2. BGP path prepending on r1 (show bgp ipv4 unicast 10.50.0.0/16):
+Paths: (1 available, best #1)
+  65010 65030 65050 65050 65050 65050
+    100.64.11.1 from 100.64.11.1 (ra.measlab)
+
+3. Looking glass on route-server (show bgp summary):
+Neighbor        V    AS MsgRcvd MsgSent   TblVer  InQ OutQ  Up/Down State/PfxRcd
+100.64.99.10    4 65010       0       0        0    0    0 00:04:12 Active
+100.64.99.20    4 65020    1452    1450        0    0    0 01:12:30        1
+100.64.99.50    4 65050    1455    1452        0    0    0 01:12:30        1
+</code></pre>
 <blockquote>
 <p><strong>Symptom.</strong> Round-trip time to target2 rose from under 2 ms to roughly 50 ms in both IPv4 and IPv6, with no packet loss. target1 measures unchanged, so the fault sits outside our network and outside the shared portion of the two paths.</p>
 <p><strong>Path change.</strong> Traffic to dest-2 previously crossed upstream A's port at the IXP directly to dest-2. It now detours through the transit carrier AS 65030 and enters dest-2 through its backup transit link (entering via 100.64.35.2 instead of 100.64.99.50; note that depending on Linux kernel ICMP address selection with asymmetric return routing via upstream B, traceroute hop 5 may report either 100.64.99.50 or 100.64.35.2, but with the elevated ~30-50 ms transit RTT). The BGP path for 10.50.0.0/16 reads 65010 65030 65050 65050 65050 65050: dest-2 prepends its AS on this route to mark it as a path of last resort, and the Internet is nevertheless using it.</p>
@@ -948,6 +1103,26 @@ sudo ./scripts/lg.sh route-server &quot;show bgp summary&quot;
 </code></pre>
 <details class="answers"><summary>Model incident summary (reveal after writing your own)</summary>
 <p>Reveal after writing your own.</p>
+<pre><code class="language-text">Key diagnostic evidence:
+
+1. MTR over 100 cycles to target1 (mtr -n --report --report-cycles 100 10.40.10.10):
+HOST: host1                       Loss%   Snt   Last   Avg  Best  Wrst StDev
+  1.|-- 10.1.10.1                  0.0%   100    0.1   0.1   0.1   0.2   0.0
+  2.|-- 10.1.1.1                   0.0%   100    0.2   0.2   0.2   0.3   0.0
+  3.|-- 100.64.11.1                0.0%   100    0.5   0.5   0.4   0.7   0.1
+  4.|-- 100.64.13.2                0.0%   100   20.8  20.8  20.4  22.1   0.3
+  5.|-- ???                       100.0   100    0.0   0.0   0.0   0.0   0.0
+  6.|-- 10.40.10.10               48.0%   100   46.1  46.2  45.8  47.9   0.5
+  (Intermediate hops stay clean while destination shows ~50% loss)
+
+2. Ping error during outage window:
+From 10.1.1.1 icmp_seq=1 Destination Net Unreachable
+(Indicates routing table withdrawal on our first hop, not link packet loss)
+
+3. Control plane BGP lookup (show bgp ipv4 unicast 10.40.0.0/16 on r1):
+- UP window:   route present, age resets: Last update: 00:00:15 ago
+- DOWN window: % Network not in table
+</code></pre>
 <blockquote>
 <p><strong>Symptom.</strong> target1 alternates between full reachability and total outage in a regular cycle of roughly 40 seconds each way, in both address families. Over a two-minute mtr, loss to target1 reads near 50%, while every intermediate hop up to the transit carrier stays clean. target2 is unaffected.</p>
 <p><strong>This is routing, not a lossy link.</strong> During outage windows our own routers hold no route to 10.40.0.0/16 or 3fff:40::/32 at all: pings fail with "Network unreachable" from our first hop rather than timing out, and the BGP table entry for the prefix vanishes and reappears with an age of seconds. Packet loss degrades a path; a withdrawn route removes it. We observed removal.</p>
@@ -1015,6 +1190,18 @@ sudo ./scripts/lg.sh upstream-a &quot;show bgp ipv4 unicast 10.50.0.0/16&quot;
 </code></pre>
 <details class="answers"><summary>Model incident summary (reveal after writing your own)</summary>
 <p>Reveal after writing your own.</p>
+<pre><code class="language-text">Key diagnostic comparison:
+
+target1 (Fault 1 · Congestion &amp; Queueing Loss):
+- Statistics:   min: 45.8 ms | median: 46.2 ms | mean: 118.4 ms | p95: 298.5 ms | Loss: ~11%
+- Path hops:    host1 -&gt; r3 -&gt; r1 -&gt; ra -&gt; rt -&gt; rd1 (loss &amp; jitter begin at 100.64.34.2)
+- BGP path:     65010 65030 65040 (path unchanged, queue saturated)
+
+target2 (Fault 2 · Routing Detour / Trombone):
+- Statistics:   min: 50.8 ms | median: 51.1 ms | mean: 51.2 ms | p95: 51.9 ms | Loss: 0%
+- Path hops:    host1 -&gt; r3 -&gt; r1 -&gt; ra -&gt; rt -&gt; rd2 backup port (100.64.35.2) -&gt; target2
+- BGP path:     65010 65030 65050 65050 65050 65050 (prepended backup path selected)
+</code></pre>
 <blockquote>
 <p><strong>Executive Summary.</strong> The reported issues are two distinct, concurrent faults occurring in separate Autonomous Systems. Our own AS network, local border links, and Upstream A connection are fully operational.</p>
 <p><strong>Fault 1 (target1 · AS 65040): Congestion &amp; Queueing Loss</strong>

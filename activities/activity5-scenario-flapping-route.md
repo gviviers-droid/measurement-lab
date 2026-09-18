@@ -58,6 +58,28 @@ sudo ./scripts/scenario.sh 2 off
 
 Reveal after writing your own.
 
+```text
+Key diagnostic evidence:
+
+1. MTR over 100 cycles to target1 (mtr -n --report --report-cycles 100 10.40.10.10):
+HOST: host1                       Loss%   Snt   Last   Avg  Best  Wrst StDev
+  1.|-- 10.1.10.1                  0.0%   100    0.1   0.1   0.1   0.2   0.0
+  2.|-- 10.1.1.1                   0.0%   100    0.2   0.2   0.2   0.3   0.0
+  3.|-- 100.64.11.1                0.0%   100    0.5   0.5   0.4   0.7   0.1
+  4.|-- 100.64.13.2                0.0%   100   20.8  20.8  20.4  22.1   0.3
+  5.|-- ???                       100.0   100    0.0   0.0   0.0   0.0   0.0
+  6.|-- 10.40.10.10               48.0%   100   46.1  46.2  45.8  47.9   0.5
+  (Intermediate hops stay clean while destination shows ~50% loss)
+
+2. Ping error during outage window:
+From 10.1.1.1 icmp_seq=1 Destination Net Unreachable
+(Indicates routing table withdrawal on our first hop, not link packet loss)
+
+3. Control plane BGP lookup (show bgp ipv4 unicast 10.40.0.0/16 on r1):
+- UP window:   route present, age resets: Last update: 00:00:15 ago
+- DOWN window: % Network not in table
+```
+
 > **Symptom.** target1 alternates between full reachability and total outage in a regular cycle of roughly 40 seconds each way, in both address families. Over a two-minute mtr, loss to target1 reads near 50%, while every intermediate hop up to the transit carrier stays clean. target2 is unaffected.
 >
 > **This is routing, not a lossy link.** During outage windows our own routers hold no route to 10.40.0.0/16 or 3fff:40::/32 at all: pings fail with "Network unreachable" from our first hop rather than timing out, and the BGP table entry for the prefix vanishes and reappears with an age of seconds. Packet loss degrades a path; a withdrawn route removes it. We observed removal.

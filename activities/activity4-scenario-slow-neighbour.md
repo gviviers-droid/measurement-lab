@@ -65,6 +65,29 @@ sudo ./scripts/scenario.sh 1 off
 
 Reveal after writing your own.
 
+```text
+Key diagnostic evidence:
+
+1. Detoured traceroute (traceroute -n 10.50.10.10):
+ 1  10.1.10.1      0.11 ms   (r3)
+ 2  10.1.1.1       0.22 ms   (r1)
+ 3  100.64.11.1    0.51 ms   (ra - Upstream A)
+ 4  100.64.13.2   20.85 ms   (rt - Transit carrier entry)
+ 5  100.64.35.2   50.92 ms   (rd2 backup transit link)
+ 6  10.50.10.10   51.15 ms   (target2 - RTT rose from <2 ms to ~51 ms)
+
+2. BGP path prepending on r1 (show bgp ipv4 unicast 10.50.0.0/16):
+Paths: (1 available, best #1)
+  65010 65030 65050 65050 65050 65050
+    100.64.11.1 from 100.64.11.1 (ra.measlab)
+
+3. Looking glass on route-server (show bgp summary):
+Neighbor        V    AS MsgRcvd MsgSent   TblVer  InQ OutQ  Up/Down State/PfxRcd
+100.64.99.10    4 65010       0       0        0    0    0 00:04:12 Active
+100.64.99.20    4 65020    1452    1450        0    0    0 01:12:30        1
+100.64.99.50    4 65050    1455    1452        0    0    0 01:12:30        1
+```
+
 > **Symptom.** Round-trip time to target2 rose from under 2 ms to roughly 50 ms in both IPv4 and IPv6, with no packet loss. target1 measures unchanged, so the fault sits outside our network and outside the shared portion of the two paths.
 >
 > **Path change.** Traffic to dest-2 previously crossed upstream A's port at the IXP directly to dest-2. It now detours through the transit carrier AS 65030 and enters dest-2 through its backup transit link (entering via 100.64.35.2 instead of 100.64.99.50; note that depending on Linux kernel ICMP address selection with asymmetric return routing via upstream B, traceroute hop 5 may report either 100.64.99.50 or 100.64.35.2, but with the elevated ~30-50 ms transit RTT). The BGP path for 10.50.0.0/16 reads 65010 65030 65050 65050 65050 65050: dest-2 prepends its AS on this route to mark it as a path of last resort, and the Internet is nevertheless using it.

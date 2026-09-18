@@ -62,6 +62,21 @@ mtr -n --report --report-cycles 100 10.40.10.10
 <details class="answers" markdown="1">
 <summary>Check your answers for Task 3 (reveal after writing your own)</summary>
 
+```text
+Sample statistical comparison:
+baseline.txt: count: 100 | mean:  46.12 | median: 46.05 | p95:  47.10 | min: 45.82 | max:  48.91
+busy.txt:     count:  88 | mean: 115.42 | median: 68.10 | p95: 295.30 | min: 45.90 | max: 418.50
+
+Sample MTR report under congestion (mtr -n --report --report-cycles 100 10.40.10.10):
+HOST: host1                       Loss%   Snt   Last   Avg  Best  Wrst StDev
+  1.|-- 10.1.10.1                  0.0%   100    0.1   0.1   0.1   0.2   0.0
+  2.|-- 10.1.1.1                   0.0%   100    0.2   0.2   0.2   0.3   0.0
+  3.|-- 100.64.11.1                0.0%   100    0.5   0.5   0.4   0.7   0.1
+  4.|-- 100.64.13.2                0.0%   100   20.8  20.8  20.4  22.1   0.3
+  5.|-- 100.64.34.2               12.0%   100  124.5 116.8  45.9 415.2  86.4
+  6.|-- 10.40.10.10               12.0%   100  125.1 117.2  46.1 418.5  86.1
+```
+
 **3a.** The mean moves more than the median, because the mean absorbs the tail of queueing spikes while the median only shifts with the typical packet. The largest single change appears at the top of the distribution: p95 and max grow by far the most, from tens of milliseconds to potentially hundreds. Exact values vary between machines; the pattern does not.
 
 **3b.** Queueing delay. Packets wait in the buffer of the loaded transit link before transmission, and the mtr report shows the inflation starting at the transit-to-dest-1 hop (100.64.34.2) while earlier hops keep their baseline figures. Propagation delay is physics and constant; queueing delay is load and variable. Telling them apart is one of the most useful skills in latency analysis.

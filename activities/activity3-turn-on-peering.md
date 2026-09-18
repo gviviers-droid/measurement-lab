@@ -36,6 +36,13 @@ show bgp summary
 <details class="answers" markdown="1">
 <summary>Check your answer for Task 1 (reveal after writing your own)</summary>
 
+```text
+Sample output (show bgp summary on r2):
+Neighbor        V    AS MsgRcvd MsgSent   TblVer  InQ OutQ  Up/Down State/PfxRcd
+100.64.99.1     4 65100       0       0        0    0    0    never Idle (Admin)
+3fff:ff::1      6 65100       0       0        0    0    0    never Idle (Admin)
+```
+
 **1a.** Idle (Admin): the sessions exist in configuration but an operator shut them down on purpose. Configured-but-disabled is a normal state on real routers, and it differs from a session that is down because of a fault.
 
 </details>
@@ -60,6 +67,14 @@ show bgp ipv6 unicast
 <details class="answers" markdown="1">
 <summary>Check your answer for Task 2 (reveal after writing your own)</summary>
 
+```text
+Sample output (show bgp ipv4 unicast on r2):
+   Network          Next Hop            Metric LocPrf Weight Path
+*> 10.10.0.0/16     100.64.99.10                             65010 ?
+*> 10.20.0.0/16     100.64.99.20                             65020 ?
+*> 10.50.0.0/16     100.64.99.50                             65050 ?
+```
+
 **2a.** The route server passes you the prefixes of the other members: upstream A (10.10.0.0/16, 3fff:10::/32), upstream B, and dest-2 (10.50.0.0/16, 3fff:50::/32), each with a path of a single AS. Missing: AS 65100, the route server itself. A route server distributes routes between members without inserting its own AS number, so peering through it looks, in BGP, like a direct adjacency with every member.
 
 </details>
@@ -78,6 +93,21 @@ Repeat every measurement from Task 1: both traceroutes, both pings, both BGP loo
 
 <details class="answers" markdown="1">
 <summary>Check your answers for Task 3 (reveal after writing your own)</summary>
+
+```text
+Sample output (traceroute -n 10.50.10.10):
+ 1  10.1.10.1     0.105 ms  0.088 ms  0.080 ms   (r3)
+ 2  10.1.2.1      0.210 ms  0.195 ms  0.180 ms   (r2 - border B!)
+ 3  100.64.99.50  0.550 ms  0.520 ms  0.490 ms   (dest-2 IXP port)
+ 4  10.50.10.10   0.780 ms  0.720 ms  0.690 ms   (target2)
+
+Sample excerpt (show bgp ipv4 unicast 10.50.0.0/16 on r2):
+Paths: (2 available, best #2)
+  65010 65050
+    10.1.1.1 (via iBGP from r1), LocPrf 200
+  65050
+    100.64.99.50 (via peering), LocPrf 250, best (Local Pref)
+```
 
 **3a.** host1 to r3, then r2, then straight to dest-2's IXP port (100.64.99.50, or 3fff:ff::50), then target2. Four hops, leaving through r2, with upstream A no longer involved.
 

@@ -86,6 +86,20 @@ sudo ./scripts/scenario.sh 3 off
 
 Reveal after writing your own.
 
+```text
+Key diagnostic comparison:
+
+target1 (Fault 1 · Congestion & Queueing Loss):
+- Statistics:   min: 45.8 ms | median: 46.2 ms | mean: 118.4 ms | p95: 298.5 ms | Loss: ~11%
+- Path hops:    host1 -> r3 -> r1 -> ra -> rt -> rd1 (loss & jitter begin at 100.64.34.2)
+- BGP path:     65010 65030 65040 (path unchanged, queue saturated)
+
+target2 (Fault 2 · Routing Detour / Trombone):
+- Statistics:   min: 50.8 ms | median: 51.1 ms | mean: 51.2 ms | p95: 51.9 ms | Loss: 0%
+- Path hops:    host1 -> r3 -> r1 -> ra -> rt -> rd2 backup port (100.64.35.2) -> target2
+- BGP path:     65010 65030 65050 65050 65050 65050 (prepended backup path selected)
+```
+
 > **Executive Summary.** The reported issues are two distinct, concurrent faults occurring in separate Autonomous Systems. Our own AS network, local border links, and Upstream A connection are fully operational.
 >
 > **Fault 1 (target1 · AS 65040): Congestion & Queueing Loss**
