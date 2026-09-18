@@ -92,11 +92,28 @@ Open the extracted `measurement-lab-main` folder and follow the instructions for
 2. You should see the **Internet Measurements Lab Control Portal**.
 3. Check the following:
    - [ ] Does the page load cleanly?
+   - [ ] Click the **"Health check"** button (under **Lab lifecycle**) — does the Output area report `Result: 21 passed, 0 failed`?
    - [ ] Do the live terminal panes appear at the bottom for `host1`, `r1`, `r2`, and `r3`?
-   - [ ] Click the **"Health check"** (or run `./lab.sh check` in terminal) — do the checks report `PASS`?
    - [ ] Can you see the task sheets on the left panel (Activity 1 to Activity 6)?
 
-If all of these pass, your setup is completely successful! 🎉
+### 1. Where to Click "Health check" & Verify Results
+
+Under the **Lab lifecycle** section, click the **"Health check"** button (labelled **1** below). The automated test suite will run and report the results in the **Output Area** (labelled **2** below). Every line should report `PASS`, ending with `Result: 21 passed, 0 failed`:
+
+![Control Portal Health Check Verification](images/portal-health-check.png)
+
+---
+
+### 2. Where the Router & Host Terminals are Located
+
+Scroll down to the **Terminals** section at the bottom of the dashboard. Four side-by-side terminal shells connect you directly to your network nodes (**AS 65001**) without needing manual container commands:
+
+* **Host Terminal (`host1`)** (labelled **A** below): The learner workstation shell. Use this for active measurement commands (`ping`, `traceroute`, `mtr`).
+* **Router Terminals (`r1`, `r2`, `r3`)** (labelled **B** below): The routing engine shells. Use these for FRRouting diagnostics (`vtysh`, `show ip bgp summary`, `show ip route`).
+
+![Control Portal Live Terminals](images/portal-terminals.png)
+
+If all of these pass and connect, your setup is completely successful! 🎉
 
 ---
 
