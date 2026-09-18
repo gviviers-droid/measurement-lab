@@ -129,6 +129,19 @@ code { font-family: var(--mono); font-size: 14px; background: var(--panel-2);
 pre { background: #0a0f1f; border: 1px solid var(--line); border-radius: 8px;
   padding: 14px 16px; overflow-x: auto; margin: 0; }
 pre code { background: none; padding: 0; color: #e8eefb; font-size: 14px; }
+.code-annotation { color: #ffa94d; font-style: italic; font-weight: 500; }
+.code-header { color: #8fb7e1; font-weight: 600; }
+.code-label { color: #8fb7e1; font-weight: 600; }
+.code-legend {
+  display: inline-flex; align-items: center; gap: 16px;
+  font-family: var(--mono); font-size: 11.5px; margin: 4px 0 10px;
+  padding: 4px 10px; background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--line); border-radius: 6px; color: var(--muted);
+}
+.legend-item { display: inline-flex; align-items: center; gap: 6px; }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
+.legend-dot.dot-output { background: #e8eefb; box-shadow: 0 0 5px rgba(232, 238, 251, 0.4); }
+.legend-dot.dot-annotation { background: #ffa94d; box-shadow: 0 0 5px rgba(255, 169, 77, 0.5); }
 .copy-btn { position: absolute; top: 8px; right: 8px; font-family: var(--mono); font-size: 12px;
   background: var(--panel-2); color: var(--blue); border: 1px solid var(--line);
   border-radius: 5px; padding: 3px 10px; cursor: pointer; }
@@ -719,13 +732,14 @@ traceroute -n -6 3fff:50:10::10
 <div class="callout tip">
 <div class="callout-header">💡 <span class="callout-badge">TIP</span></div>
 <p><strong>How to read traceroute output:</strong></p>
-<pre><code class="language-text">Hop #   IP address        Probe 1      Probe 2      Probe 3
- 1      10.1.10.1         0.118 ms     0.095 ms     0.088 ms    &lt;- host1 gateway (r3)
- 2      10.1.1.1          0.231 ms     0.210 ms     0.198 ms    &lt;- Border router A (r1)
- 3      100.64.11.1       0.512 ms     0.485 ms     0.462 ms    &lt;- Upstream A (ra)
- 4      100.64.13.2       20.851 ms    20.720 ms    20.690 ms   &lt;- Transit entry (rt)
- 5      100.64.34.2       45.920 ms    45.810 ms    45.750 ms   &lt;- Dest-1 gateway (rd1)
- 6      10.40.10.10       46.150 ms    46.020 ms    45.980 ms   &lt;- Target 1
+<div class="code-legend"><span class="legend-item"><span class="legend-dot dot-output"></span>Tool output</span><span class="legend-item"><span class="legend-dot dot-annotation"></span>Explanation / annotation</span></div>
+<pre><code class="language-text"><span class="code-header">Hop #   IP address        Probe 1      Probe 2      Probe 3</span>
+ 1      10.1.10.1         0.118 ms     0.095 ms     0.088 ms    <span class="code-annotation">&lt;- host1 gateway (r3)</span>
+ 2      10.1.1.1          0.231 ms     0.210 ms     0.198 ms    <span class="code-annotation">&lt;- Border router A (r1)</span>
+ 3      100.64.11.1       0.512 ms     0.485 ms     0.462 ms    <span class="code-annotation">&lt;- Upstream A (ra)</span>
+ 4      100.64.13.2       20.851 ms    20.720 ms    20.690 ms   <span class="code-annotation">&lt;- Transit entry (rt)</span>
+ 5      100.64.34.2       45.920 ms    45.810 ms    45.750 ms   <span class="code-annotation">&lt;- Dest-1 gateway (rd1)</span>
+ 6      10.40.10.10       46.150 ms    46.020 ms    45.980 ms   <span class="code-annotation">&lt;- Target 1</span>
 </code></pre>
 </div>
 <p><strong>Question 1a.</strong> How many ASes does your traffic cross to reach target1? And to reach target2?</p>
@@ -733,7 +747,7 @@ traceroute -n -6 3fff:50:10::10
 <p><strong>Question 1c.</strong> The path to target2 crosses the IXP. Which single hop in the traceroute tells you that, and what is odd about how the exchange itself appears?</p>
 <details class="answers">
 <summary>Check your answers for Task 1 (reveal after writing your own)</summary>
-<pre><code class="language-text">Sample output (traceroute -n 10.40.10.10):
+<pre><code class="language-text"><span class="code-label">Sample output (traceroute -n 10.40.10.10):</span>
  1  10.1.10.1    0.118 ms  0.095 ms  0.088 ms
  2  10.1.1.1     0.231 ms  0.210 ms  0.198 ms
  3  100.64.11.1  0.512 ms  0.485 ms  0.462 ms
@@ -741,11 +755,11 @@ traceroute -n -6 3fff:50:10::10
  5  100.64.34.2  45.920 ms 45.810 ms 45.750 ms
  6  10.40.10.10  46.150 ms 46.020 ms 45.980 ms
 
-Sample output (traceroute -n 10.50.10.10):
+<span class="code-label">Sample output (traceroute -n 10.50.10.10):</span>
  1  10.1.10.1     0.115 ms  0.092 ms  0.085 ms
  2  10.1.1.1      0.228 ms  0.205 ms  0.192 ms
  3  100.64.11.1   0.508 ms  0.480 ms  0.458 ms
- 4  100.64.99.50  1.482 ms  1.420 ms  1.390 ms  (dest-2 IXP port)
+ 4  100.64.99.50  1.482 ms  1.420 ms  1.390 ms  <span class="code-annotation">(dest-2 IXP port)</span>
  5  10.50.10.10   1.750 ms  1.690 ms  1.650 ms
 </code></pre>
 <p><strong>1a.</strong> target1: four ASes, your 65001, upstream A (65010), transit (65030) and 65040. target2: three, your 65001, upstream A (65010) and 65050.</p>
@@ -763,12 +777,12 @@ ping -c 10 10.50.10.10
 <p><strong>Question 2c.</strong> A colleague concludes that the router at the first jump is overloaded, because latency rises there. Give an alternative explanation for a latency jump between two hops that has nothing to do with router load.</p>
 <details class="answers">
 <summary>Check your answers for Task 2 (reveal after writing your own)</summary>
-<pre><code class="language-text">Sample output (ping -c 10 10.40.10.10):
+<pre><code class="language-text"><span class="code-label">Sample output (ping -c 10 10.40.10.10):</span>
 --- 10.40.10.10 ping statistics ---
 10 packets transmitted, 10 received, 0% packet loss, time 9014ms
 rtt min/avg/max/mdev = 45.812/46.104/47.230/0.412 ms
 
-Sample output (ping -c 10 10.50.10.10):
+<span class="code-label">Sample output (ping -c 10 10.50.10.10):</span>
 --- 10.50.10.10 ping statistics ---
 10 packets transmitted, 10 received, 0% packet loss, time 9012ms
 rtt min/avg/max/mdev = 1.450/1.620/1.890/0.125 ms
@@ -785,6 +799,7 @@ rtt min/avg/max/mdev = 1.450/1.620/1.890/0.125 ms
 <div class="callout tip">
 <div class="callout-header">💡 <span class="callout-badge">TIP</span></div>
 <p><strong>Anatomy of an MTR report:</strong></p>
+<div class="code-legend"><span class="legend-item"><span class="legend-dot dot-output"></span>Tool output</span><span class="legend-item"><span class="legend-dot dot-annotation"></span>Explanation / annotation</span></div>
 <pre><code class="language-text">HOST: host1                       Loss%   Snt   Last   Avg  Best  Wrst StDev
   1.|-- 10.1.10.1                  0.0%   100    0.1   0.1   0.1   0.2   0.0
   2.|-- 10.1.1.1                   0.0%   100    0.2   0.2   0.2   0.3   0.0
@@ -792,16 +807,16 @@ rtt min/avg/max/mdev = 1.450/1.620/1.890/0.125 ms
   4.|-- 100.64.13.2                0.0%   100   20.7  20.8  20.4  21.9   0.3
   5.|-- 100.64.34.2                1.0%   100   45.8  46.0  45.5  48.2   0.6
   6.|-- 10.40.10.10                1.0%   100   46.1  46.2  45.8  47.9   0.5
-                                   ^^^^               ^^^               ^^^^^
-                                Packet loss         Average            Jitter
-                              (starts hop 5)        latency          (Std Dev)
+<span class="code-annotation">                                   ^^^^               ^^^               ^^^^^</span>
+<span class="code-annotation">                                Packet loss         Average            Jitter</span>
+<span class="code-annotation">                              (starts hop 5)        latency          (Std Dev)</span>
 </code></pre>
 </div>
 <p><strong>Question 3a.</strong> On the target1 path, at which hop does packet loss first appear, and does it persist to the destination?</p>
 <p><strong>Question 3b.</strong> Which hop shows the largest StDev? Express in one sentence what that number tells you about the path beyond that hop.</p>
 <details class="answers">
 <summary>Check your answers for Task 3 (reveal after writing your own)</summary>
-<pre><code class="language-text">Sample output (mtr -n --report --report-cycles 100 10.40.10.10):
+<pre><code class="language-text"><span class="code-label">Sample output (mtr -n --report --report-cycles 100 10.40.10.10):</span>
 HOST: host1                       Loss%   Snt   Last   Avg  Best  Wrst StDev
   1.|-- 10.1.10.1                  0.0%   100    0.1   0.1   0.1   0.2   0.0
   2.|-- 10.1.1.1                   0.0%   100    0.2   0.2   0.2   0.3   0.0
@@ -810,7 +825,7 @@ HOST: host1                       Loss%   Snt   Last   Avg  Best  Wrst StDev
   5.|-- 100.64.34.2                1.0%   100   45.9  46.0  45.5  48.2   0.6
   6.|-- 10.40.10.10                1.0%   100   46.1  46.2  45.8  48.5   0.5
 
-Sample output (mtr -n --report --report-cycles 100 10.50.10.10):
+<span class="code-label">Sample output (mtr -n --report --report-cycles 100 10.50.10.10):</span>
 HOST: host1                       Loss%   Snt   Last   Avg  Best  Wrst StDev
   1.|-- 10.1.10.1                  0.0%   100    0.1   0.1   0.1   0.2   0.0
   2.|-- 10.1.1.1                   0.0%   100    0.2   0.2   0.2   0.3   0.0
@@ -830,7 +845,7 @@ HOST: host1                       Loss%   Snt   Last   Avg  Best  Wrst StDev
 <p><strong>Question 4b.</strong> For this path, which single number would you report to a colleague as "the latency", and why? Keep your answer; Module 2.5 and the next activity return to this question with better tools.</p>
 <details class="answers">
 <summary>Check your answers for Task 4 (reveal after writing your own)</summary>
-<pre><code class="language-text">Sample output (ping -c 100 -i 0.2 10.40.10.10 summary):
+<pre><code class="language-text"><span class="code-label">Sample output (ping -c 100 -i 0.2 10.40.10.10 summary):</span>
 100 packets transmitted, 99 received, 1% packet loss, time 20025ms
 rtt min/avg/max/mdev = 45.712/46.185/58.420/1.340 ms
 </code></pre>
@@ -850,10 +865,11 @@ show bgp ipv6 unicast 3fff:50::/32
 <div class="callout tip">
 <div class="callout-header">💡 <span class="callout-badge">TIP</span></div>
 <p><strong>How to read BGP routing entries (<code>show bgp ipv4 unicast &lt;prefix&gt;</code>):</strong></p>
+<div class="code-legend"><span class="legend-item"><span class="legend-dot dot-output"></span>Tool output</span><span class="legend-item"><span class="legend-dot dot-annotation"></span>Explanation / annotation</span></div>
 <pre><code class="language-text">BGP routing table entry for 10.40.0.0/16
 Paths: (1 available, best #1)
-  65010 65030 65040                         &lt;-- AS Path (read right to left: origin -&gt; transit -&gt; upstream)
-    100.64.11.1 from 100.64.11.1 (ra.measlab) &lt;-- Next hop router and advertising peer
+  65010 65030 65040                         <span class="code-annotation">&lt;-- AS Path (read right to left: origin -&gt; transit -&gt; upstream)</span>
+    100.64.11.1 from 100.64.11.1 (ra.measlab) <span class="code-annotation">&lt;-- Next hop router and advertising peer</span>
       Origin IGP, metric 0, valid, external, best (First path received)
 </code></pre>
 </div>
@@ -863,14 +879,14 @@ Paths: (1 available, best #1)
 <p>Type <code>exit</code> to return to the container shell (or twice to exit if you used <code>podman exec</code>).</p>
 <details class="answers">
 <summary>Check your answers for Task 5 (reveal after writing your own)</summary>
-<pre><code class="language-text">Sample output (show bgp ipv4 unicast 10.40.0.0/16):
+<pre><code class="language-text"><span class="code-label">Sample output (show bgp ipv4 unicast 10.40.0.0/16):</span>
 BGP routing table entry for 10.40.0.0/16
 Paths: (1 available, best #1)
   65010 65030 65040
     100.64.11.1 from 100.64.11.1 (ra.measlab)
       Origin IGP, metric 0, valid, external, best (First path received)
 
-Sample output (show bgp ipv4 unicast 10.50.0.0/16):
+<span class="code-label">Sample output (show bgp ipv4 unicast 10.50.0.0/16):</span>
 BGP routing table entry for 10.50.0.0/16
 Paths: (1 available, best #1)
   65010 65050
@@ -919,7 +935,7 @@ Paths: (1 available, best #1)
 <p><strong>Question 3c.</strong> Did loss change, and at the same hop as in Activity 1 or elsewhere?</p>
 <details class="answers">
 <summary>Check your answers for Task 3 (reveal after writing your own)</summary>
-<pre><code class="language-text">Sample statistical comparison:
+<pre><code class="language-text"><span class="code-label">Sample statistical comparison:</span>
 baseline.txt: count: 100 | mean:  46.12 | median: 46.05 | p95:  47.10 | min: 45.82 | max:  48.91
 busy.txt:     count:  88 | mean: 115.42 | median: 68.10 | p95: 295.30 | min: 45.90 | max: 418.50
 
@@ -973,7 +989,7 @@ show bgp ipv6 unicast 3fff:50::/32
 <p><strong>Question 1a.</strong> What state does r2 report for the two sessions towards 100.64.99.1 and 3fff:ff::1, and what does that state mean?</p>
 <details class="answers">
 <summary>Check your answer for Task 1 (reveal after writing your own)</summary>
-<pre><code class="language-text">Sample output (show bgp summary on r2):
+<pre><code class="language-text"><span class="code-label">Sample output (show bgp summary on r2):</span>
 Neighbor        V    AS MsgRcvd MsgSent   TblVer  InQ OutQ  Up/Down State/PfxRcd
 100.64.99.1     4 65100       0       0        0    0    0    never Idle (Admin)
 3fff:ff::1      6 65100       0       0        0    0    0    never Idle (Admin)
@@ -991,7 +1007,7 @@ show bgp ipv6 unicast
 <p><strong>Question 2a.</strong> Which prefixes did the route server send you, and with what AS paths? One AS you expected to see in those paths is missing. Which, and why?</p>
 <details class="answers">
 <summary>Check your answer for Task 2 (reveal after writing your own)</summary>
-<pre><code class="language-text">Sample output (show bgp ipv4 unicast on r2):
+<pre><code class="language-text"><span class="code-label">Sample output (show bgp ipv4 unicast on r2):</span>
    Network          Next Hop            Metric LocPrf Weight Path
 *&gt; 10.10.0.0/16     100.64.99.10                             65010 ?
 *&gt; 10.20.0.0/16     100.64.99.20                             65020 ?
@@ -1007,13 +1023,13 @@ show bgp ipv6 unicast
 <p><strong>Question 3d.</strong> Measure target1 again. Did peering change anything for it? State the general rule this demonstrates.</p>
 <details class="answers">
 <summary>Check your answers for Task 3 (reveal after writing your own)</summary>
-<pre><code class="language-text">Sample output (traceroute -n 10.50.10.10):
- 1  10.1.10.1     0.105 ms  0.088 ms  0.080 ms   (r3)
- 2  10.1.2.1      0.210 ms  0.195 ms  0.180 ms   (r2 - border B!)
- 3  100.64.99.50  0.550 ms  0.520 ms  0.490 ms   (dest-2 IXP port)
- 4  10.50.10.10   0.780 ms  0.720 ms  0.690 ms   (target2)
+<pre><code class="language-text"><span class="code-label">Sample output (traceroute -n 10.50.10.10):</span>
+ 1  10.1.10.1     0.105 ms  0.088 ms  0.080 ms   <span class="code-annotation">(r3)</span>
+ 2  10.1.2.1      0.210 ms  0.195 ms  0.180 ms   <span class="code-annotation">(r2 - border B!)</span>
+ 3  100.64.99.50  0.550 ms  0.520 ms  0.490 ms   <span class="code-annotation">(dest-2 IXP port)</span>
+ 4  10.50.10.10   0.780 ms  0.720 ms  0.690 ms   <span class="code-annotation">(target2)</span>
 
-Sample excerpt (show bgp ipv4 unicast 10.50.0.0/16 on r2):
+<span class="code-label">Sample excerpt (show bgp ipv4 unicast 10.50.0.0/16 on r2):</span>
 Paths: (2 available, best #2)
   65010 65050
     10.1.1.1 (via iBGP from r1), LocPrf 200
@@ -1074,22 +1090,22 @@ clear bgp * soft in
 </code></pre>
 <details class="answers"><summary>Model incident summary (reveal after writing your own)</summary>
 <p>Reveal after writing your own.</p>
-<pre><code class="language-text">Key diagnostic evidence:
+<pre><code class="language-text"><span class="code-label">Key diagnostic evidence:</span>
 
-1. Detoured traceroute (traceroute -n 10.50.10.10):
- 1  10.1.10.1      0.11 ms   (r3)
- 2  10.1.1.1       0.22 ms   (r1)
- 3  100.64.11.1    0.51 ms   (ra - Upstream A)
- 4  100.64.13.2   20.85 ms   (rt - Transit carrier entry)
- 5  100.64.35.2   50.92 ms   (rd2 backup transit link)
- 6  10.50.10.10   51.15 ms   (target2 - RTT rose from &lt;2 ms to ~51 ms)
+<span class="code-label">1. Detoured traceroute (traceroute -n 10.50.10.10):</span>
+ 1  10.1.10.1      0.11 ms   <span class="code-annotation">(r3)</span>
+ 2  10.1.1.1       0.22 ms   <span class="code-annotation">(r1)</span>
+ 3  100.64.11.1    0.51 ms   <span class="code-annotation">(ra - Upstream A)</span>
+ 4  100.64.13.2   20.85 ms   <span class="code-annotation">(rt - Transit carrier entry)</span>
+ 5  100.64.35.2   50.92 ms   <span class="code-annotation">(rd2 backup transit link)</span>
+ 6  10.50.10.10   51.15 ms   <span class="code-annotation">(target2 - RTT rose from &lt;2 ms to ~51 ms)</span>
 
-2. BGP path prepending on r1 (show bgp ipv4 unicast 10.50.0.0/16):
+<span class="code-label">2. BGP path prepending on r1 (show bgp ipv4 unicast 10.50.0.0/16):</span>
 Paths: (1 available, best #1)
   65010 65030 65050 65050 65050 65050
     100.64.11.1 from 100.64.11.1 (ra.measlab)
 
-3. Looking glass on route-server (show bgp summary):
+<span class="code-label">3. Looking glass on route-server (show bgp summary):</span>
 Neighbor        V    AS MsgRcvd MsgSent   TblVer  InQ OutQ  Up/Down State/PfxRcd
 100.64.99.10    4 65010       0       0        0    0    0 00:04:12 Active
 100.64.99.20    4 65020    1452    1450        0    0    0 01:12:30        1
@@ -1137,9 +1153,9 @@ sudo ./scripts/lg.sh route-server &quot;show bgp summary&quot;
 </code></pre>
 <details class="answers"><summary>Model incident summary (reveal after writing your own)</summary>
 <p>Reveal after writing your own.</p>
-<pre><code class="language-text">Key diagnostic evidence:
+<pre><code class="language-text"><span class="code-label">Key diagnostic evidence:</span>
 
-1. MTR over 100 cycles to target1 (mtr -n --report --report-cycles 100 10.40.10.10):
+<span class="code-label">1. MTR over 100 cycles to target1 (mtr -n --report --report-cycles 100 10.40.10.10):</span>
 HOST: host1                       Loss%   Snt   Last   Avg  Best  Wrst StDev
   1.|-- 10.1.10.1                  0.0%   100    0.1   0.1   0.1   0.2   0.0
   2.|-- 10.1.1.1                   0.0%   100    0.2   0.2   0.2   0.3   0.0
@@ -1147,13 +1163,13 @@ HOST: host1                       Loss%   Snt   Last   Avg  Best  Wrst StDev
   4.|-- 100.64.13.2                0.0%   100   20.8  20.8  20.4  22.1   0.3
   5.|-- ???                       100.0   100    0.0   0.0   0.0   0.0   0.0
   6.|-- 10.40.10.10               48.0%   100   46.1  46.2  45.8  47.9   0.5
-  (Intermediate hops stay clean while destination shows ~50% loss)
+<span class="code-annotation">  (Intermediate hops stay clean while destination shows ~50% loss)</span>
 
-2. Ping error during outage window:
+<span class="code-label">2. Ping error during outage window:</span>
 From 10.1.1.1 icmp_seq=1 Destination Net Unreachable
-(Indicates routing table withdrawal on our first hop, not link packet loss)
+<span class="code-annotation">(Indicates routing table withdrawal on our first hop, not link packet loss)</span>
 
-3. Control plane BGP lookup (show bgp ipv4 unicast 10.40.0.0/16 on r1):
+<span class="code-label">3. Control plane BGP lookup (show bgp ipv4 unicast 10.40.0.0/16 on r1):</span>
 - UP window:   route present, age resets: Last update: 00:00:15 ago
 - DOWN window: % Network not in table
 </code></pre>
@@ -1224,16 +1240,16 @@ sudo ./scripts/lg.sh upstream-a &quot;show bgp ipv4 unicast 10.50.0.0/16&quot;
 </code></pre>
 <details class="answers"><summary>Model incident summary (reveal after writing your own)</summary>
 <p>Reveal after writing your own.</p>
-<pre><code class="language-text">Key diagnostic comparison:
+<pre><code class="language-text"><span class="code-label">Key diagnostic comparison:</span>
 
 target1 (Fault 1 · Congestion &amp; Queueing Loss):
 - Statistics:   min: 45.8 ms | median: 46.2 ms | mean: 118.4 ms | p95: 298.5 ms | Loss: ~11%
-- Path hops:    host1 -&gt; r3 -&gt; r1 -&gt; ra -&gt; rt -&gt; rd1 (loss &amp; jitter begin at 100.64.34.2)
+- Path hops:    host1 <span class="code-annotation">-&gt; r3 -&gt; r1 -&gt; ra -&gt; rt -&gt; rd1 (loss &amp; jitter begin at 100.64.34.2)</span>
 - BGP path:     65010 65030 65040 (path unchanged, queue saturated)
 
 target2 (Fault 2 · Routing Detour / Trombone):
 - Statistics:   min: 50.8 ms | median: 51.1 ms | mean: 51.2 ms | p95: 51.9 ms | Loss: 0%
-- Path hops:    host1 -&gt; r3 -&gt; r1 -&gt; ra -&gt; rt -&gt; rd2 backup port (100.64.35.2) -&gt; target2
+- Path hops:    host1 <span class="code-annotation">-&gt; r3 -&gt; r1 -&gt; ra -&gt; rt -&gt; rd2 backup port (100.64.35.2) -&gt; target2</span>
 - BGP path:     65010 65030 65050 65050 65050 65050 (prepended backup path selected)
 </code></pre>
 <blockquote>
@@ -1533,8 +1549,11 @@ sudo ./scripts/lg.sh route-server &quot;show bgp summary&quot;
   }
   window.addEventListener("hashchange", function () { show(location.hash.slice(1)); });
 
-  // Copy buttons on every code block
+  // Copy buttons on every code block (except diagrams/anatomies inside callouts)
   document.querySelectorAll("pre").forEach(function (pre) {
+    if (pre.closest(".callout")) {
+      return;
+    }
     var wrap = document.createElement("div");
     wrap.className = "codewrap";
     pre.parentNode.insertBefore(wrap, pre);

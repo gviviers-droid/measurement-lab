@@ -350,6 +350,19 @@ def convert_alerts(text: str) -> str:
             icon = "⚠️ "
         elif kind == "important":
             icon = "❗ "
+
+        if "<-" in inner or "^^^" in inner:
+            legend = (
+                '<div class="code-legend">'
+                '<span class="legend-item"><span class="legend-dot dot-output"></span>Tool output</span>'
+                '<span class="legend-item"><span class="legend-dot dot-annotation"></span>Explanation / annotation</span>'
+                '</div>\n\n'
+            )
+            if "```text" in inner:
+                inner = inner.replace("```text", legend + "```text", 1)
+            else:
+                inner = legend + inner
+
         return (
             f'\n<div class="callout {kind}" markdown="1">\n'
             f'<div class="callout-header">{icon}<span class="callout-badge">{kind.upper()}</span></div>\n\n'
@@ -364,6 +377,72 @@ def convert_alerts(text: str) -> str:
     return pattern.sub(repl, text)
 
 
+def highlight_code_annotations(html: str) -> str:
+    """Color-code command output vs explanatory annotations and labels in code blocks."""
+    def process_code(match):
+        attrs = match.group(1)
+        content = match.group(2)
+        lines = content.split("\n")
+        new_lines = []
+        in_caret_block = False
+
+        for line in lines:
+            # Column guide header like "Hop #   IP address..."
+            if re.match(r"^\s*Hop #\s+IP address", line):
+                new_lines.append(f'<span class="code-header">{line}</span>')
+                continue
+
+            # Descriptive section labels inside output blocks
+            if re.match(r"^\s*(Sample (output|excerpt|statistical)|Key diagnostic|\d+\.\s+[A-Z])", line) and (line.endswith(":") or line.endswith("):")):
+                new_lines.append(f'<span class="code-label">{line}</span>')
+                continue
+
+            # Caret blocks: ^^^^ and lines under them
+            if re.search(r"\^{3,}", line):
+                in_caret_block = True
+                new_lines.append(f'<span class="code-annotation">{line}</span>')
+                continue
+
+            if in_caret_block:
+                if line.strip() == "":
+                    in_caret_block = False
+                    new_lines.append(line)
+                else:
+                    new_lines.append(f'<span class="code-annotation">{line}</span>')
+                continue
+
+            # Arrow annotations: <-, <--, or &lt;-, &lt;--
+            arrow_match = re.search(r"(\s+)(&lt;-+|-&gt;|&lt;--+|&lt;---)\s*(.*)$", line)
+            if arrow_match:
+                prefix = line[:arrow_match.start(1)]
+                spaces = arrow_match.group(1)
+                arrow = arrow_match.group(2)
+                note = arrow_match.group(3)
+                annotated = f'{prefix}{spaces}<span class="code-annotation">{arrow} {note}</span>'
+                new_lines.append(annotated)
+                continue
+
+            # Trailing parenthetical hop annotations: e.g. " 1.482 ms   (dest-2 IXP port)"
+            paren_match = re.search(r"(ms\s+)(\([^\)]+\))\s*$", line)
+            if paren_match:
+                prefix = line[:paren_match.start(2)]
+                note = paren_match.group(2)
+                annotated = f'{prefix}<span class="code-annotation">{note}</span>'
+                new_lines.append(annotated)
+                continue
+
+            # Standalone parenthetical explanation line
+            if re.match(r"^\s*\([A-Z].+\)\s*$", line):
+                new_lines.append(f'<span class="code-annotation">{line}</span>')
+                continue
+
+            new_lines.append(line)
+
+        return f'<pre><code{attrs}>' + "\n".join(new_lines) + '</code></pre>'
+
+    return re.sub(r'<pre><code([^>]*)>(.*?)</code></pre>', process_code, html, flags=re.DOTALL)
+
+
 def load_page(path: Path):
     text = path.read_text(encoding="utf-8")
     title_match = re.search(r"^# (.+)$", text, re.M)
@@ -371,6 +450,7 @@ def load_page(path: Path):
     body = re.sub(r"^# .+$", "", text, count=1, flags=re.M)
     body = convert_alerts(body)
     html = wrap_spoilers(md_to_html(body))
+    html = highlight_code_annotations(html)
     return title, html
 
 
@@ -578,6 +658,19 @@ code { font-family: var(--mono); font-size: 14px; background: var(--panel-2);
 pre { background: #0a0f1f; border: 1px solid var(--line); border-radius: 8px;
   padding: 14px 16px; overflow-x: auto; margin: 0; }
 pre code { background: none; padding: 0; color: #e8eefb; font-size: 14px; }
+.code-annotation { color: #ffa94d; font-style: italic; font-weight: 500; }
+.code-header { color: #8fb7e1; font-weight: 600; }
+.code-label { color: #8fb7e1; font-weight: 600; }
+.code-legend {
+  display: inline-flex; align-items: center; gap: 16px;
+  font-family: var(--mono); font-size: 11.5px; margin: 4px 0 10px;
+  padding: 4px 10px; background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--line); border-radius: 6px; color: var(--muted);
+}
+.legend-item { display: inline-flex; align-items: center; gap: 6px; }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
+.legend-dot.dot-output { background: #e8eefb; box-shadow: 0 0 5px rgba(232, 238, 251, 0.4); }
+.legend-dot.dot-annotation { background: #ffa94d; box-shadow: 0 0 5px rgba(255, 169, 77, 0.5); }
 .copy-btn { position: absolute; top: 8px; right: 8px; font-family: var(--mono); font-size: 12px;
   background: var(--panel-2); color: var(--blue); border: 1px solid var(--line);
   border-radius: 5px; padding: 3px 10px; cursor: pointer; }
@@ -713,8 +806,11 @@ details.answers[open] { border-style: solid; padding-bottom: 8px; }
   }
   window.addEventListener("hashchange", function () { show(location.hash.slice(1)); });
 
-  // Copy buttons on every code block
+  // Copy buttons on every code block (except diagrams/anatomies inside callouts)
   document.querySelectorAll("pre").forEach(function (pre) {
+    if (pre.closest(".callout")) {
+      return;
+    }
     var wrap = document.createElement("div");
     wrap.className = "codewrap";
     pre.parentNode.insertBefore(wrap, pre);
