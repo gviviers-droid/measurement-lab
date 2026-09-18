@@ -13,3 +13,6 @@ clab-measlab/
 # Python artifacts
 __pycache__/
 *.py[cod]
+
+# Local course reference files (maintained in another repository/folder)
+references/
