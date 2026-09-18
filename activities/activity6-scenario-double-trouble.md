@@ -13,7 +13,7 @@ Your deliverable is a comprehensive incident summary proving whether these sympt
 
 > **Urgent:** Users are reporting widespread degradation across multiple external services. Connectivity to target1 (10.40.10.10 / 3fff:40:10::10) is experiencing severe packet loss and jitter. Simultaneously, target2 (10.50.10.10 / 3fff:50:10::10) has become noticeably sluggish. Management suspects our border connection to Upstream A is failing. Please investigate, isolate the root cause(s), and submit an incident report.
 
-Start the incident on your own machine in the lab folder:
+Start the incident by clicking **Scenario 3 on** in the Control Portal (or run on your own machine in the lab folder):
 
 ```
 sudo ./scripts/scenario.sh 3 on
@@ -24,7 +24,7 @@ Wait a minute for conditions to stabilize, then investigate.
 ## Suggested investigation, if you want structure
 
 ### Step 1: Disentangle the symptoms
-Do not assume both targets suffer from the same underlying fault just because the complaints arrived together. Collect measurements for both targets from host1:
+Do not assume both targets suffer from the same underlying fault just because the complaints arrived together. Collect measurements for both targets from host1 (via the **host1** terminal in the Control Portal, or `podman exec -it clab-measlab-host1 bash`):
 
 ```
 ping -c 100 -i 0.2 10.40.10.10 | grep -oE 'time=[0-9.]+' | cut -d= -f2 > target1.txt
@@ -54,14 +54,14 @@ mtr -n --report --report-cycles 50 10.50.10.10
 * On target2, compare the sequence of hops against your baseline from Activity 1. Has the path changed?
 
 ### Step 3: Consult the control plane and looking glass
-Check your BGP table on r1 (`docker exec -it clab-measlab-r1 vtysh`):
+Check your BGP table on r1 (switch to the **r1** terminal in the Control Portal and type `vtysh`, or run `podman exec -it clab-measlab-r1 vtysh`):
 
 ```
 show bgp ipv4 unicast 10.40.0.0/16
 show bgp ipv4 unicast 10.50.0.0/16
 ```
 
-Then query the looking glass from your lab folder:
+Then query the looking glass (use the **Looking glass** section in the Control Portal, or run from your lab folder):
 
 ```
 sudo ./scripts/lg.sh route-server "show bgp summary"
@@ -76,7 +76,7 @@ Can you mitigate either symptom locally without waiting for external providers?
 * Does changing local preference on r1 towards Upstream B improve reachability for target2?
 * Does local routing policy have any effect on target1's congested transit link?
 
-Restore baseline when finished:
+Restore baseline when finished by clicking **Scenario 3 off** in the Control Portal (or run):
 
 ```
 sudo ./scripts/scenario.sh 3 off

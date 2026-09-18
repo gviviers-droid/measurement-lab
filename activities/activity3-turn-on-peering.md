@@ -3,13 +3,13 @@
 **Maps to:** Modules 2.1 and 2.3, and the Unit 1 material on IXPs and Internet flattening
 **Time:** 25 minutes
 **Start state:** lab deployed, `lab-check.sh` all green, congestion stopped, peering down.
-**You need:** a shell inside host1, a shell on your own machine in the lab folder, and access to r1 and r2.
+**You need:** a shell inside host1, a shell on your own machine in the lab folder, and access to r1 and r2 (all directly accessible in the Control Portal at `http://localhost:8080`).
 
 Your AS has held a port at the IXP since the lab began, configured and paid for, carrying nothing. Today you become a peer. The measurement discipline: never change a network without a before picture, so the first half of this activity records the world as it is, and the second half enables the sessions and measures what changed. This before-and-after method is exactly how operators justify peering decisions with data.
 
 ## Task 1: The before picture
 
-From host1, record path and latency to target2 in both families:
+From host1 (switch to the **host1** terminal in the Control Portal, or run `podman exec -it clab-measlab-host1 bash`), record path and latency to target2 in both families:
 
 ```
 traceroute -n 10.50.10.10
@@ -18,14 +18,14 @@ ping -c 20 10.50.10.10
 ping -c 20 3fff:50:10::10
 ```
 
-Then read your own routing. On r1 (`docker exec -it clab-measlab-r1 vtysh`):
+Then read your own routing. On r1 (in the Control Portal **r1** terminal type `vtysh`, or run `podman exec -it clab-measlab-r1 vtysh`):
 
 ```
 show bgp ipv4 unicast 10.50.0.0/16
 show bgp ipv6 unicast 3fff:50::/32
 ```
 
-Note the AS path and which border router carries the traffic. Finally, look at the dormant sessions on r2 (`docker exec -it clab-measlab-r2 vtysh`):
+Note the AS path and which border router carries the traffic. Finally, look at the dormant sessions on r2 (in the Control Portal **r2** terminal type `vtysh`, or run `podman exec -it clab-measlab-r2 vtysh`):
 
 ```
 show bgp summary
@@ -42,7 +42,7 @@ show bgp summary
 
 ## Task 2: Become a peer
 
-On your own machine in the lab folder:
+In the Control Portal, click **Enable peering** (or on your own machine in the lab folder, run):
 
 ```
 sudo ./scripts/peering.sh up
@@ -91,7 +91,7 @@ Repeat every measurement from Task 1: both traceroutes, both pings, both BGP loo
 
 ## Task 4: The business case
 
-Write three sentences a manager would understand: what you enabled, what measurably improved, and for which destinations. Then restore the base state for the next activity:
+Write three sentences a manager would understand: what you enabled, what measurably improved, and for which destinations. Then restore the base state for the next activity by clicking **Disable peering** in the Control Portal (or run):
 
 ```
 sudo ./scripts/peering.sh down

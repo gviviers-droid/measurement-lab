@@ -3,13 +3,13 @@
 **Maps to:** Modules 2.3 (Core Performance Metrics) and 2.5 (Analysing Measurement Data)
 **Time:** 30 minutes
 **Start state:** lab deployed, `lab-check.sh` all green, congestion stopped, peering down.
-**You need:** two terminals: one shell inside host1, and one on your own machine in the lab folder (where you ran `containerlab deploy`).
+**You need:** two terminals: one shell inside host1, and one on your own machine in the lab folder (or use the Control Portal at `http://localhost:8080`).
 
 In Activity 1 you located latency along a path. This activity adds the dimension the Internet never holds still: time. Real links carry other people's traffic, and that load rises and falls with human activity through the day. Your lab compresses that daily cycle into a switch you control, so you can measure the same path under quiet and busy conditions and see which statistics survive the difference.
 
 ## Task 1: Establish the baseline
 
-From host1, capture one hundred round-trip times to target1 and store them:
+From host1 (switch to the **host1** terminal in the Control Portal, or run `podman exec -it clab-measlab-host1 bash`), capture one hundred round-trip times to target1 and store them:
 
 ```
 ping -c 100 -i 0.2 10.40.10.10 | grep -oE 'time=[0-9.]+' | cut -d= -f2 > baseline.txt
@@ -31,7 +31,7 @@ Record all six numbers. Repeat for IPv6 (`ping -c 100 -i 0.2 3fff:40:10::10`, ou
 
 ## Task 2: Load the path
 
-In your other terminal, on your own machine in the lab folder, switch on the background load:
+In the Control Portal, click **Start congestion** (or on your own machine in the lab folder, run):
 
 ```
 sudo ./scripts/congestion.sh start
@@ -72,7 +72,7 @@ mtr -n --report --report-cycles 100 10.40.10.10
 
 ## Task 4: Report honestly
 
-Switch the load off and confirm recovery with a short ping:
+Switch the load off by clicking **Stop congestion** in the Control Portal (or run `sudo ./scripts/congestion.sh stop` from your host terminal), and confirm recovery with a short ping:
 
 ```
 sudo ./scripts/congestion.sh stop

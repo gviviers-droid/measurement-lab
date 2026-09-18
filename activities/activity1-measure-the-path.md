@@ -29,10 +29,10 @@ Your AS holds 10.1.0.0/16 and the IPv6 allocation 3fff:1::/32, a /32 like every 
 
 Addresses starting with 100.64.99 or 3fff:ff: sit on the IXP peering LAN, a single shared subnet where all members connect.
 
-Open a shell on your workstation:
+Open a shell on your workstation (in the Control Portal, switch to the **host1** terminal, or run from your host shell):
 
 ```
-docker exec -it clab-measlab-host1 bash
+podman exec -it clab-measlab-host1 bash
 ```
 
 ## Task 1: Discover both paths, in both address families
@@ -141,10 +141,10 @@ The final line reports `min/avg/max/mdev`.
 
 ## Task 5: Read your own BGP table
 
-Your routers learned all these paths through BGP. Open the CLI of your border router r1:
+Your routers learned all these paths through BGP. Open the CLI of your border router r1 (in the Control Portal, switch to the **r1** terminal and type `vtysh`, or run from your host shell):
 
 ```
-docker exec -it clab-measlab-r1 vtysh
+podman exec -it clab-measlab-r1 vtysh
 ```
 
 Look up both destinations in both address families:
@@ -162,7 +162,7 @@ show bgp ipv6 unicast 3fff:50::/32
 
 **Question 5c.** Every AS in this lab announces one IPv4 /16 and one IPv6 /32. A /16 holds 65,536 addresses. Using prefix arithmetic, how many /64 subnets fit in your 3fff:1::/32?
 
-Type `exit` twice to leave the router.
+Type `exit` to return to the container shell (or twice to exit if you used `podman exec`).
 
 <details class="answers" markdown="1">
 <summary>Check your answers for Task 5 (reveal after writing your own)</summary>

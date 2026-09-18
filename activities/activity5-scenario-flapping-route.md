@@ -11,7 +11,7 @@ Activity 4 gave you a degraded path. This scenario gives you something meaner: a
 
 > target1 (10.40.10.10 / 3fff:40:10::10) keeps dropping out. It works, then it does not, then it works again. Monitoring shows the pattern started 20 minutes ago. target2 is fine. Please investigate and tell us whose problem this is.
 
-Start the incident on your own machine in the lab folder:
+Start the incident by clicking **Scenario 2 on** in the Control Portal (or run on your own machine in the lab folder):
 
 ```
 sudo ./scripts/scenario.sh 2 on
@@ -21,7 +21,7 @@ Wait a minute, then investigate. Try your own approach first.
 
 ## Suggested investigation, if you want structure
 
-Measure over time, not once. A 100-cycle mtr to target1 spans about two minutes, longer than one bad or good period, so its loss column tells the truth a single ping cannot:
+Measure over time, not once. From host1 (via the **host1** terminal in the Control Portal or `podman exec -it clab-measlab-host1 bash`), a 100-cycle mtr to target1 spans about two minutes, longer than one bad or good period, so its loss column tells the truth a single ping cannot:
 
 ```
 mtr -n --report --report-cycles 100 10.40.10.10
@@ -29,16 +29,15 @@ mtr -n --report --report-cycles 100 10.40.10.10
 
 Read the failure mode. During an outage window, ping target1 and look at the exact error. A timeout means your packet left and nothing came back; a "Network unreachable" means your own router had no route to offer. The two point at different layers, and this detail decides your whole diagnosis.
 
-Watch your control plane. On r1, check the route repeatedly for a few minutes:
+Watch your control plane. On r1 (in the Control Portal switch to the **r1** terminal and type `vtysh`, or run `podman exec -it clab-measlab-r1 vtysh`), check the route repeatedly for a few minutes:
 
 ```
-docker exec -it clab-measlab-r1 vtysh
 show bgp ipv4 unicast 10.40.0.0/16
 ```
 
 Run it during a good window and a bad window. Also look at r1's BGP log messages (`show logging` in vtysh, or repeat the lookup and note the changing age of the route). A route whose age keeps resetting to seconds is telling you its history.
 
-Attribute it. The looking glass shows you where the instability enters the Internet:
+Attribute it. The looking glass shows you where the instability enters the Internet (use the **Looking glass** section in the Control Portal, or run from your host machine):
 
 ```
 sudo ./scripts/lg.sh transit "show bgp ipv4 unicast 10.40.0.0/16"
@@ -49,7 +48,7 @@ If the transit carrier's route to dest-1 also comes and goes while the IXP looks
 
 ## Your incident summary
 
-Write it before reading the model answer: symptom with numbers, the evidence that this is a routing problem rather than a lossy link, the responsible network, and whom you would contact. Then close the scenario:
+Write it before reading the model answer: symptom with numbers, the evidence that this is a routing problem rather than a lossy link, the responsible network, and whom you would contact. Then close the scenario by clicking **Scenario 2 off** in the Control Portal (or run):
 
 ```
 sudo ./scripts/scenario.sh 2 off

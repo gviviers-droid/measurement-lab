@@ -189,7 +189,7 @@ Execute from the repository root:
 ```
 
 ### 3. Measurement & Probing One-Liners
-Run from inside `host1` (`docker exec -it clab-measlab-host1 bash` or via the web terminal):
+Run from inside `host1` (`podman exec -it clab-measlab-host1 bash` or via the web terminal):
 
 ```bash
 # Dual-stack reachability and latency

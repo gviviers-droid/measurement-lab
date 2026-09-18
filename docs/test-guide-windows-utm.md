@@ -165,7 +165,7 @@ When it finishes, the health check runs automatically. **Record the output.** Ev
 Then work through the first activity as a learner would:
 
 ```
-docker exec -it clab-measlab-host1 bash
+podman exec -it clab-measlab-host1 bash
 traceroute -n 10.40.10.10
 ping -c 10 3fff:40:10::10
 mtr -n --report --report-cycles 20 10.40.10.10

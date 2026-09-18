@@ -362,7 +362,7 @@ sudo ./lab.sh down
 <article id="portal" class="page" data-title="Control Portal"><h1>Control Portal</h1>
 
 <p>Start and stop the lab and its activities from here, and use real terminals
-into your own network instead of typing <code>docker exec</code> commands by
+into your own network instead of typing <code>podman exec</code> commands by
 hand. Run <code>./portal.sh</code> on your own machine first (not inside the
 lab), then reload this page from <code>http://localhost:8080</code>.</p>
 
@@ -432,7 +432,7 @@ same rule as <code>lg.sh</code>: observe only.</p>
 
 <h2>Terminals</h2>
 <p>Live shells into the nodes you're allowed to touch, side by side. Each opens
-where <code>docker exec -it clab-measlab-&lt;node&gt; sh</code> would have
+where <code>podman exec -it clab-measlab-&lt;node&gt; sh</code> would have
 dropped you &mdash; run <code>vtysh</code>, <code>ping</code>,
 <code>traceroute</code>, <code>mtr</code> directly, no prefix needed. Drag a
 console's bottom-right corner to resize it.</p>
@@ -671,8 +671,8 @@ console's bottom-right corner to resize it.</p>
 </tbody>
 </table>
 <p>Addresses starting with 100.64.99 or 3fff:ff: sit on the IXP peering LAN, a single shared subnet where all members connect.</p>
-<p>Open a shell on your workstation:</p>
-<pre><code>docker exec -it clab-measlab-host1 bash
+<p>Open a shell on your workstation (in the Control Portal, switch to the <strong>host1</strong> terminal, or run from your host shell):</p>
+<pre><code>podman exec -it clab-measlab-host1 bash
 </code></pre>
 <h2>Task 1: Discover both paths, in both address families</h2>
 <p>Run four traceroutes from host1 and keep the outputs:</p>
@@ -731,8 +731,8 @@ ping -c 10 10.50.10.10
 <p><strong>4b.</strong> There is no single correct answer, and that is the point. The minimum approximates the clean path latency, the average reflects typical experience, and neither captures the spread. Any honest report needs at least two numbers.</p>
 </details>
 <h2>Task 5: Read your own BGP table</h2>
-<p>Your routers learned all these paths through BGP. Open the CLI of your border router r1:</p>
-<pre><code>docker exec -it clab-measlab-r1 vtysh
+<p>Your routers learned all these paths through BGP. Open the CLI of your border router r1 (in the Control Portal, switch to the <strong>r1</strong> terminal and type <code>vtysh</code>, or run from your host shell):</p>
+<pre><code>podman exec -it clab-measlab-r1 vtysh
 </code></pre>
 <p>Look up both destinations in both address families:</p>
 <pre><code>show bgp ipv4 unicast 10.40.0.0/16
@@ -743,7 +743,7 @@ show bgp ipv6 unicast 3fff:50::/32
 <p><strong>Question 5a.</strong> Read the AS path attribute for each destination. Which ASes appear, in what order, and does the IXP appear?</p>
 <p><strong>Question 5b.</strong> Compare the AS paths with your traceroutes from Task 1. The traceroute shows individual routers; the AS path shows networks. Do the two views agree?</p>
 <p><strong>Question 5c.</strong> Every AS in this lab announces one IPv4 /16 and one IPv6 /32. A /16 holds 65,536 addresses. Using prefix arithmetic, how many /64 subnets fit in your 3fff:1::/32?</p>
-<p>Type <code>exit</code> twice to leave the router.</p>
+<p>Type <code>exit</code> to return to the container shell (or twice to exit if you used <code>podman exec</code>).</p>
 <details class="answers">
 <summary>Check your answers for Task 5 (reveal after writing your own)</summary>
 <p><strong>5a.</strong> dest-1: <code>65010 65030 65040</code> in both address families. dest-2: <code>65010 65050</code>. The IXP's route server (AS 65100) appears in neither path: route servers pass routes between members without inserting themselves, so the exchange stays invisible at the BGP level too.</p>
@@ -755,10 +755,10 @@ show bgp ipv6 unicast 3fff:50::/32
 <p><strong>Maps to:</strong> Modules 2.3 (Core Performance Metrics) and 2.5 (Analysing Measurement Data)
 <strong>Time:</strong> 30 minutes
 <strong>Start state:</strong> lab deployed, <code>lab-check.sh</code> all green, congestion stopped, peering down.
-<strong>You need:</strong> two terminals: one shell inside host1, and one on your own machine in the lab folder (where you ran <code>containerlab deploy</code>).</p>
+<strong>You need:</strong> two terminals: one shell inside host1, and one on your own machine in the lab folder (or use the Control Portal at <code>http://localhost:8080</code>).</p>
 <p>In Activity 1 you located latency along a path. This activity adds the dimension the Internet never holds still: time. Real links carry other people's traffic, and that load rises and falls with human activity through the day. Your lab compresses that daily cycle into a switch you control, so you can measure the same path under quiet and busy conditions and see which statistics survive the difference.</p>
 <h2>Task 1: Establish the baseline</h2>
-<p>From host1, capture one hundred round-trip times to target1 and store them:</p>
+<p>From host1 (switch to the <strong>host1</strong> terminal in the Control Portal, or run <code>podman exec -it clab-measlab-host1 bash</code>), capture one hundred round-trip times to target1 and store them:</p>
 <pre><code>ping -c 100 -i 0.2 10.40.10.10 | grep -oE 'time=[0-9.]+' | cut -d= -f2 &gt; baseline.txt
 </code></pre>
 <p>Compute the summary statistics:</p>
@@ -772,7 +772,7 @@ show bgp ipv6 unicast 3fff:50::/32
 </code></pre>
 <p>Record all six numbers. Repeat for IPv6 (<code>ping -c 100 -i 0.2 3fff:40:10::10</code>, output to <code>baseline6.txt</code>) and confirm the two families measure alike.</p>
 <h2>Task 2: Load the path</h2>
-<p>In your other terminal, on your own machine in the lab folder, switch on the background load:</p>
+<p>In the Control Portal, click <strong>Start congestion</strong> (or on your own machine in the lab folder, run):</p>
 <pre><code>sudo ./scripts/congestion.sh start
 </code></pre>
 <p>Another network in upstream A now pushes a heavy stream across the same transit link your traffic uses. You did not cause it and cannot stop their traffic; you can only measure what it does to yours. Wait thirty seconds for the queue to build.</p>
@@ -793,7 +793,7 @@ show bgp ipv6 unicast 3fff:50::/32
 <p><strong>3c.</strong> Yes. On top of the constant 1% you found in Activity 1, the loaded link drops packets whenever its queue overflows, so loss rises at the same hop and persists to the destination. Congestion loss and the baseline loss share a location but differ in behaviour: one vanishes when the load stops.</p>
 </details>
 <h2>Task 4: Report honestly</h2>
-<p>Switch the load off and confirm recovery with a short ping:</p>
+<p>Switch the load off by clicking <strong>Stop congestion</strong> in the Control Portal (or run <code>sudo ./scripts/congestion.sh stop</code> from your host terminal), and confirm recovery with a short ping:</p>
 <pre><code>sudo ./scripts/congestion.sh stop
 </code></pre>
 <p><strong>Question 4a.</strong> Your monitoring system samples this path once per hour with a single ping. Sketch what its latency graph would show across a day with two busy periods, and name what it would miss.</p>
@@ -810,20 +810,20 @@ show bgp ipv6 unicast 3fff:50::/32
 <p><strong>Maps to:</strong> Modules 2.1 and 2.3, and the Unit 1 material on IXPs and Internet flattening
 <strong>Time:</strong> 25 minutes
 <strong>Start state:</strong> lab deployed, <code>lab-check.sh</code> all green, congestion stopped, peering down.
-<strong>You need:</strong> a shell inside host1, a shell on your own machine in the lab folder, and access to r1 and r2.</p>
+<strong>You need:</strong> a shell inside host1, a shell on your own machine in the lab folder, and access to r1 and r2 (all directly accessible in the Control Portal at <code>http://localhost:8080</code>).</p>
 <p>Your AS has held a port at the IXP since the lab began, configured and paid for, carrying nothing. Today you become a peer. The measurement discipline: never change a network without a before picture, so the first half of this activity records the world as it is, and the second half enables the sessions and measures what changed. This before-and-after method is exactly how operators justify peering decisions with data.</p>
 <h2>Task 1: The before picture</h2>
-<p>From host1, record path and latency to target2 in both families:</p>
+<p>From host1 (switch to the <strong>host1</strong> terminal in the Control Portal, or run <code>podman exec -it clab-measlab-host1 bash</code>), record path and latency to target2 in both families:</p>
 <pre><code>traceroute -n 10.50.10.10
 traceroute -n -6 3fff:50:10::10
 ping -c 20 10.50.10.10
 ping -c 20 3fff:50:10::10
 </code></pre>
-<p>Then read your own routing. On r1 (<code>docker exec -it clab-measlab-r1 vtysh</code>):</p>
+<p>Then read your own routing. On r1 (in the Control Portal <strong>r1</strong> terminal type <code>vtysh</code>, or run <code>podman exec -it clab-measlab-r1 vtysh</code>):</p>
 <pre><code>show bgp ipv4 unicast 10.50.0.0/16
 show bgp ipv6 unicast 3fff:50::/32
 </code></pre>
-<p>Note the AS path and which border router carries the traffic. Finally, look at the dormant sessions on r2 (<code>docker exec -it clab-measlab-r2 vtysh</code>):</p>
+<p>Note the AS path and which border router carries the traffic. Finally, look at the dormant sessions on r2 (in the Control Portal <strong>r2</strong> terminal type <code>vtysh</code>, or run <code>podman exec -it clab-measlab-r2 vtysh</code>):</p>
 <pre><code>show bgp summary
 </code></pre>
 <p><strong>Question 1a.</strong> What state does r2 report for the two sessions towards 100.64.99.1 and 3fff:ff::1, and what does that state mean?</p>
@@ -832,7 +832,7 @@ show bgp ipv6 unicast 3fff:50::/32
 <p><strong>1a.</strong> Idle (Admin): the sessions exist in configuration but an operator shut them down on purpose. Configured-but-disabled is a normal state on real routers, and it differs from a session that is down because of a fault.</p>
 </details>
 <h2>Task 2: Become a peer</h2>
-<p>On your own machine in the lab folder:</p>
+<p>In the Control Portal, click <strong>Enable peering</strong> (or on your own machine in the lab folder, run):</p>
 <pre><code>sudo ./scripts/peering.sh up
 </code></pre>
 <p>Give BGP half a minute, then confirm on r2 that both sessions show as Established and count the prefixes received. Look at what arrived:</p>
@@ -858,7 +858,7 @@ show bgp ipv6 unicast
 <p><strong>3d.</strong> Nothing changed for target1. dest-1 is not present at the exchange, so your new sessions offer no route to it. The rule: peering improves reachability only to networks that are also at the exchange; everything else still rides transit. Real peering decisions weigh exactly this: how much of my traffic goes to networks I could reach across this fabric?</p>
 </details>
 <h2>Task 4: The business case</h2>
-<p>Write three sentences a manager would understand: what you enabled, what measurably improved, and for which destinations. Then restore the base state for the next activity:</p>
+<p>Write three sentences a manager would understand: what you enabled, what measurably improved, and for which destinations. Then restore the base state for the next activity by clicking <strong>Disable peering</strong> in the Control Portal (or run):</p>
 <pre><code>sudo ./scripts/peering.sh down
 </code></pre>
 <details class="answers">
@@ -876,24 +876,24 @@ show bgp ipv6 unicast
 <blockquote>
 <p>Since this morning, users report that target2 (10.50.10.10 / 3fff:50:10::10) feels sluggish. It worked fine yesterday. target1 seems unaffected. Please investigate.</p>
 </blockquote>
-<p>Start the incident on your own machine in the lab folder:</p>
+<p>Start the incident by clicking <strong>Scenario 1 on</strong> in the Control Portal (or run on your own machine in the lab folder):</p>
 <pre><code>sudo ./scripts/scenario.sh 1 on
 </code></pre>
 <p>Wait a minute, then investigate. Work through your own method before reading the suggested one below.</p>
 <h2>Suggested investigation, if you want structure</h2>
-<p>Confirm the symptom first: ping and traceroute to target2, both families, and compare against your Activity 1 and 3 records. A complaint is a hypothesis; a measurement is a fact.</p>
+<p>Confirm the symptom first: ping and traceroute to target2 from host1 (via the <strong>host1</strong> terminal in the Control Portal or <code>podman exec -it clab-measlab-host1 bash</code>), both families, and compare against your Activity 1 and 3 records. A complaint is a hypothesis; a measurement is a fact.</p>
 <p>Bracket the fault second: measure target1 the same way. One destination degraded and one clean already excludes large parts of the path, including your own AS.</p>
-<p>Read the path third: your traceroute to target2 changed. Label every hop with its AS, note the new round-trip time, and read the AS path for 10.50.0.0/16 on r1. Something about that AS path looks artificial; it is a deliberate signal from dest-2, and worth explaining in your summary.</p>
-<p>Use the looking glass fourth: you cannot log in to other networks, but you can read them:</p>
+<p>Read the path third: your traceroute to target2 changed. Label every hop with its AS, note the new round-trip time, and read the AS path for 10.50.0.0/16 on r1 (using the <strong>r1</strong> terminal in the Control Portal with <code>vtysh</code>, or <code>podman exec -it clab-measlab-r1 vtysh</code>). Something about that AS path looks artificial; it is a deliberate signal from dest-2, and worth explaining in your summary.</p>
+<p>Use the looking glass fourth: you cannot log in to other networks, but you can read them. In the Control Portal, use the <strong>Looking glass</strong> section, or run from the lab folder:</p>
 <pre><code>sudo ./scripts/lg.sh upstream-a &quot;show bgp ipv4 unicast 10.50.0.0/16&quot;
 sudo ./scripts/lg.sh route-server &quot;show bgp summary&quot;
 </code></pre>
 <p>The route server's summary is the IXP's member list with session states. Compare what you see there against the topology diagram.</p>
 <h2>Your incident summary</h2>
 <p>Write it before reading the model answer. Cover: the symptom quantified, the path change, the network you hold responsible, the evidence, and whom you would contact.</p>
-<p><strong>Optional mitigation.</strong> The fault is not yours, but the routing policy that steers your traffic into it is. Your r2 learns a clean route to dest-2 through upstream B, yet r1's higher local preference for upstream A wins. Lower it and watch your traffic escape the detour:</p>
-<pre><code>docker exec -it clab-measlab-r1 vtysh
-configure terminal
+<p><strong>Optional mitigation.</strong> The fault is not yours, but the routing policy that steers your traffic into it is. Your r2 learns a clean route to dest-2 through upstream B, yet r1's higher local preference for upstream A wins. Lower it and watch your traffic escape the detour.</p>
+<p>In the Control Portal, switch to the <strong>r1</strong> terminal and type <code>vtysh</code> (or run <code>podman exec -it clab-measlab-r1 vtysh</code> from your host terminal), then apply the policy:</p>
+<pre><code>configure terminal
 route-map FROM-UPSTREAM-A permit 10
  set local-preference 90
 exit
@@ -901,7 +901,7 @@ exit
 clear bgp * soft in
 </code></pre>
 <p>Measure target2 again, confirm the recovery through upstream B, then restore the value to 200 the same way (and <code>clear bgp * soft in</code> again). You diagnosed remotely and mitigated locally, which is precisely the shape of real incident response between networks.</p>
-<p>Close the scenario:</p>
+<p>Close the scenario by clicking <strong>Scenario 1 off</strong> in the Control Portal (or run):</p>
 <pre><code>sudo ./scripts/scenario.sh 1 off
 </code></pre>
 <details class="answers"><summary>Model incident summary (reveal after writing your own)</summary>
@@ -924,27 +924,26 @@ clear bgp * soft in
 <blockquote>
 <p>target1 (10.40.10.10 / 3fff:40:10::10) keeps dropping out. It works, then it does not, then it works again. Monitoring shows the pattern started 20 minutes ago. target2 is fine. Please investigate and tell us whose problem this is.</p>
 </blockquote>
-<p>Start the incident on your own machine in the lab folder:</p>
+<p>Start the incident by clicking <strong>Scenario 2 on</strong> in the Control Portal (or run on your own machine in the lab folder):</p>
 <pre><code>sudo ./scripts/scenario.sh 2 on
 </code></pre>
 <p>Wait a minute, then investigate. Try your own approach first.</p>
 <h2>Suggested investigation, if you want structure</h2>
-<p>Measure over time, not once. A 100-cycle mtr to target1 spans about two minutes, longer than one bad or good period, so its loss column tells the truth a single ping cannot:</p>
+<p>Measure over time, not once. From host1 (via the <strong>host1</strong> terminal in the Control Portal or <code>podman exec -it clab-measlab-host1 bash</code>), a 100-cycle mtr to target1 spans about two minutes, longer than one bad or good period, so its loss column tells the truth a single ping cannot:</p>
 <pre><code>mtr -n --report --report-cycles 100 10.40.10.10
 </code></pre>
 <p>Read the failure mode. During an outage window, ping target1 and look at the exact error. A timeout means your packet left and nothing came back; a "Network unreachable" means your own router had no route to offer. The two point at different layers, and this detail decides your whole diagnosis.</p>
-<p>Watch your control plane. On r1, check the route repeatedly for a few minutes:</p>
-<pre><code>docker exec -it clab-measlab-r1 vtysh
-show bgp ipv4 unicast 10.40.0.0/16
+<p>Watch your control plane. On r1 (in the Control Portal switch to the <strong>r1</strong> terminal and type <code>vtysh</code>, or run <code>podman exec -it clab-measlab-r1 vtysh</code>), check the route repeatedly for a few minutes:</p>
+<pre><code>show bgp ipv4 unicast 10.40.0.0/16
 </code></pre>
 <p>Run it during a good window and a bad window. Also look at r1's BGP log messages (<code>show logging</code> in vtysh, or repeat the lookup and note the changing age of the route). A route whose age keeps resetting to seconds is telling you its history.</p>
-<p>Attribute it. The looking glass shows you where the instability enters the Internet:</p>
+<p>Attribute it. The looking glass shows you where the instability enters the Internet (use the <strong>Looking glass</strong> section in the Control Portal, or run from your host machine):</p>
 <pre><code>sudo ./scripts/lg.sh transit &quot;show bgp ipv4 unicast 10.40.0.0/16&quot;
 sudo ./scripts/lg.sh route-server &quot;show bgp summary&quot;
 </code></pre>
 <p>If the transit carrier's route to dest-1 also comes and goes while the IXP looks healthy, the boundary of the fault is drawn for you.</p>
 <h2>Your incident summary</h2>
-<p>Write it before reading the model answer: symptom with numbers, the evidence that this is a routing problem rather than a lossy link, the responsible network, and whom you would contact. Then close the scenario:</p>
+<p>Write it before reading the model answer: symptom with numbers, the evidence that this is a routing problem rather than a lossy link, the responsible network, and whom you would contact. Then close the scenario by clicking <strong>Scenario 2 off</strong> in the Control Portal (or run):</p>
 <pre><code>sudo ./scripts/scenario.sh 2 off
 </code></pre>
 <details class="answers"><summary>Model incident summary (reveal after writing your own)</summary>
@@ -968,13 +967,13 @@ sudo ./scripts/lg.sh route-server &quot;show bgp summary&quot;
 <blockquote>
 <p><strong>Urgent:</strong> Users are reporting widespread degradation across multiple external services. Connectivity to target1 (10.40.10.10 / 3fff:40:10::10) is experiencing severe packet loss and jitter. Simultaneously, target2 (10.50.10.10 / 3fff:50:10::10) has become noticeably sluggish. Management suspects our border connection to Upstream A is failing. Please investigate, isolate the root cause(s), and submit an incident report.</p>
 </blockquote>
-<p>Start the incident on your own machine in the lab folder:</p>
+<p>Start the incident by clicking <strong>Scenario 3 on</strong> in the Control Portal (or run on your own machine in the lab folder):</p>
 <pre><code>sudo ./scripts/scenario.sh 3 on
 </code></pre>
 <p>Wait a minute for conditions to stabilize, then investigate.</p>
 <h2>Suggested investigation, if you want structure</h2>
 <h3>Step 1: Disentangle the symptoms</h3>
-<p>Do not assume both targets suffer from the same underlying fault just because the complaints arrived together. Collect measurements for both targets from host1:</p>
+<p>Do not assume both targets suffer from the same underlying fault just because the complaints arrived together. Collect measurements for both targets from host1 (via the <strong>host1</strong> terminal in the Control Portal, or <code>podman exec -it clab-measlab-host1 bash</code>):</p>
 <pre><code>ping -c 100 -i 0.2 10.40.10.10 | grep -oE 'time=[0-9.]+' | cut -d= -f2 &gt; target1.txt
 ping -c 100 -i 0.2 10.50.10.10 | grep -oE 'time=[0-9.]+' | cut -d= -f2 &gt; target2.txt
 </code></pre>
@@ -995,11 +994,11 @@ mtr -n --report --report-cycles 50 10.50.10.10
 <li>On target2, compare the sequence of hops against your baseline from Activity 1. Has the path changed?</li>
 </ul>
 <h3>Step 3: Consult the control plane and looking glass</h3>
-<p>Check your BGP table on r1 (<code>docker exec -it clab-measlab-r1 vtysh</code>):</p>
+<p>Check your BGP table on r1 (switch to the <strong>r1</strong> terminal in the Control Portal and type <code>vtysh</code>, or run <code>podman exec -it clab-measlab-r1 vtysh</code>):</p>
 <pre><code>show bgp ipv4 unicast 10.40.0.0/16
 show bgp ipv4 unicast 10.50.0.0/16
 </code></pre>
-<p>Then query the looking glass from your lab folder:</p>
+<p>Then query the looking glass (use the <strong>Looking glass</strong> section in the Control Portal, or run from your lab folder):</p>
 <pre><code>sudo ./scripts/lg.sh route-server &quot;show bgp summary&quot;
 sudo ./scripts/lg.sh upstream-a &quot;show bgp ipv4 unicast 10.50.0.0/16&quot;
 </code></pre>
@@ -1011,7 +1010,7 @@ sudo ./scripts/lg.sh upstream-a &quot;show bgp ipv4 unicast 10.50.0.0/16&quot;
 <p>Can you mitigate either symptom locally without waiting for external providers?
 * Does changing local preference on r1 towards Upstream B improve reachability for target2?
 * Does local routing policy have any effect on target1's congested transit link?</p>
-<p>Restore baseline when finished:</p>
+<p>Restore baseline when finished by clicking <strong>Scenario 3 off</strong> in the Control Portal (or run):</p>
 <pre><code>sudo ./scripts/scenario.sh 3 off
 </code></pre>
 <details class="answers"><summary>Model incident summary (reveal after writing your own)</summary>
@@ -1035,28 +1034,34 @@ sudo ./scripts/lg.sh upstream-a &quot;show bgp ipv4 unicast 10.50.0.0/16&quot;
 <thead>
 <tr>
 <th>Where</th>
-<th>Command</th>
+<th>Control Portal</th>
+<th>CLI Command (Podman)</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>Workstation shell</td>
-<td><code>docker exec -it clab-measlab-host1 bash</code></td>
+<td><strong>host1</strong> terminal</td>
+<td><code>podman exec -it clab-measlab-host1 bash</code></td>
 </tr>
 <tr>
 <td>Router CLI (r1)</td>
-<td><code>docker exec -it clab-measlab-r1 vtysh</code></td>
+<td><strong>r1</strong> terminal (<code>vtysh</code>)</td>
+<td><code>podman exec -it clab-measlab-r1 vtysh</code></td>
 </tr>
 <tr>
 <td>Router CLI (r2)</td>
-<td><code>docker exec -it clab-measlab-r2 vtysh</code></td>
+<td><strong>r2</strong> terminal (<code>vtysh</code>)</td>
+<td><code>podman exec -it clab-measlab-r2 vtysh</code></td>
 </tr>
 <tr>
 <td>Router CLI (r3)</td>
-<td><code>docker exec -it clab-measlab-r3 vtysh</code></td>
+<td><strong>r3</strong> terminal (<code>vtysh</code>)</td>
+<td><code>podman exec -it clab-measlab-r3 vtysh</code></td>
 </tr>
 <tr>
 <td>Leave a router CLI</td>
+<td><code>exit</code></td>
 <td><code>exit</code> (twice)</td>
 </tr>
 </tbody>

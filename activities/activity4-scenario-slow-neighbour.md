@@ -11,7 +11,7 @@ From here on, the training wheels come off. Nobody tells you what broke. You get
 
 > Since this morning, users report that target2 (10.50.10.10 / 3fff:50:10::10) feels sluggish. It worked fine yesterday. target1 seems unaffected. Please investigate.
 
-Start the incident on your own machine in the lab folder:
+Start the incident by clicking **Scenario 1 on** in the Control Portal (or run on your own machine in the lab folder):
 
 ```
 sudo ./scripts/scenario.sh 1 on
@@ -21,13 +21,13 @@ Wait a minute, then investigate. Work through your own method before reading the
 
 ## Suggested investigation, if you want structure
 
-Confirm the symptom first: ping and traceroute to target2, both families, and compare against your Activity 1 and 3 records. A complaint is a hypothesis; a measurement is a fact.
+Confirm the symptom first: ping and traceroute to target2 from host1 (via the **host1** terminal in the Control Portal or `podman exec -it clab-measlab-host1 bash`), both families, and compare against your Activity 1 and 3 records. A complaint is a hypothesis; a measurement is a fact.
 
 Bracket the fault second: measure target1 the same way. One destination degraded and one clean already excludes large parts of the path, including your own AS.
 
-Read the path third: your traceroute to target2 changed. Label every hop with its AS, note the new round-trip time, and read the AS path for 10.50.0.0/16 on r1. Something about that AS path looks artificial; it is a deliberate signal from dest-2, and worth explaining in your summary.
+Read the path third: your traceroute to target2 changed. Label every hop with its AS, note the new round-trip time, and read the AS path for 10.50.0.0/16 on r1 (using the **r1** terminal in the Control Portal with `vtysh`, or `podman exec -it clab-measlab-r1 vtysh`). Something about that AS path looks artificial; it is a deliberate signal from dest-2, and worth explaining in your summary.
 
-Use the looking glass fourth: you cannot log in to other networks, but you can read them:
+Use the looking glass fourth: you cannot log in to other networks, but you can read them. In the Control Portal, use the **Looking glass** section, or run from the lab folder:
 
 ```
 sudo ./scripts/lg.sh upstream-a "show bgp ipv4 unicast 10.50.0.0/16"
@@ -40,10 +40,11 @@ The route server's summary is the IXP's member list with session states. Compare
 
 Write it before reading the model answer. Cover: the symptom quantified, the path change, the network you hold responsible, the evidence, and whom you would contact.
 
-**Optional mitigation.** The fault is not yours, but the routing policy that steers your traffic into it is. Your r2 learns a clean route to dest-2 through upstream B, yet r1's higher local preference for upstream A wins. Lower it and watch your traffic escape the detour:
+**Optional mitigation.** The fault is not yours, but the routing policy that steers your traffic into it is. Your r2 learns a clean route to dest-2 through upstream B, yet r1's higher local preference for upstream A wins. Lower it and watch your traffic escape the detour.
+
+In the Control Portal, switch to the **r1** terminal and type `vtysh` (or run `podman exec -it clab-measlab-r1 vtysh` from your host terminal), then apply the policy:
 
 ```
-docker exec -it clab-measlab-r1 vtysh
 configure terminal
 route-map FROM-UPSTREAM-A permit 10
  set local-preference 90
@@ -54,7 +55,7 @@ clear bgp * soft in
 
 Measure target2 again, confirm the recovery through upstream B, then restore the value to 200 the same way (and `clear bgp * soft in` again). You diagnosed remotely and mitigated locally, which is precisely the shape of real incident response between networks.
 
-Close the scenario:
+Close the scenario by clicking **Scenario 1 off** in the Control Portal (or run):
 
 ```
 sudo ./scripts/scenario.sh 1 off

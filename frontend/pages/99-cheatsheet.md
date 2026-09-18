@@ -2,13 +2,13 @@
 
 ## Getting into your machines
 
-| Where | Command |
-|---|---|
-| Workstation shell | `docker exec -it clab-measlab-host1 bash` |
-| Router CLI (r1) | `docker exec -it clab-measlab-r1 vtysh` |
-| Router CLI (r2) | `docker exec -it clab-measlab-r2 vtysh` |
-| Router CLI (r3) | `docker exec -it clab-measlab-r3 vtysh` |
-| Leave a router CLI | `exit` (twice) |
+| Where | Control Portal | CLI Command (Podman) |
+|---|---|---|
+| Workstation shell | **host1** terminal | `podman exec -it clab-measlab-host1 bash` |
+| Router CLI (r1) | **r1** terminal (`vtysh`) | `podman exec -it clab-measlab-r1 vtysh` |
+| Router CLI (r2) | **r2** terminal (`vtysh`) | `podman exec -it clab-measlab-r2 vtysh` |
+| Router CLI (r3) | **r3** terminal (`vtysh`) | `podman exec -it clab-measlab-r3 vtysh` |
+| Leave a router CLI | `exit` | `exit` (twice) |
 
 Only r1, r2, r3 and host1 are yours. Everything else refuses you, by design.
 

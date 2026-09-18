@@ -64,7 +64,7 @@ NAV_ICONS = {"lab-guide": ICON_GUIDE, "portal": ICON_PORTAL, "cheatsheet": ICON_
 
 PORTAL_HTML = r"""
 <p>Start and stop the lab and its activities from here, and use real terminals
-into your own network instead of typing <code>docker exec</code> commands by
+into your own network instead of typing <code>podman exec</code> commands by
 hand. Run <code>./portal.sh</code> on your own machine first (not inside the
 lab), then reload this page from <code>http://localhost:8080</code>.</p>
 
@@ -134,7 +134,7 @@ same rule as <code>lg.sh</code>: observe only.</p>
 
 <h2>Terminals</h2>
 <p>Live shells into the nodes you're allowed to touch, side by side. Each opens
-where <code>docker exec -it clab-measlab-&lt;node&gt; sh</code> would have
+where <code>podman exec -it clab-measlab-&lt;node&gt; sh</code> would have
 dropped you &mdash; run <code>vtysh</code>, <code>ping</code>,
 <code>traceroute</code>, <code>mtr</code> directly, no prefix needed. Drag a
 console's bottom-right corner to resize it.</p>
