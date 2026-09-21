@@ -1,12 +1,12 @@
-# Running the Lab on Windows & Linux with Oracle VirtualBox
+# Running the Lab on Windows, Linux & Intel Mac with Oracle VirtualBox
 
-This guide walks you through importing and running the pre-packaged **Internet Measurements Lab** `.ova` virtual appliance on Windows 10/11 or Linux using **Oracle VirtualBox**.
+This guide walks you through importing and running the pre-packaged **Internet Measurements Lab** `.ova` virtual appliance on Windows 10/11, Linux, or Intel-based Mac using **Oracle VirtualBox**.
 
 ---
 
 ## 1. Prerequisites
 
-1. **Oracle VirtualBox**: Download and install [VirtualBox 7.0+](https://www.virtualbox.org/wiki/Downloads) (free and open-source).
+1. **Oracle VirtualBox**: Download and install [VirtualBox 7.0+](https://www.virtualbox.org/wiki/Downloads) (choose the Windows, Linux, or **macOS / Intel hosts** installer).
 2. **Lab Appliance**: Download `measlab-x86_64.ova` from the course materials / releases.
 
 ---

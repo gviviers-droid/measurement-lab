@@ -271,7 +271,12 @@ install_ttyd_linux() {
 # ---------------------------------------------------------------- macOS ----
 
 ensure_homebrew_macos() {
-  # If brew isn't on PATH, check standard installation paths (e.g. Apple Silicon /opt/homebrew)
+  # If both podman and ttyd are already installed, Homebrew is not strictly required
+  if command -v podman >/dev/null 2>&1 && command -v ttyd >/dev/null 2>&1; then
+    return
+  fi
+
+  # If brew isn't on PATH, check standard installation paths (e.g. Apple Silicon /opt/homebrew or Intel /usr/local)
   if ! command -v brew >/dev/null 2>&1; then
     if [ -x /opt/homebrew/bin/brew ]; then
       eval "$(/opt/homebrew/bin/brew shellenv)"
@@ -300,17 +305,24 @@ ensure_homebrew_macos() {
 
   # Re-verify brew
   if ! command -v brew >/dev/null 2>&1; then
-    die "Homebrew is required on macOS. Install it by running:
+    die "Homebrew is required on macOS to automatically install Podman and ttyd.
 
+To install Homebrew, run:
   /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"
 
-Then re-run ./install.sh. Learn more: https://brew.sh"
+If you are on an older Intel Mac (e.g. macOS 10.15 Catalina) or cannot install Homebrew:
+  1. Use GitHub Codespaces (zero local installation, runs directly in your browser).
+  2. Use Oracle VirtualBox with the pre-built measlab-x86_64.ova appliance.
+Learn more: https://github.com/gviviers-droid/measurement-lab#readme"
   fi
 
-  # Persist brew on PATH in ~/.zprofile for future shells (e.g. Apple Silicon)
+  # Persist brew on PATH in ~/.zprofile for future shells (Apple Silicon or Intel)
   if [ -x /opt/homebrew/bin/brew ]; then
     grep -q '/opt/homebrew/bin/brew shellenv' ~/.zprofile 2>/dev/null || \
       printf '\neval "$(/opt/homebrew/bin/brew shellenv)"\n' >> ~/.zprofile
+  elif [ -x /usr/local/bin/brew ]; then
+    grep -q '/usr/local/bin/brew shellenv' ~/.zprofile 2>/dev/null || \
+      printf '\neval "$(/usr/local/bin/brew shellenv)"\n' >> ~/.zprofile
   fi
 }
 
