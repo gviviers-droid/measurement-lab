@@ -53,26 +53,44 @@ Open the extracted `measurement-lab-main` folder and follow the instructions for
 
 ---
 
-### 🍎 macOS (Apple Silicon M1–M4 or Intel)
+### 🍎 macOS on Apple Silicon (M1, M2, M3, M4)
 
 > [!IMPORTANT]
-> **Prerequisite: Homebrew**  
-> macOS requires **[Homebrew](https://brew.sh)** to automatically install the container and terminal tools (`podman` and `ttyd`).
+> **Prerequisite: Homebrew (Apple Silicon)**  
+> macOS on Apple Silicon uses **[Homebrew](https://brew.sh)** to automatically install the container and terminal tools (`podman` and `ttyd`).
 > 
 > - **If you already have Homebrew:** You can skip straight to Step 1 below.
-> - **If you don't have Homebrew (or aren't sure):** Open Terminal and copy-paste this one command first:
+> - **If you don't have Homebrew (or aren't sure):** Open Terminal and copy-paste this command first:
 >   ```bash
 >   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 >   ```
->   *(Press `Enter` when prompted and enter your Mac password. If you are on an Apple Silicon Mac M1–M4, follow any "Next steps" commands shown, though our installer script will also auto-detect it).*
+>   *(Press `Enter` when prompted and enter your Mac password. Follow any "Next steps" commands shown, though our installer script will also auto-detect it).*
 
-> [!TIP]
-> **Using an Intel Mac or having trouble installing Homebrew?**  
-> If you are on an Intel MacBook running an older macOS release (e.g. macOS 10.15 Catalina or Big Sur) where Homebrew is unsupported or fails with SSL/curl errors, you don't need to struggle with local installation:
+---
+
+### 🍏 macOS on Intel Processors (Intel Core i5, i7, i9)
+
+> [!WARNING]
+> **Notice for Intel Mac Users:**  
+> As of September 2026, Homebrew officially retired support and **blocked new installations on Intel-based Macs** (the Homebrew installer halts with: *"Homebrew on macOS is only supported on Apple Silicon processors!"*).
 > 
-> 1. **Zero-Install Cloud Alternative (Recommended):** Use **GitHub Codespaces**. Go to the [repository on GitHub](https://github.com/gviviers-droid/measurement-lab), click **Code** $\to$ **Codespaces** $\to$ **Create codespace on main**, then run `./portal.sh` in the terminal that appears. It runs completely inside your web browser.
-> 2. **Offline Virtual Machine:** Download [Oracle VirtualBox for macOS / Intel](https://www.virtualbox.org/wiki/Downloads) and import the pre-built `measlab-x86_64.ova` virtual machine. See the [VirtualBox Setup Guide](vm-guide-windows-virtualbox.md).
-> 3. **Fixing Homebrew on modern Intel Macs (macOS 12+):** First install the command-line tools with `xcode-select --install`. If you see `/usr/local` permission errors, run `sudo chown -R $(whoami) /usr/local/*` and try the Homebrew command again.
+> Because of this, please **do not attempt to install Homebrew**. Instead, use one of these two seamless methods:
+> 
+> 1. **Option A (Recommended — Zero Local Setup): GitHub Codespaces**  
+>    Run the entire lab in the cloud inside your web browser:
+>    - Go to the repository on GitHub: **[measurement-lab](https://github.com/gviviers-droid/measurement-lab)**
+>    - Click the green **Code** button $\to$ **Codespaces** tab $\to$ click **Create codespace on main**.
+>    - When the browser terminal appears, run `./portal.sh` and click **Open in Browser** for port 8080!
+> 
+> 2. **Option B (Full Offline Lab): Oracle VirtualBox**  
+>    Because your Mac has an Intel x86_64 processor, it can run our pre-built virtual appliance at full native hardware speed:
+>    - Download and install [Oracle VirtualBox 7.0 for macOS / Intel](https://www.virtualbox.org/wiki/Downloads).
+>    - Download `measlab-x86_64.ova` from the course materials.
+>    - Double-click the `.ova` file to import it into VirtualBox, click **Start**, and open `http://localhost:8080` in your browser. (See the [VirtualBox Setup Guide](vm-guide-windows-virtualbox.md)).
+
+---
+
+### Running the Installer (Apple Silicon & Supported Systems)
 
 1. Open the **Terminal** application (press `Cmd + Space`, type `Terminal`, and hit `Enter`).
 2. Navigate to the extracted lab folder:

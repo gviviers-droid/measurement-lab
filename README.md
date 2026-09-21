@@ -71,11 +71,11 @@ Once booted, the VM automatically deploys the lab and starts the Control Portal.
 
 ### Route 3: One-Command Local Script
 Clone the repository, open a terminal, and run:
-* **macOS or native Linux:**
+* **macOS (Apple Silicon) or native Linux:**
   ```bash
   ./install.sh
   ```
-  *(On macOS, [Homebrew](https://brew.sh) is required to install Podman and ttyd; the script will automatically detect it or prompt to install it if missing).*
+  *(On Apple Silicon macOS, [Homebrew](https://brew.sh) is used to install Podman and ttyd. For Intel Mac users, use Route 1 Codespaces or Route 2 VirtualBox).*
 * **Windows (PowerShell):**
   ```powershell
   .\install.ps1

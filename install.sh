@@ -285,8 +285,25 @@ ensure_homebrew_macos() {
     fi
   fi
 
-  # If still not found, offer interactive installation if running in a terminal
+  # If still not found, check architecture
   if ! command -v brew >/dev/null 2>&1; then
+    local arch
+    arch="$(uname -m)"
+    if [ "${arch}" = "x86_64" ]; then
+      die "Homebrew officially discontinued new installations on Intel-based Macs as of September 2026.
+(The official Homebrew installer aborts with: 'Homebrew on macOS is only supported on Apple Silicon processors!').
+
+For Intel MacBooks, please use one of these two proven alternatives instead:
+
+  1. GitHub Codespaces (Recommended — Zero installation, runs directly in your browser):
+     Open: https://github.com/gviviers-droid/measurement-lab
+     Click 'Code' -> 'Codespaces' -> 'Create codespace on main', then run ./portal.sh
+
+  2. Oracle VirtualBox Appliance (Runs offline at full native Intel x86_64 speed):
+     Download VirtualBox 7.0 for Intel Mac and import 'measlab-x86_64.ova'.
+     See: docs/vm-guide-windows-virtualbox.md"
+    fi
+
     warn "Homebrew is required on macOS to install Podman and ttyd, but was not found."
     if [ -t 0 ]; then
       printf '\nWould you like to install Homebrew now? [y/N] '
@@ -305,15 +322,12 @@ ensure_homebrew_macos() {
 
   # Re-verify brew
   if ! command -v brew >/dev/null 2>&1; then
-    die "Homebrew is required on macOS to automatically install Podman and ttyd.
+    die "Homebrew is required on Apple Silicon macOS to automatically install Podman and ttyd.
 
 To install Homebrew, run:
   /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"
 
-If you are on an older Intel Mac (e.g. macOS 10.15 Catalina) or cannot install Homebrew:
-  1. Use GitHub Codespaces (zero local installation, runs directly in your browser).
-  2. Use Oracle VirtualBox with the pre-built measlab-x86_64.ova appliance.
-Learn more: https://github.com/gviviers-droid/measurement-lab#readme"
+Then re-run ./install.sh. Learn more: https://brew.sh"
   fi
 
   # Persist brew on PATH in ~/.zprofile for future shells (Apple Silicon or Intel)
