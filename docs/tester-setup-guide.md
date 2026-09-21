@@ -87,6 +87,11 @@ Open the extracted `measurement-lab-main` folder and follow the instructions for
 >    - Download and install [Oracle VirtualBox 7.0 for macOS / Intel](https://www.virtualbox.org/wiki/Downloads).
 >    - Download `measlab-x86_64.ova` from the course materials.
 >    - Double-click the `.ova` file to import it into VirtualBox, click **Start**, and open `http://localhost:8080` in your browser. (See the [VirtualBox Setup Guide](vm-guide-windows-virtualbox.md)).
+> 
+> 3. **Option C (Local Podman on Intel Mac — Zero Homebrew):**  
+>    If you prefer to run the lab natively on your Mac with Podman:
+>    - Simply run `./install.sh` from your lab folder. Our script will automatically detect your Intel Mac and install the official Red Hat **[Podman standalone package](https://github.com/containers/podman/releases/download/v5.4.0/podman-installer-macos-amd64.pkg)** without needing Homebrew at all!
+>    - *(You can also install [Podman Desktop](https://podman-desktop.io/downloads) or use [MacPorts](https://www.macports.org/): `sudo port install podman ttyd`).*
 
 ---
 

@@ -270,8 +270,13 @@ install_ttyd_linux() {
 
 # ---------------------------------------------------------------- macOS ----
 
-ensure_homebrew_macos() {
-  # If both podman and ttyd are already installed, Homebrew is not strictly required
+ensure_prerequisites_macos() {
+  # Add MacPorts to PATH if present
+  if [ -d /opt/local/bin ] && [[ ":$PATH:" != *":/opt/local/bin:"* ]]; then
+    export PATH="/opt/local/bin:$PATH"
+  fi
+
+  # If both podman and ttyd are already installed, package manager is not strictly required
   if command -v podman >/dev/null 2>&1 && command -v ttyd >/dev/null 2>&1; then
     return
   fi
@@ -285,26 +290,11 @@ ensure_homebrew_macos() {
     fi
   fi
 
-  # If still not found, check architecture
-  if ! command -v brew >/dev/null 2>&1; then
-    local arch
-    arch="$(uname -m)"
-    if [ "${arch}" = "x86_64" ]; then
-      die "Homebrew officially discontinued new installations on Intel-based Macs as of September 2026.
-(The official Homebrew installer aborts with: 'Homebrew on macOS is only supported on Apple Silicon processors!').
-
-For Intel MacBooks, please use one of these two proven alternatives instead:
-
-  1. GitHub Codespaces (Recommended — Zero installation, runs directly in your browser):
-     Open: https://github.com/gviviers-droid/measurement-lab
-     Click 'Code' -> 'Codespaces' -> 'Create codespace on main', then run ./portal.sh
-
-  2. Oracle VirtualBox Appliance (Runs offline at full native Intel x86_64 speed):
-     Download VirtualBox 7.0 for Intel Mac and import 'measlab-x86_64.ova'.
-     See: docs/vm-guide-windows-virtualbox.md"
-    fi
-
-    warn "Homebrew is required on macOS to install Podman and ttyd, but was not found."
+  # On Apple Silicon Macs without brew, offer interactive Homebrew install
+  local arch
+  arch="$(uname -m)"
+  if [ "${arch}" = "arm64" ] && ! command -v brew >/dev/null 2>&1; then
+    warn "Homebrew is recommended on Apple Silicon macOS to install Podman and ttyd, but was not found."
     if [ -t 0 ]; then
       printf '\nWould you like to install Homebrew now? [y/N] '
       read -r answer
@@ -313,21 +303,9 @@ For Intel MacBooks, please use one of these two proven alternatives instead:
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
         if [ -x /opt/homebrew/bin/brew ]; then
           eval "$(/opt/homebrew/bin/brew shellenv)"
-        elif [ -x /usr/local/bin/brew ]; then
-          eval "$(/usr/local/bin/brew shellenv)"
         fi
       fi
     fi
-  fi
-
-  # Re-verify brew
-  if ! command -v brew >/dev/null 2>&1; then
-    die "Homebrew is required on Apple Silicon macOS to automatically install Podman and ttyd.
-
-To install Homebrew, run:
-  /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"
-
-Then re-run ./install.sh. Learn more: https://brew.sh"
   fi
 
   # Persist brew on PATH in ~/.zprofile for future shells (Apple Silicon or Intel)
@@ -343,16 +321,60 @@ Then re-run ./install.sh. Learn more: https://brew.sh"
 install_podman_macos() {
   if command -v podman >/dev/null 2>&1; then
     log "Podman already installed"
-  else
+    return
+  fi
+
+  if command -v brew >/dev/null 2>&1; then
     log "Installing Podman via Homebrew"
     brew install podman
+    return
   fi
+
+  if command -v port >/dev/null 2>&1; then
+    log "Installing Podman via MacPorts"
+    sudo port install podman
+    return
+  fi
+
+  local arch
+  arch="$(uname -m)"
+  if [ "${arch}" = "x86_64" ]; then
+    log "Intel Mac detected without Homebrew or MacPorts."
+    log "Downloading official Red Hat Podman standalone installer package (v5.4.0 amd64)..."
+    local pkg_url="https://github.com/containers/podman/releases/download/v5.4.0/podman-installer-macos-amd64.pkg"
+    local tmp_pkg="/tmp/podman-installer.pkg"
+    curl -fsSL "${pkg_url}" -o "${tmp_pkg}"
+    log "Installing Podman package (you may be prompted for your Mac password)..."
+    sudo installer -pkg "${tmp_pkg}" -target /
+    rm -f "${tmp_pkg}"
+    command -v podman >/dev/null 2>&1 || die "Podman installation failed. Please install Podman Desktop manually: https://podman-desktop.io/downloads"
+    return
+  fi
+
+  die "Podman is required. On Apple Silicon macOS, install Homebrew first: https://brew.sh"
 }
 
 install_ttyd_macos() {
-  command -v ttyd >/dev/null 2>&1 && { log "ttyd already installed"; return; }
-  log "Installing ttyd via Homebrew"
-  brew install ttyd
+  if command -v ttyd >/dev/null 2>&1; then
+    log "ttyd already installed"
+    return
+  fi
+
+  if command -v brew >/dev/null 2>&1; then
+    log "Installing ttyd via Homebrew"
+    brew install ttyd
+    return
+  fi
+
+  if command -v port >/dev/null 2>&1; then
+    log "Installing ttyd via MacPorts"
+    sudo port install ttyd
+    return
+  fi
+
+  warn "ttyd was not found and could not be installed automatically without Homebrew or MacPorts."
+  warn "The lab network and containers will still run normally, but browser terminal panes in ./portal.sh will be inactive."
+  warn "To enable browser terminals on an Intel Mac, install MacPorts (https://www.macports.org/) and run: sudo port install ttyd"
 }
 
 setup_podman_machine_macos() {
@@ -429,7 +451,7 @@ deploy_lab() {
 
 case "${PLATFORM}" in
   macos)
-    ensure_homebrew_macos
+    ensure_prerequisites_macos
     install_podman_macos
     install_ttyd_macos
     setup_podman_machine_macos
