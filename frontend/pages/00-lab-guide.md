@@ -38,7 +38,9 @@ Every activity assumes the base state: check green, congestion stopped, peering 
 sudo ./lab.sh reset
 ```
 
-Then run `sudo ./lab.sh check` again. If a check still fails, `sudo ./lab.sh down` followed by `sudo ./lab.sh up` rebuilds the world from scratch; the lab keeps no state you can lose.
+## Tracking your progress
+
+Each activity sheet includes interactive checkboxes next to every **Task** heading. Click any checkbox (or click the task title) to check off exercises as you complete them. Your completion progress is automatically saved in your browser and updated in the sidebar!
 
 ## The network
 

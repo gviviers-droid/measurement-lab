@@ -13,6 +13,7 @@ We are preparing this hands-on lab environment for learners in the **RIPE NCC Ac
 - **Memory (RAM):** At least 4 GB of available RAM.
 - **Disk Space:** Around 5 GB of free disk space (for the container images and networking tools).
 - **Time Required:** 15–20 minutes to install and verify.
+- **macOS Users:** Requires [Homebrew](https://brew.sh) package manager (instructions included below if you do not have it yet).
 
 ---
 
@@ -54,8 +55,23 @@ Open the extracted `measurement-lab-main` folder and follow the instructions for
 
 ### 🍎 macOS (Apple Silicon M1–M4 or Intel)
 
+> [!IMPORTANT]
+> **Prerequisite: Homebrew**  
+> macOS requires **[Homebrew](https://brew.sh)** to automatically install the container and terminal tools (`podman` and `ttyd`).
+> 
+> - **If you already have Homebrew:** You can skip straight to Step 1 below.
+> - **If you don't have Homebrew (or aren't sure):** Open Terminal and copy-paste this one command first:
+>   ```bash
+>   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+>   ```
+>   *(Press `Enter` when prompted and enter your Mac password. If you are on an Apple Silicon Mac M1–M4, follow any "Next steps" commands shown, though our installer script will also auto-detect it).*
+
 1. Open the **Terminal** application (press `Cmd + Space`, type `Terminal`, and hit `Enter`).
-2. Type `cd ` (type `cd` followed by a space), then **drag and drop** the extracted `measurement-lab-main` folder from Finder into the Terminal window. Hit `Enter`.
+2. Navigate to the extracted lab folder:
+   ```bash
+   cd ~/Downloads/measurement-lab-main
+   ```
+   *(Alternatively: type `cd ` followed by a space, then drag and drop the extracted `measurement-lab-main` folder from Finder into the Terminal window and hit `Enter`).*
 3. Run the installer:
    ```bash
    ./install.sh
@@ -65,9 +81,6 @@ Open the extracted `measurement-lab-main` folder and follow the instructions for
    ```bash
    ./portal.sh
    ```
-
-> ℹ️ **Homebrew Prerequisite:** macOS requires [Homebrew](https://brew.sh) to install Podman and ttyd. If you don't have it installed yet, copy and paste this one command into Terminal first:  
-> `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"`
 
 ---
 
@@ -125,6 +138,30 @@ If all of these pass and connect, your setup is completely successful! 🎉
    ./lab.sh down
    ```
    *(On Windows WSL2 / Linux, run with `sudo ./lab.sh down` if needed).*
+
+---
+
+## 🔄 How to Upgrade to the Latest Version
+
+If new activities, exercises, or fixes are published to the repository, you can update your existing installation in one command without starting over:
+
+1. Open your terminal in your `measurement-lab-main` folder.
+2. Run the update script:
+   - **macOS / Linux:**
+     ```bash
+     ./update.sh
+     ```
+   - **Windows (PowerShell):**
+     ```powershell
+     .\update.ps1
+     ```
+   *(This automatically downloads the latest updates whether you used Git or downloaded the ZIP. If you cloned with Git, running `git pull` works too).*
+3. Restart the portal:
+   - If `./portal.sh` is currently running, press **`Ctrl + C`** in its terminal and restart it with `./portal.sh`.
+   - Refresh your browser at **`http://localhost:8080`**.
+
+> [!TIP]
+> **Your progress is preserved:** All checked tasks and scratchpad notes in the web portal are stored in your browser's local storage (`localStorage`). Updating the lab files will **not** wipe your completed tasks or notes!
 
 ---
 

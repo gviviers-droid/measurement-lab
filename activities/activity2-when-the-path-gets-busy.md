@@ -29,15 +29,70 @@ sort -n baseline.txt | awk '{a[NR]=$1; s+=$1}
 
 Record all six numbers. Repeat for IPv6 (`ping -c 100 -i 0.2 3fff:40:10::10`, output to `baseline6.txt`) and confirm the two families measure alike.
 
+> [!TIP]
+> **How to interpret summary statistics:**
+>
+> ```text
+> Metric    What it represents                            Expected baseline value
+> count     Number of packets that received replies        100 (0% packet loss)
+> mean      Arithmetic average of all round-trip times    ~46.1 ms
+> median    50th percentile (typical packet experience)   ~46.0 ms (close to mean)
+> p95       95th percentile (worst 5% tail latency)       ~47.1 ms (tight spread)
+> min       Fastest packet (pure physical propagation)    ~45.8 ms
+> max       Slowest packet in this 100-probe sample       ~48.9 ms
+> ```
+> On an idle, uncongested path, the distribution is tight and symmetrical: `mean` and `median` are virtually identical, and `p95` sits within 1–2 ms of the median because there is zero link queueing.
+
+**Question 1a.** Inspect your baseline statistics. Do `mean` and `median` match closely? What does a tight spread between `median` and `p95` tell you about link queueing?
+
+<details class="answers" markdown="1">
+<summary>Check your answers for Task 1 (reveal after writing your own)</summary>
+
+```text
+Sample output (sort -n baseline.txt | awk ...):
+count: 100
+mean: 46.12
+median: 46.05
+p95: 47.10
+min: 45.82
+max: 48.91
+```
+
+**1a.** Yes, `mean` (~46.1 ms) and `median` (~46.0 ms) are almost identical. A tight spread between median and p95 confirms zero queueing delay: buffers along the path are empty, so packets experience only fixed propagation delay and immediate forwarding.
+
+</details>
+
 ## Task 2: Load the path
 
 In the Control Portal, click **Start congestion** (or on your own machine in the lab folder, run):
 
-```
+```bash
 sudo ./scripts/congestion.sh start
 ```
 
 Another network in upstream A now pushes a heavy stream across the same transit link your traffic uses. You did not cause it and cannot stop their traffic; you can only measure what it does to yours. Wait thirty seconds for the queue to build.
+
+> [!TIP]
+> **How to verify congestion is active:**  
+> Run a quick 3-packet ping from `host1`:
+> ```bash
+> ping -c 3 10.40.10.10
+> ```
+> When congestion is active, you will immediately see RTT jump from the ~46 ms baseline to between 80 ms and 300+ ms, and the Control Portal status bar will show **Congestion: Active (10.5M)**.
+
+<details class="answers" markdown="1">
+<summary>Check your setup for Task 2 (reveal after starting congestion)</summary>
+
+```text
+Sample output (quick verification from host1):
+64 bytes from 10.40.10.10: icmp_seq=1 ttl=59 time=138.4 ms
+64 bytes from 10.40.10.10: icmp_seq=2 ttl=59 time=242.1 ms
+64 bytes from 10.40.10.10: icmp_seq=3 ttl=59 time=94.7 ms
+```
+
+The latency jump confirms that cross-traffic buffers are filling up and queueing delay has begun.
+
+</details>
 
 ## Task 3: Measure the busy path
 

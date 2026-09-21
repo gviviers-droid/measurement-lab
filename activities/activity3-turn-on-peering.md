@@ -31,6 +31,21 @@ Note the AS path and which border router carries the traffic. Finally, look at t
 show bgp summary
 ```
 
+> [!TIP]
+> **How to read `show bgp summary`:**
+>
+> ```text
+> Neighbor        V    AS MsgRcvd MsgSent   TblVer  InQ OutQ  Up/Down State/PfxRcd
+> 100.64.99.1     4 65100       0       0        0    0    0    never Idle (Admin)
+> ^^^^^^^^^^^       ^^^^^                                             ^^^^^^^^^^^^
+> Neighbor IP     Peer AS                                             Session State:
+>                                                                     Text = Session DOWN
+>                                                                     Number = Session UP
+> ```
+> **The `State/PfxRcd` column rule:**
+> * When a session is **down or administratively shut**, it displays a **state name** (e.g. `Idle (Admin)`, `Active`, `Connect`).
+> * When a session is **up and established**, it displays an **integer** (the count of prefixes received, e.g. `1` or `3`). It does *not* write out the word "Established"!
+
 **Question 1a.** What state does r2 report for the two sessions towards 100.64.99.1 and 3fff:ff::1, and what does that state mean?
 
 <details class="answers" markdown="1">
@@ -55,12 +70,23 @@ In the Control Portal, click **Enable peering** (or on your own machine in the l
 sudo ./scripts/peering.sh up
 ```
 
-Give BGP half a minute, then confirm on r2 that both sessions show as Established and count the prefixes received. Look at what arrived:
+Give BGP half a minute, then confirm on r2 that both sessions show as Established (remember: look for a number in the `State/PfxRcd` column!) and count the prefixes received. Look at what arrived:
 
 ```
 show bgp ipv4 unicast
 show bgp ipv6 unicast
 ```
+
+> [!TIP]
+> **How to read prefix routes (`show bgp ipv4 unicast`):**
+>
+> ```text
+>    Network          Next Hop            Metric LocPrf Weight Path
+> *> 10.50.0.0/16     100.64.99.50                             65050 ?
+> ^^                  ^^^^^^^^^^^^                             ^^^^^
+> *> = Best path      Next-hop router                          AS sequence to destination
+> ```
+> Look at the `Path` column: it lists the Autonomous Systems traversed to reach the destination network.
 
 **Question 2a.** Which prefixes did the route server send you, and with what AS paths? One AS you expected to see in those paths is missing. Which, and why?
 

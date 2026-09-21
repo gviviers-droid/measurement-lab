@@ -48,7 +48,7 @@ Select the deployment method that fits your environment:
 |---|---|---|---|
 | ☁️ **GitHub Codespaces** | Quickest start, no local setup | Web browser only | [Open in Codespaces](https://github.com/features/codespaces) |
 | 📦 **Pre-built VM Appliance** | Offline workshops, zero container install | VirtualBox, VMware, or UTM | Import OVA / QCOW2 image |
-| ⚡ **One-Command Script** | macOS, Linux, or Windows WSL2 | Podman or Docker | `./install.sh` or `.\install.ps1` |
+| ⚡ **One-Command Script** | macOS, Linux, or Windows WSL2 | Podman/Docker (or Homebrew on macOS) | `./install.sh` or `.\install.ps1` |
 | 🐳 **VS Code Dev Container** | Local VS Code workflow | Docker Desktop + VS Code | Reopen in Dev Container |
 | 🐧 **Native Linux Manual** | Custom Linux setups | Podman + Containerlab | `sudo ./lab.sh up` |
 
@@ -75,6 +75,7 @@ Clone the repository, open a terminal, and run:
   ```bash
   ./install.sh
   ```
+  *(On macOS, [Homebrew](https://brew.sh) is required to install Podman and ttyd; the script will automatically detect it or prompt to install it if missing).*
 * **Windows (PowerShell):**
   ```powershell
   .\install.ps1
@@ -163,6 +164,7 @@ Execute from the repository root:
 ./lab.sh check    # Verify reachability, DNS, and latency tolerances
 ./lab.sh reset    # Clear faults, peering, and congestion back to base state
 ./lab.sh down     # Stop and tear down all lab containers
+./lab.sh update   # Pull latest repo updates & refresh lab (or run ./update.sh)
 ```
 *(On Linux/WSL2, prefix with `sudo` if running without rootless container permissions; on macOS, `./lab.sh` routes into the Podman VM automatically).*
 

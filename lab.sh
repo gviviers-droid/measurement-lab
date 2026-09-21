@@ -15,7 +15,7 @@ MEASLAB_HOP=direct
 MEASLAB_MACHINE=podman-machine-default
 [ -f .measlab/runtime.env ] && . .measlab/runtime.env
 
-if [ "${MEASLAB_HOP}" = "podman-machine" ] && [ "$(uname -s)" = "Darwin" ] && [ "${1:-}" != "docs" ]; then
+if [ "${MEASLAB_HOP}" = "podman-machine" ] && [ "$(uname -s)" = "Darwin" ] && [ "${1:-}" != "docs" ] && [ "${1:-}" != "update" ]; then
   if [ -n "${SUDO_USER:-}" ]; then
     exec sudo -u "${SUDO_USER}" podman machine ssh "${MEASLAB_MACHINE}" -- "cd '${DIR}' && sudo ./lab.sh $*"
   else
@@ -52,7 +52,10 @@ case "${1:-}" in
     echo "Serving the activity frontend at http://localhost:8080 (Ctrl-C to stop)."
     cd frontend && python3 -m http.server 8080
     ;;
+  update)
+    exec "${DIR}/update.sh"
+    ;;
   *)
-    echo "Usage: $0 up|check|reset|down|docs"; exit 1
+    echo "Usage: $0 up|check|reset|down|docs|update"; exit 1
     ;;
 esac

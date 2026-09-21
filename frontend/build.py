@@ -685,7 +685,44 @@ th { background: var(--panel); font-family: var(--mono); font-size: 13px; color:
 td code { white-space: nowrap; }
 
 /* task checkboxes */
-.task-check { width: 17px; height: 17px; accent-color: var(--orange); cursor: pointer; flex: none; }
+.task-check {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 19px;
+  height: 19px;
+  border: 2px solid var(--blue);
+  border-radius: 4px;
+  background: var(--panel-2);
+  cursor: pointer;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.15s ease;
+  vertical-align: middle;
+}
+.task-check:hover {
+  border-color: var(--orange);
+  background: rgba(242, 107, 33, 0.15);
+  box-shadow: 0 0 8px rgba(242, 107, 33, 0.4);
+  transform: scale(1.08);
+}
+.task-check:checked {
+  background: var(--orange);
+  border-color: var(--orange);
+}
+.task-check:checked::after {
+  content: "";
+  display: block;
+  width: 5px;
+  height: 9px;
+  border: solid #ffffff;
+  border-width: 0 2.5px 2.5px 0;
+  transform: rotate(45deg) translate(-0.5px, -1px);
+}
+.task-title { cursor: pointer; transition: color 0.15s ease; }
+h2:has(.task-check):hover .task-check:not(:checked) { border-color: var(--orange); }
 h2.task-done { color: var(--muted); }
 h2.task-done .task-title { text-decoration: line-through; text-decoration-color: var(--orange); }
 
@@ -847,6 +884,7 @@ details.answers[open] { border-style: solid; padding-bottom: 8px; }
       if (!tasks.length) { pill.textContent = ""; return; }
       var done = tasks.filter(function (h) { return h.querySelector("input").checked; }).length;
       pill.textContent = done + "/" + tasks.length;
+      pill.title = "Progress: " + done + " of " + tasks.length + " tasks completed";
       pill.classList.toggle("done", done === tasks.length);
     }
 
@@ -854,13 +892,21 @@ details.answers[open] { border-style: solid; padding-bottom: 8px; }
       var key = "measlab." + page.id + ".task" + i;
       var box = document.createElement("input");
       box.type = "checkbox"; box.className = "task-check";
-      box.setAttribute("aria-label", "Mark task complete");
+      box.title = "Click to mark this task complete";
+      box.setAttribute("aria-label", "Mark " + h.textContent + " complete");
       box.checked = load(key) === "1";
       var span = document.createElement("span");
       span.className = "task-title"; span.textContent = h.textContent;
+      span.title = "Click to toggle completion";
       h.textContent = ""; h.appendChild(box); h.appendChild(span);
       h.classList.toggle("task-done", box.checked);
       box.addEventListener("change", function () {
+        store(key, box.checked ? "1" : "0");
+        h.classList.toggle("task-done", box.checked);
+        refresh();
+      });
+      span.addEventListener("click", function () {
+        box.checked = !box.checked;
         store(key, box.checked ? "1" : "0");
         h.classList.toggle("task-done", box.checked);
         refresh();

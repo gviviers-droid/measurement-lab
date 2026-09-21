@@ -156,7 +156,44 @@ th { background: var(--panel); font-family: var(--mono); font-size: 13px; color:
 td code { white-space: nowrap; }
 
 /* task checkboxes */
-.task-check { width: 17px; height: 17px; accent-color: var(--orange); cursor: pointer; flex: none; }
+.task-check {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 19px;
+  height: 19px;
+  border: 2px solid var(--blue);
+  border-radius: 4px;
+  background: var(--panel-2);
+  cursor: pointer;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.15s ease;
+  vertical-align: middle;
+}
+.task-check:hover {
+  border-color: var(--orange);
+  background: rgba(242, 107, 33, 0.15);
+  box-shadow: 0 0 8px rgba(242, 107, 33, 0.4);
+  transform: scale(1.08);
+}
+.task-check:checked {
+  background: var(--orange);
+  border-color: var(--orange);
+}
+.task-check:checked::after {
+  content: "";
+  display: block;
+  width: 5px;
+  height: 9px;
+  border: solid #ffffff;
+  border-width: 0 2.5px 2.5px 0;
+  transform: rotate(45deg) translate(-0.5px, -1px);
+}
+.task-title { cursor: pointer; transition: color 0.15s ease; }
+h2:has(.task-check):hover .task-check:not(:checked) { border-color: var(--orange); }
 h2.task-done { color: var(--muted); }
 h2.task-done .task-title { text-decoration: line-through; text-decoration-color: var(--orange); }
 
@@ -289,7 +326,8 @@ sudo ./lab.sh down
 <p>Every activity assumes the base state: check green, congestion stopped, peering down, scenarios off. Reset to it with:</p>
 <pre><code>sudo ./lab.sh reset
 </code></pre>
-<p>Then run <code>sudo ./lab.sh check</code> again. If a check still fails, <code>sudo ./lab.sh down</code> followed by <code>sudo ./lab.sh up</code> rebuilds the world from scratch; the lab keeps no state you can lose.</p>
+<h2>Tracking your progress</h2>
+<p>Each activity sheet includes interactive checkboxes next to every <strong>Task</strong> heading. Click any checkbox (or click the task title) to check off exercises as you complete them. Your completion progress is automatically saved in your browser and updated in the sidebar!</p>
 <h2>The network</h2>
 <div class="diagram"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" font-family="Helvetica, Arial, sans-serif">
   <rect width="1200" height="620" fill="#ffffff"/>
@@ -918,11 +956,54 @@ Paths: (1 available, best #1)
        print &quot;max:&quot;, a[NR]}'
 </code></pre>
 <p>Record all six numbers. Repeat for IPv6 (<code>ping -c 100 -i 0.2 3fff:40:10::10</code>, output to <code>baseline6.txt</code>) and confirm the two families measure alike.</p>
+<div class="callout tip">
+<div class="callout-header">💡 <span class="callout-badge">TIP</span></div>
+<p><strong>How to interpret summary statistics:</strong></p>
+<pre><code class="language-text">Metric    What it represents                            Expected baseline value
+count     Number of packets that received replies        100 (0% packet loss)
+mean      Arithmetic average of all round-trip times    ~46.1 ms
+median    50th percentile (typical packet experience)   ~46.0 ms <span class="code-annotation">(close to mean)</span>
+p95       95th percentile (worst 5% tail latency)       ~47.1 ms <span class="code-annotation">(tight spread)</span>
+min       Fastest packet (pure physical propagation)    ~45.8 ms
+max       Slowest packet in this 100-probe sample       ~48.9 ms
+</code></pre>
+<p>On an idle, uncongested path, the distribution is tight and symmetrical: <code>mean</code> and <code>median</code> are virtually identical, and <code>p95</code> sits within 1–2 ms of the median because there is zero link queueing.</p>
+</div>
+<p><strong>Question 1a.</strong> Inspect your baseline statistics. Do <code>mean</code> and <code>median</code> match closely? What does a tight spread between <code>median</code> and <code>p95</code> tell you about link queueing?</p>
+<details class="answers">
+<summary>Check your answers for Task 1 (reveal after writing your own)</summary>
+<pre><code class="language-text"><span class="code-label">Sample output (sort -n baseline.txt | awk ...):</span>
+count: 100
+mean: 46.12
+median: 46.05
+p95: 47.10
+min: 45.82
+max: 48.91
+</code></pre>
+<p><strong>1a.</strong> Yes, <code>mean</code> (~46.1 ms) and <code>median</code> (~46.0 ms) are almost identical. A tight spread between median and p95 confirms zero queueing delay: buffers along the path are empty, so packets experience only fixed propagation delay and immediate forwarding.</p>
+</details>
 <h2>Task 2: Load the path</h2>
 <p>In the Control Portal, click <strong>Start congestion</strong> (or on your own machine in the lab folder, run):</p>
-<pre><code>sudo ./scripts/congestion.sh start
+<pre><code class="language-bash">sudo ./scripts/congestion.sh start
 </code></pre>
 <p>Another network in upstream A now pushes a heavy stream across the same transit link your traffic uses. You did not cause it and cannot stop their traffic; you can only measure what it does to yours. Wait thirty seconds for the queue to build.</p>
+<div class="callout tip">
+<div class="callout-header">💡 <span class="callout-badge">TIP</span></div>
+<p><strong>How to verify congestion is active:</strong><br />
+Run a quick 3-packet ping from <code>host1</code>:</p>
+<pre><code class="language-bash">ping -c 3 10.40.10.10
+</code></pre>
+<p>When congestion is active, you will immediately see RTT jump from the ~46 ms baseline to between 80 ms and 300+ ms, and the Control Portal status bar will show <strong>Congestion: Active (10.5M)</strong>.</p>
+</div>
+<details class="answers">
+<summary>Check your setup for Task 2 (reveal after starting congestion)</summary>
+<pre><code class="language-text"><span class="code-label">Sample output (quick verification from host1):</span>
+64 bytes from 10.40.10.10: icmp_seq=1 ttl=59 time=138.4 ms
+64 bytes from 10.40.10.10: icmp_seq=2 ttl=59 time=242.1 ms
+64 bytes from 10.40.10.10: icmp_seq=3 ttl=59 time=94.7 ms
+</code></pre>
+<p>The latency jump confirms that cross-traffic buffers are filling up and queueing delay has begun.</p>
+</details>
 <h2>Task 3: Measure the busy path</h2>
 <p>From host1, repeat the exact measurement into a new file:</p>
 <pre><code>ping -c 100 -i 0.2 10.40.10.10 | grep -oE 'time=[0-9.]+' | cut -d= -f2 &gt; busy.txt
@@ -986,6 +1067,21 @@ show bgp ipv6 unicast 3fff:50::/32
 <p>Note the AS path and which border router carries the traffic. Finally, look at the dormant sessions on r2 (in the Control Portal <strong>r2</strong> terminal type <code>vtysh</code>, or run <code>podman exec -it clab-measlab-r2 vtysh</code>):</p>
 <pre><code>show bgp summary
 </code></pre>
+<div class="callout tip">
+<div class="callout-header">💡 <span class="callout-badge">TIP</span></div>
+<p><strong>How to read <code>show bgp summary</code>:</strong></p>
+<div class="code-legend"><span class="legend-item"><span class="legend-dot dot-output"></span>Tool output</span><span class="legend-item"><span class="legend-dot dot-annotation"></span>Explanation / annotation</span></div>
+<pre><code class="language-text">Neighbor        V    AS MsgRcvd MsgSent   TblVer  InQ OutQ  Up/Down State/PfxRcd
+100.64.99.1     4 65100       0       0        0    0    0    never Idle (Admin)
+<span class="code-annotation">^^^^^^^^^^^       ^^^^^                                             ^^^^^^^^^^^^</span>
+<span class="code-annotation">Neighbor IP     Peer AS                                             Session State:</span>
+<span class="code-annotation">                                                                    Text = Session DOWN</span>
+<span class="code-annotation">                                                                    Number = Session UP</span>
+</code></pre>
+<p><strong>The <code>State/PfxRcd</code> column rule:</strong>
+* When a session is <strong>down or administratively shut</strong>, it displays a <strong>state name</strong> (e.g. <code>Idle (Admin)</code>, <code>Active</code>, <code>Connect</code>).
+* When a session is <strong>up and established</strong>, it displays an <strong>integer</strong> (the count of prefixes received, e.g. <code>1</code> or <code>3</code>). It does <em>not</em> write out the word "Established"!</p>
+</div>
 <p><strong>Question 1a.</strong> What state does r2 report for the two sessions towards 100.64.99.1 and 3fff:ff::1, and what does that state mean?</p>
 <details class="answers">
 <summary>Check your answer for Task 1 (reveal after writing your own)</summary>
@@ -1000,10 +1096,21 @@ Neighbor        V    AS MsgRcvd MsgSent   TblVer  InQ OutQ  Up/Down State/PfxRcd
 <p>In the Control Portal, click <strong>Enable peering</strong> (or on your own machine in the lab folder, run):</p>
 <pre><code>sudo ./scripts/peering.sh up
 </code></pre>
-<p>Give BGP half a minute, then confirm on r2 that both sessions show as Established and count the prefixes received. Look at what arrived:</p>
+<p>Give BGP half a minute, then confirm on r2 that both sessions show as Established (remember: look for a number in the <code>State/PfxRcd</code> column!) and count the prefixes received. Look at what arrived:</p>
 <pre><code>show bgp ipv4 unicast
 show bgp ipv6 unicast
 </code></pre>
+<div class="callout tip">
+<div class="callout-header">💡 <span class="callout-badge">TIP</span></div>
+<p><strong>How to read prefix routes (<code>show bgp ipv4 unicast</code>):</strong></p>
+<div class="code-legend"><span class="legend-item"><span class="legend-dot dot-output"></span>Tool output</span><span class="legend-item"><span class="legend-dot dot-annotation"></span>Explanation / annotation</span></div>
+<pre><code class="language-text">   Network          Next Hop            Metric LocPrf Weight Path
+*&gt; 10.50.0.0/16     100.64.99.50                             65050 ?
+<span class="code-annotation">^^                  ^^^^^^^^^^^^                             ^^^^^</span>
+<span class="code-annotation">*&gt; = Best path      Next-hop router                          AS sequence to destination</span>
+</code></pre>
+<p>Look at the <code>Path</code> column: it lists the Autonomous Systems traversed to reach the destination network.</p>
+</div>
 <p><strong>Question 2a.</strong> Which prefixes did the route server send you, and with what AS paths? One AS you expected to see in those paths is missing. Which, and why?</p>
 <details class="answers">
 <summary>Check your answer for Task 2 (reveal after writing your own)</summary>
@@ -1064,18 +1171,70 @@ Paths: (2 available, best #2)
 <pre><code>sudo ./scripts/scenario.sh 1 on
 </code></pre>
 <p>Wait a minute, then investigate. Work through your own method before reading the suggested one below.</p>
-<h2>Suggested investigation, if you want structure</h2>
-<p>Confirm the symptom first: ping and traceroute to target2 from host1 (via the <strong>host1</strong> terminal in the Control Portal or <code>podman exec -it clab-measlab-host1 bash</code>), both families, and compare against your Activity 1 and 3 records. A complaint is a hypothesis; a measurement is a fact.</p>
-<p>Bracket the fault second: measure target1 the same way. One destination degraded and one clean already excludes large parts of the path, including your own AS.</p>
-<p>Read the path third: your traceroute to target2 changed. Label every hop with its AS, note the new round-trip time, and read the AS path for 10.50.0.0/16 on r1 (using the <strong>r1</strong> terminal in the Control Portal with <code>vtysh</code>, or <code>podman exec -it clab-measlab-r1 vtysh</code>). Something about that AS path looks artificial; it is a deliberate signal from dest-2, and worth explaining in your summary.</p>
-<p>Use the looking glass fourth: you cannot log in to other networks, but you can read them. In the Control Portal, use the <strong>Looking glass</strong> section, or run from the lab folder:</p>
-<pre><code>sudo ./scripts/lg.sh upstream-a &quot;show bgp ipv4 unicast 10.50.0.0/16&quot;
-sudo ./scripts/lg.sh route-server &quot;show bgp summary&quot;
+<h2>Task 1: Replicate and quantify the symptom</h2>
+<p>Confirm the symptom first: ping and traceroute to target2 from host1 (via the <strong>host1</strong> terminal in the Control Portal or <code>podman exec -it clab-measlab-host1 bash</code>), in both address families, and compare against your Activity 1 and 3 records.</p>
+<pre><code class="language-bash">traceroute -n 10.50.10.10
+ping -c 10 10.50.10.10
 </code></pre>
-<p>The route server's summary is the IXP's member list with session states. Compare what you see there against the topology diagram.</p>
-<h2>Your incident summary</h2>
-<p>Write it before reading the model answer. Cover: the symptom quantified, the path change, the network you hold responsible, the evidence, and whom you would contact.</p>
-<p><strong>Optional mitigation.</strong> The fault is not yours, but the routing policy that steers your traffic into it is. Your r2 learns a clean route to dest-2 through upstream B, yet r1's higher local preference for upstream A wins. Lower it and watch your traffic escape the detour.</p>
+<p>Then bracket the fault: measure target1 the same way (<code>traceroute -n 10.40.10.10</code> and <code>ping -c 10 10.40.10.10</code>). A complaint is a hypothesis; a measurement is a fact.</p>
+<div class="callout tip">
+<div class="callout-header">💡 <span class="callout-badge">TIP</span></div>
+<p><strong>Where to look in the traceroute:</strong> Compare the hop count and round-trip times against Activity 1. In Activity 1, target2 took only 5 hops with &lt;2 ms latency directly across the IXP peering LAN (<code>100.64.99.50</code>). Check which new network hops appear now at hop 4 and 5.</p>
+</div>
+<p><strong>Question 1.</strong> What is the new round-trip time to target2, and at which hop does the large latency jump occur? What does comparing this with target1 tell you?</p>
+<details class="answers">
+<summary>Check your findings for Task 1 (reveal after measuring)</summary>
+<pre><code class="language-text"><span class="code-label">Sample output (traceroute -n 10.50.10.10):</span>
+ 1  10.1.10.1      0.11 ms   <span class="code-annotation">(r3)</span>
+ 2  10.1.1.1       0.22 ms   <span class="code-annotation">(r1)</span>
+ 3  100.64.11.1    0.51 ms   <span class="code-annotation">(ra - Upstream A)</span>
+ 4  100.64.13.2   20.85 ms   <span class="code-annotation">(rt - Transit carrier entry!)</span>
+ 5  100.64.35.2   50.92 ms   <span class="code-annotation">(rd2 backup transit link)</span>
+ 6  10.50.10.10   51.15 ms   <span class="code-annotation">(target2)</span>
+</code></pre>
+<p><strong>Finding:</strong> Round-trip time to target2 jumped from under 2 ms to ~51 ms, entering transit at hop 4 (<code>100.64.13.2</code>). Meanwhile, target1 measures completely normal (~46 ms). This proves your own network and the shared border links are healthy; the degradation is specific to dest-2 or upstream A.</p>
+</details>
+<h2>Task 2: Inspect the routing path and BGP prepending</h2>
+<p>Your traceroute to target2 changed. Read the AS path for <code>10.50.0.0/16</code> on your border router r1 (using the <strong>r1</strong> terminal in the Control Portal with <code>vtysh</code>, or <code>podman exec -it clab-measlab-r1 vtysh</code>):</p>
+<pre><code>show bgp ipv4 unicast 10.50.0.0/16
+</code></pre>
+<div class="callout tip">
+<div class="callout-header">💡 <span class="callout-badge">TIP</span></div>
+<p><strong>What to look for in the AS Path:</strong> Check the sequence of AS numbers. Look at the tail of the path: why is an AS number repeated multiple times?</p>
+</div>
+<p><strong>Question 2.</strong> What AS path does r1 show for 10.50.0.0/16, and what does the repeated AS number signify?</p>
+<details class="answers">
+<summary>Check your findings for Task 2 (reveal after checking BGP)</summary>
+<pre><code class="language-text"><span class="code-label">Sample output (show bgp ipv4 unicast 10.50.0.0/16 on r1):</span>
+Paths: (1 available, best #1)
+  65010 65030 65050 65050 65050 65050
+    100.64.11.1 from 100.64.11.1 (ra.measlab)
+</code></pre>
+<p><strong>Finding:</strong> The path is <code>65010 65030 65050 65050 65050 65050</code>. dest-2 (AS 65050) has prepended its own AS four times on this route. BGP prepending artificially inflates the path length to make it an unattractive path of last resort. The fact that the Internet is using it anyway means its primary, preferred route must be broken.</p>
+</details>
+<h2>Task 3: Query the looking glass to isolate the fault</h2>
+<p>You cannot log in to other networks, but you can read them. In the Control Portal, use the <strong>Looking glass</strong> section (or run from the lab folder):</p>
+<pre><code class="language-bash">sudo ./scripts/lg.sh route-server &quot;show bgp summary&quot;
+sudo ./scripts/lg.sh upstream-a &quot;show bgp ipv4 unicast 10.50.0.0/16&quot;
+</code></pre>
+<p>The route server's summary is the IXP's member list with session states.</p>
+<div class="callout tip">
+<div class="callout-header">💡 <span class="callout-badge">TIP</span></div>
+<p><strong>Where to look in the Route Server summary:</strong> Check the <code>State/PfxRcd</code> column for Upstream A (<code>100.64.99.10</code>) versus dest-2 (<code>100.64.99.50</code>) and Upstream B (<code>100.64.99.20</code>). Remember: an integer indicates Established/UP; text like <code>Active</code> or <code>Idle</code> indicates DOWN.</p>
+</div>
+<p><strong>Question 3.</strong> Which peer session is down on the route server, and what does this prove about the root cause?</p>
+<details class="answers">
+<summary>Check your findings for Task 3 (reveal after looking glass check)</summary>
+<pre><code class="language-text"><span class="code-label">Sample output (route-server show bgp summary):</span>
+Neighbor        V    AS MsgRcvd MsgSent   TblVer  InQ OutQ  Up/Down State/PfxRcd
+100.64.99.10    4 65010       0       0        0    0    0 00:04:12 Active
+100.64.99.20    4 65020    1452    1450        0    0    0 01:12:30        1
+100.64.99.50    4 65050    1455    1452        0    0    0 01:12:30        1
+</code></pre>
+<p><strong>Finding:</strong> Upstream A's session (<code>100.64.99.10</code>) is in state <code>Active</code> (trying to reconnect / session down!), while dest-2 and Upstream B are established (<code>1</code>). Upstream A (AS 65010) dropped out of the IXP, so every route it previously learned across the peering LAN fell back to transit!</p>
+</details>
+<h2>Task 4: Mitigate locally and formulate your incident report</h2>
+<p>The fault is not yours, but the routing policy that steers your traffic into it is. Your r2 learns a clean route to dest-2 through upstream B, yet r1's higher local preference for upstream A wins. Lower it and watch your traffic escape the detour.</p>
 <p>In the Control Portal, switch to the <strong>r1</strong> terminal and type <code>vtysh</code> (or run <code>podman exec -it clab-measlab-r1 vtysh</code> from your host terminal), then apply the policy:</p>
 <pre><code>configure terminal
 route-map FROM-UPSTREAM-A permit 10
@@ -1086,10 +1245,12 @@ clear bgp * soft in
 </code></pre>
 <p>Measure target2 again, confirm the recovery through upstream B, then restore the value to 200 the same way (and <code>clear bgp * soft in</code> again). You diagnosed remotely and mitigated locally, which is precisely the shape of real incident response between networks.</p>
 <p>Close the scenario by clicking <strong>Scenario 1 off</strong> in the Control Portal (or run):</p>
-<pre><code>sudo ./scripts/scenario.sh 1 off
+<pre><code class="language-bash">sudo ./scripts/scenario.sh 1 off
 </code></pre>
-<details class="answers"><summary>Model incident summary (reveal after writing your own)</summary>
-<p>Reveal after writing your own.</p>
+<h3>Your incident summary</h3>
+<p>Write it before reading the model answer below. Cover: the symptom quantified, the path change, the network you hold responsible, the evidence, and whom you would contact.</p>
+<details class="answers">
+<summary>Model incident summary (reveal after writing your own)</summary>
 <pre><code class="language-text"><span class="code-label">Key diagnostic evidence:</span>
 
 <span class="code-label">1. Detoured traceroute (traceroute -n 10.50.10.10):</span>
@@ -1117,7 +1278,8 @@ Neighbor        V    AS MsgRcvd MsgSent   TblVer  InQ OutQ  Up/Down State/PfxRcd
 <p><strong>Root cause attribution.</strong> The IXP route server shows upstream A's sessions down while all other members remain established. Upstream A (AS 65010) has lost its presence at the exchange, so every route it previously learned across the peering LAN, including dest-2's, fell back to transit.</p>
 <p><strong>Action.</strong> Contact our account team at upstream A with this evidence and a request for their ETA. As local mitigation, we can prefer upstream B for the affected prefixes until the exchange sessions return.</p>
 </blockquote>
-<p>The name for this pattern is tromboning: traffic between two nearby networks detours through a distant third, out and back like the slide of a trombone. In Unit 3 you will find real trombones in RIPE Atlas traceroutes, and the evidence chain you built here, symptom, path, AS attribution, is the one you will use there.</p></details>
+</details>
+<p>The name for this pattern is tromboning: traffic between two nearby networks detours through a distant third, out and back like the slide of a trombone. In Unit 3 you will find real trombones in RIPE Atlas traceroutes, and the evidence chain you built here, symptom, path, AS attribution, is the one you will use there.</p>
 </article>
 <article id="activity5" class="page" data-title="Activity 5, Scenario 2: Now You See It, Now You Don&#x27;t"><h1>Activity 5, Scenario 2: Now You See It, Now You Don&#x27;t</h1>
 <p><strong>Maps to:</strong> Module 2.6 (Troubleshooting with Measurements), with a direct bridge to Unit 3 (RIS and BGPlay)
@@ -1133,26 +1295,83 @@ Neighbor        V    AS MsgRcvd MsgSent   TblVer  InQ OutQ  Up/Down State/PfxRcd
 <pre><code>sudo ./scripts/scenario.sh 2 on
 </code></pre>
 <p>Wait a minute, then investigate. Try your own approach first.</p>
-<h2>Suggested investigation, if you want structure</h2>
-<p>Measure over time, not once. From host1 (via the <strong>host1</strong> terminal in the Control Portal or <code>podman exec -it clab-measlab-host1 bash</code>), a 100-cycle mtr to target1 spans about two minutes, longer than one bad or good period, so its loss column tells the truth a single ping cannot:</p>
-<pre><code>mtr -n --report --report-cycles 100 10.40.10.10
+<h2>Task 1: Measure over time with MTR</h2>
+<p>Intermittent faults fool single pings. From host1 (via the <strong>host1</strong> terminal in the Control Portal or <code>podman exec -it clab-measlab-host1 bash</code>), run a 100-cycle mtr to target1:</p>
+<pre><code class="language-bash">mtr -n --report --report-cycles 100 10.40.10.10
 </code></pre>
-<p>Read the failure mode. During an outage window, ping target1 and look at the exact error. A timeout means your packet left and nothing came back; a "Network unreachable" means your own router had no route to offer. The two point at different layers, and this detail decides your whole diagnosis.</p>
-<p>Watch your control plane. On r1 (in the Control Portal switch to the <strong>r1</strong> terminal and type <code>vtysh</code>, or run <code>podman exec -it clab-measlab-r1 vtysh</code>), check the route repeatedly for a few minutes:</p>
+<div class="callout tip">
+<div class="callout-header">💡 <span class="callout-badge">TIP</span></div>
+<p><strong>Where to look in the MTR report:</strong> Look at the <code>Loss%</code> column for intermediate hops (1 to 4) versus the final destination (target1). Notice how hops 1–4 show 0.0% loss, but the destination reports roughly 50% loss.</p>
+</div>
+<p><strong>Question 1.</strong> What loss percentage does MTR report for target1 over 100 cycles, and why did a single ping fail to reveal this pattern?</p>
+<details class="answers">
+<summary>Check your findings for Task 1 (reveal after measuring)</summary>
+<pre><code class="language-text"><span class="code-label">Sample output (mtr -n --report --report-cycles 100 10.40.10.10):</span>
+HOST: host1                       Loss%   Snt   Last   Avg  Best  Wrst StDev
+  1.|-- 10.1.10.1                  0.0%   100    0.1   0.1   0.1   0.2   0.0
+  2.|-- 10.1.1.1                   0.0%   100    0.2   0.2   0.2   0.3   0.0
+  3.|-- 100.64.11.1                0.0%   100    0.5   0.5   0.4   0.7   0.1
+  4.|-- 100.64.13.2                0.0%   100   20.8  20.8  20.4  22.1   0.3
+  5.|-- ???                       100.0   100    0.0   0.0   0.0   0.0   0.0
+  6.|-- 10.40.10.10               48.0%   100   46.1  46.2  45.8  47.9   0.5
+</code></pre>
+<p><strong>Finding:</strong> Loss to target1 is roughly 48%–50% over time. A single ping probe that lands during an "up" window reports 100% success with normal ~46 ms latency, completely hiding the periodic outage. Only continuous sampling over time exposes intermittent faults.</p>
+</details>
+<h2>Task 2: Distinguish link loss from routing table withdrawal</h2>
+<p>Read the failure mode closely. Run a continuous ping to target1:</p>
+<pre><code class="language-bash">ping 10.40.10.10
+</code></pre>
+<p>Watch the terminal as it alternates between successful replies and failure messages (press <code>Ctrl + C</code> to stop after observing the pattern).</p>
+<div class="callout tip">
+<div class="callout-header">💡 <span class="callout-badge">TIP</span></div>
+<p><strong>Interpreting ICMP errors:</strong><br />
+- <strong>Request timeout:</strong> Packets left your network, but no reply returned (typical of physical packet loss, link congestion, or dead hosts).<br />
+- <strong>From 10.1.1.1: Destination Net Unreachable:</strong> Your <em>own local router</em> (<code>r1</code>) actively rejected the packet because it has no route to the destination network in its routing table!</p>
+</div>
+<p><strong>Question 2.</strong> What specific error message does ping display during outage windows, and which machine issues it?</p>
+<details class="answers">
+<summary>Check your findings for Task 2 (reveal after ping check)</summary>
+<pre><code class="language-text"><span class="code-label">Sample output during outage:</span>
+From 10.1.1.1 icmp_seq=1 Destination Net Unreachable
+From 10.1.1.1 icmp_seq=2 Destination Net Unreachable
+</code></pre>
+<p><strong>Finding:</strong> The error is <code>Destination Net Unreachable</code> coming directly from our border router <code>10.1.1.1</code> (<code>r1</code>). This proves the failure is NOT packets dropping on a noisy cable; our own router has lost its BGP route to <code>10.40.0.0/16</code> entirely!</p>
+</details>
+<h2>Task 3: Observe route flaps on the control plane and looking glass</h2>
+<p>On r1 (in the Control Portal switch to the <strong>r1</strong> terminal and type <code>vtysh</code>, or run <code>podman exec -it clab-measlab-r1 vtysh</code>), check the route repeatedly over two minutes:</p>
 <pre><code>show bgp ipv4 unicast 10.40.0.0/16
 </code></pre>
-<p>Run it during a good window and a bad window. Also look at r1's BGP log messages (<code>show logging</code> in vtysh, or repeat the lookup and note the changing age of the route). A route whose age keeps resetting to seconds is telling you its history.</p>
-<p>Attribute it. The looking glass shows you where the instability enters the Internet (use the <strong>Looking glass</strong> section in the Control Portal, or run from your host machine):</p>
-<pre><code>sudo ./scripts/lg.sh transit &quot;show bgp ipv4 unicast 10.40.0.0/16&quot;
+<p>Then query the looking glass (use the <strong>Looking glass</strong> section in the Control Portal, or run from your host machine):</p>
+<pre><code class="language-bash">sudo ./scripts/lg.sh transit &quot;show bgp ipv4 unicast 10.40.0.0/16&quot;
 sudo ./scripts/lg.sh route-server &quot;show bgp summary&quot;
 </code></pre>
-<p>If the transit carrier's route to dest-1 also comes and goes while the IXP looks healthy, the boundary of the fault is drawn for you.</p>
-<h2>Your incident summary</h2>
-<p>Write it before reading the model answer: symptom with numbers, the evidence that this is a routing problem rather than a lossy link, the responsible network, and whom you would contact. Then close the scenario by clicking <strong>Scenario 2 off</strong> in the Control Portal (or run):</p>
-<pre><code>sudo ./scripts/scenario.sh 2 off
+<div class="callout tip">
+<div class="callout-header">💡 <span class="callout-badge">TIP</span></div>
+<p><strong>Where to look in BGP lookups:</strong>
+* On <code>r1</code>: During good windows, check the route age (<code>Last update: 00:00:15 ago</code>). Notice how the age repeatedly resets back to seconds! During bad windows, it reports <code>% Network not in table</code>.
+* In the looking glass: Check if the transit carrier (<code>AS 65030</code>) also sees dest-1 (<code>AS 65040</code>) appearing and disappearing.</p>
+</div>
+<details class="answers">
+<summary>Check your findings for Task 3 (reveal after checking BGP)</summary>
+<pre><code class="language-text"><span class="code-label">Sample output on r1 (UP window):</span>
+  BGP routing table entry for 10.40.0.0/16
+  Paths: (1 available, best #1)
+    65010 65030 65040
+    Last update: 00:00:12 ago (age resets repeatedly!)
+
+<span class="code-label">Sample output on r1 (DOWN window):</span>
+  % Network not in table
 </code></pre>
-<details class="answers"><summary>Model incident summary (reveal after writing your own)</summary>
-<p>Reveal after writing your own.</p>
+<p><strong>Finding:</strong> The prefix <code>10.40.0.0/16</code> is rhythmically withdrawn and re-announced in roughly 40-second cycles. Transit's looking glass confirms the same flap on its session to AS 65040, while IXP route-server sessions remain stable. This isolates the fault to dest-1's transit connection with AS 65030.</p>
+</details>
+<h2>Task 4: Formulate your incident summary</h2>
+<p>Close the scenario by clicking <strong>Scenario 2 off</strong> in the Control Portal (or run):</p>
+<pre><code class="language-bash">sudo ./scripts/scenario.sh 2 off
+</code></pre>
+<h3>Your incident summary</h3>
+<p>Write it before reading the model answer: symptom with numbers, the evidence that this is a routing problem rather than a lossy link, the responsible network, and whom you would contact.</p>
+<details class="answers">
+<summary>Model incident summary (reveal after writing your own)</summary>
 <pre><code class="language-text"><span class="code-label">Key diagnostic evidence:</span>
 
 <span class="code-label">1. MTR over 100 cycles to target1 (mtr -n --report --report-cycles 100 10.40.10.10):</span>
@@ -1179,7 +1398,8 @@ From 10.1.1.1 icmp_seq=1 Destination Net Unreachable
 <p><strong>Root cause attribution.</strong> The transit carrier's own view (via its looking glass) shows its route to dest-1 appearing and disappearing on the same cycle, learned on its direct session to AS 65040. The IXP route server shows all member sessions stable. The instability therefore originates at dest-1's connection to its transit provider: either the dest-1 router, the link between them, or a misbehaving policy repeatedly resetting the session. From outside, we cannot distinguish which, and honest attribution stops at the boundary the evidence supports: AS 65040's transit connection.</p>
 <p><strong>Action.</strong> This is not our network and not our upstream's. We would report the evidence to dest-1's operations contact, and note that every network on the Internet observing this prefix sees the same churn.</p>
 </blockquote>
-<p>The name for this pattern is a route flap, and its signature, a prefix rhythmically announced and withdrawn, propagates through the routing system to every observer. That last point is the doorway to Unit 3: RIPE RIS records exactly these announcements and withdrawals from hundreds of vantage points, and BGPlay animates them, so the flap you just diagnosed from one AS with a looking glass is the flap you will next watch ripple across the whole Internet.</p></details>
+</details>
+<p>The name for this pattern is a route flap, and its signature, a prefix rhythmically announced and withdrawn, propagates through the routing system to every observer. That last point is the doorway to Unit 3: RIPE RIS records exactly these announcements and withdrawals from hundreds of vantage points, and BGPlay animates them, so the flap you just diagnosed from one AS with a looking glass is the flap you will next watch ripple across the whole Internet.</p>
 </article>
 <article id="activity6" class="page" data-title="Activity 6, Scenario 3: Double Trouble"><h1>Activity 6, Scenario 3: Double Trouble</h1>
 <p><strong>Maps to:</strong> Modules 2.3, 2.5 (Analysing Measurement Data) and 2.6 (Troubleshooting with Measurements)
@@ -1196,50 +1416,98 @@ From 10.1.1.1 icmp_seq=1 Destination Net Unreachable
 <pre><code>sudo ./scripts/scenario.sh 3 on
 </code></pre>
 <p>Wait a minute for conditions to stabilize, then investigate.</p>
-<h2>Suggested investigation, if you want structure</h2>
-<h3>Step 1: Disentangle the symptoms</h3>
+<h2>Task 1: Disentangle the symptoms (statistical analysis)</h2>
 <p>Do not assume both targets suffer from the same underlying fault just because the complaints arrived together. Collect measurements for both targets from host1 (via the <strong>host1</strong> terminal in the Control Portal, or <code>podman exec -it clab-measlab-host1 bash</code>):</p>
-<pre><code>ping -c 100 -i 0.2 10.40.10.10 | grep -oE 'time=[0-9.]+' | cut -d= -f2 &gt; target1.txt
+<pre><code class="language-bash">ping -c 100 -i 0.2 10.40.10.10 | grep -oE 'time=[0-9.]+' | cut -d= -f2 &gt; target1.txt
 ping -c 100 -i 0.2 10.50.10.10 | grep -oE 'time=[0-9.]+' | cut -d= -f2 &gt; target2.txt
 </code></pre>
 <p>Compute statistics for each:</p>
-<pre><code>sort -n target1.txt | awk '{a[NR]=$1; s+=$1} END {print &quot;t1 count:&quot;, NR, &quot;mean:&quot;, s/NR, &quot;median:&quot;, a[int((NR+1)/2)], &quot;p95:&quot;, a[int(NR*0.95)], &quot;min:&quot;, a[1], &quot;max:&quot;, a[NR]}'
+<pre><code class="language-bash">sort -n target1.txt | awk '{a[NR]=$1; s+=$1} END {print &quot;t1 count:&quot;, NR, &quot;mean:&quot;, s/NR, &quot;median:&quot;, a[int((NR+1)/2)], &quot;p95:&quot;, a[int(NR*0.95)], &quot;min:&quot;, a[1], &quot;max:&quot;, a[NR]}'
 sort -n target2.txt | awk '{a[NR]=$1; s+=$1} END {print &quot;t2 count:&quot;, NR, &quot;mean:&quot;, s/NR, &quot;median:&quot;, a[int((NR+1)/2)], &quot;p95:&quot;, a[int(NR*0.95)], &quot;min:&quot;, a[1], &quot;max:&quot;, a[NR]}'
 </code></pre>
-<p>Compare the distributions:
-* Which target exhibits high variance, large difference between mean and median, and packet loss?
-* Which target exhibits a stable distribution whose baseline has simply shifted upwards?</p>
-<h3>Step 2: Trace and locate each path</h3>
-<p>Run <code>mtr</code> and <code>traceroute</code> for each target:</p>
-<pre><code>mtr -n --report --report-cycles 50 10.40.10.10
+<div class="callout tip">
+<div class="callout-header">💡 <span class="callout-badge">TIP</span></div>
+<p><strong>Comparing latency distributions:</strong><br />
+- If <code>min</code> stays identical to baseline while <code>mean</code>, <code>p95</code>, and <code>max</code> explode with packet loss: this is <strong>queueing delay</strong> (buffer congestion).<br />
+- If <code>min</code>, <code>median</code>, and <code>mean</code> all shift upwards together by a steady amount with 0% loss: this is a <strong>propagation delay shift</strong> (physical path detour).</p>
+</div>
+<p><strong>Question 1.</strong> Compare the distributions of target1 and target2. Which represents queueing delay, and which represents a routing detour?</p>
+<details class="answers">
+<summary>Check your findings for Task 1 (reveal after measuring)</summary>
+<pre><code class="language-text"><span class="code-label">Sample statistical comparison:</span>
+target1: count:  89 | mean: 118.4 | median: 46.2 | p95: 298.5 | min: 45.8 | max: 418.2 (Loss: ~11%)
+target2: count: 100 | mean:  51.2 | median: 51.1 | p95:  51.9 | min: 50.8 | max:  52.4 (Loss:   0%)
+</code></pre>
+<p><strong>Finding:</strong> target1 exhibits severe jitter, elevated mean/p95, and ~11% packet loss, but its <code>min</code> is unchanged at ~45.8 ms. This is classic queueing delay (link congestion). In contrast, target2 shows zero loss and negligible jitter, but its entire distribution shifted from &lt;2 ms to ~51 ms. This indicates a longer physical routing path. The two destinations have completely different problems!</p>
+</details>
+<h2>Task 2: Trace and locate each path (MTR)</h2>
+<p>Run <code>mtr</code> and <code>traceroute</code> for each target to isolate where each failure manifests:</p>
+<pre><code class="language-bash">mtr -n --report --report-cycles 50 10.40.10.10
 mtr -n --report --report-cycles 50 10.50.10.10
 </code></pre>
-<ul>
-<li>On target1, at which specific link do the jitter and packet loss begin?</li>
-<li>On target2, compare the sequence of hops against your baseline from Activity 1. Has the path changed?</li>
-</ul>
-<h3>Step 3: Consult the control plane and looking glass</h3>
+<div class="callout tip">
+<div class="callout-header">💡 <span class="callout-badge">TIP</span></div>
+<p><strong>Where to look:</strong>
+- On <code>target1</code>: Check the hop where <code>Loss%</code> and <code>Avg</code> latency jump.
+- On <code>target2</code>: Compare the hop sequence against your Activity 1 baseline. Does it detour into the transit carrier (<code>100.64.13.2</code>)?</p>
+</div>
+<p><strong>Question 2.</strong> At which hop does packet loss begin on target1? And which hop does target2 detour through?</p>
+<details class="answers">
+<summary>Check your findings for Task 2 (reveal after running MTR)</summary>
+<pre><code class="language-text">Sample findings:
+- target1 path: host1 <span class="code-annotation">-&gt; r3 -&gt; r1 -&gt; ra -&gt; rt -&gt; rd1 (100.64.34.2)</span>
+  Loss (~11%) and high jitter start specifically at hop 5 (100.64.34.2, dest-1 entry).
+- target2 path: host1 <span class="code-annotation">-&gt; r3 -&gt; r1 -&gt; ra -&gt; rt (100.64.13.2) -&gt; rd2 backup port (100.64.35.2) -&gt; target2</span>
+  Hops to target2 detour through the transit backbone instead of crossing the IXP!
+</code></pre>
+<p><strong>Finding:</strong> The data plane confirms two distinct locations: target1 experiences link congestion between transit (<code>rt</code>) and dest-1 (<code>rd1</code>), whereas target2 is detouring over transit to reach dest-2's backup link.</p>
+</details>
+<h2>Task 3: Consult the control plane and looking glass</h2>
 <p>Check your BGP table on r1 (switch to the <strong>r1</strong> terminal in the Control Portal and type <code>vtysh</code>, or run <code>podman exec -it clab-measlab-r1 vtysh</code>):</p>
 <pre><code>show bgp ipv4 unicast 10.40.0.0/16
 show bgp ipv4 unicast 10.50.0.0/16
 </code></pre>
 <p>Then query the looking glass (use the <strong>Looking glass</strong> section in the Control Portal, or run from your lab folder):</p>
-<pre><code>sudo ./scripts/lg.sh route-server &quot;show bgp summary&quot;
+<pre><code class="language-bash">sudo ./scripts/lg.sh route-server &quot;show bgp summary&quot;
 sudo ./scripts/lg.sh upstream-a &quot;show bgp ipv4 unicast 10.50.0.0/16&quot;
 </code></pre>
-<ul>
-<li>Are both routes learned through the same upstream?</li>
-<li>Does the route server show any peering sessions down?</li>
-</ul>
-<h3>Step 4: Optional local mitigation</h3>
+<div class="callout tip">
+<div class="callout-header">💡 <span class="callout-badge">TIP</span></div>
+<p><strong>Connecting the evidence:</strong>
+- Check if <code>10.40.0.0/16</code>'s BGP path has changed (<code>65010 65030 65040</code>).
+- Check <code>10.50.0.0/16</code>'s BGP path for AS prepending (<code>65010 65030 65050 65050...</code>).
+- Look at the route server's summary: why is dest-2 taking the backup path?</p>
+</div>
+<p><strong>Question 3.</strong> What do the BGP tables and looking glass reveal about management's theory that our border link is failing?</p>
+<details class="answers">
+<summary>Check your findings for Task 3 (reveal after BGP inspection)</summary>
+<pre><code class="language-text">Sample BGP lookups:
+- 10.40.0.0/16 Path: 65010 65030 65040 (Normal path; congestion is purely in data buffer queues).
+- 10.50.0.0/16 Path: 65010 65030 65050 65050 65050 65050 (Prepended backup path active).
+- Route server summary: Upstream A (100.64.99.10) session is Active/down!
+</code></pre>
+<p><strong>Finding:</strong> Upstream A dropped off the IXP, which caused target2's route to fail over to transit. Meanwhile, target1's routing is completely normal, but the transit link to AS 65040 is overloaded with traffic. Management's suspicion that "our border link to Upstream A is failing" is completely disproven!</p>
+</details>
+<h2>Task 4: Formulate the incident summary and test local mitigation</h2>
 <p>Can you mitigate either symptom locally without waiting for external providers?
 * Does changing local preference on r1 towards Upstream B improve reachability for target2?
 * Does local routing policy have any effect on target1's congested transit link?</p>
-<p>Restore baseline when finished by clicking <strong>Scenario 3 off</strong> in the Control Portal (or run):</p>
-<pre><code>sudo ./scripts/scenario.sh 3 off
+<p>In the Control Portal, switch to the <strong>r1</strong> terminal (<code>vtysh</code>):</p>
+<pre><code>configure terminal
+route-map FROM-UPSTREAM-A permit 10
+ set local-preference 90
+exit
+exit
+clear bgp * soft in
 </code></pre>
-<details class="answers"><summary>Model incident summary (reveal after writing your own)</summary>
-<p>Reveal after writing your own.</p>
+<p>Measure both targets again. Notice target2 recovers to &lt;2 ms via Upstream B, but target1 remains congested. Restore local preference to 200 when done (<code>set local-preference 200</code> and <code>clear bgp * soft in</code>).</p>
+<p>Restore baseline when finished by clicking <strong>Scenario 3 off</strong> in the Control Portal (or run):</p>
+<pre><code class="language-bash">sudo ./scripts/scenario.sh 3 off
+</code></pre>
+<h3>Your incident summary</h3>
+<p>Write it before reading the model answer below. Prove whether these symptoms share a common cause, identify the responsible networks, and propose concrete actions.</p>
+<details class="answers">
+<summary>Model incident summary (reveal after writing your own)</summary>
 <pre><code class="language-text"><span class="code-label">Key diagnostic comparison:</span>
 
 target1 (Fault 1 · Congestion &amp; Queueing Loss):
@@ -1263,7 +1531,8 @@ target2 (Fault 2 · Routing Detour / Trombone):
 * <strong>Root Cause:</strong> Upstream A (AS 65010) lost its BGP peering sessions with the IXP route server (AS 65100). Traffic to dest-2 therefore detoured through the transit carrier AS 65030 and dest-2's prepended backup path (<code>65010 65030 65050 65050 65050 65050</code>).
 * <strong>Action &amp; Local Mitigation:</strong> Open a ticket with Upstream A requesting restoration of their IXP peering. In the interim, lower local preference on r1 for Upstream A (<code>set local-preference 90</code>) to steer outbound traffic through Upstream B (AS 65020), which maintains active IXP peering, immediately restoring &lt;2 ms latency.</p>
 </blockquote>
-<p>This scenario reinforces the core lesson of Unit 2: <strong>latency is not a single number, and performance degradation is not a single phenomenon</strong>. A shift in minimum RTT points to propagation distance and path changes; a shift in mean/p95 with steady minimum points to queueing and link saturation.</p></details>
+</details>
+<p>This scenario reinforces the core lesson of Unit 2: <strong>latency is not a single number, and performance degradation is not a single phenomenon</strong>. A shift in minimum RTT points to propagation distance and path changes; a shift in mean/p95 with steady minimum points to queueing and link saturation.</p>
 </article>
 <article id="cheatsheet" class="page" data-title="Cheatsheet"><h1>Cheatsheet</h1>
 <h2>Getting into your machines</h2>
@@ -1590,6 +1859,7 @@ sudo ./scripts/lg.sh route-server &quot;show bgp summary&quot;
       if (!tasks.length) { pill.textContent = ""; return; }
       var done = tasks.filter(function (h) { return h.querySelector("input").checked; }).length;
       pill.textContent = done + "/" + tasks.length;
+      pill.title = "Progress: " + done + " of " + tasks.length + " tasks completed";
       pill.classList.toggle("done", done === tasks.length);
     }
 
@@ -1597,13 +1867,21 @@ sudo ./scripts/lg.sh route-server &quot;show bgp summary&quot;
       var key = "measlab." + page.id + ".task" + i;
       var box = document.createElement("input");
       box.type = "checkbox"; box.className = "task-check";
-      box.setAttribute("aria-label", "Mark task complete");
+      box.title = "Click to mark this task complete";
+      box.setAttribute("aria-label", "Mark " + h.textContent + " complete");
       box.checked = load(key) === "1";
       var span = document.createElement("span");
       span.className = "task-title"; span.textContent = h.textContent;
+      span.title = "Click to toggle completion";
       h.textContent = ""; h.appendChild(box); h.appendChild(span);
       h.classList.toggle("task-done", box.checked);
       box.addEventListener("change", function () {
+        store(key, box.checked ? "1" : "0");
+        h.classList.toggle("task-done", box.checked);
+        refresh();
+      });
+      span.addEventListener("click", function () {
+        box.checked = !box.checked;
         store(key, box.checked ? "1" : "0");
         h.classList.toggle("task-done", box.checked);
         refresh();

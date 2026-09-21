@@ -270,10 +270,51 @@ install_ttyd_linux() {
 
 # ---------------------------------------------------------------- macOS ----
 
-install_podman_macos() {
+ensure_homebrew_macos() {
+  # If brew isn't on PATH, check standard installation paths (e.g. Apple Silicon /opt/homebrew)
   if ! command -v brew >/dev/null 2>&1; then
-    die "Homebrew is required on macOS. Install it by running:\n  /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"\nThen re-run ./install.sh. Learn more: https://brew.sh"
+    if [ -x /opt/homebrew/bin/brew ]; then
+      eval "$(/opt/homebrew/bin/brew shellenv)"
+    elif [ -x /usr/local/bin/brew ]; then
+      eval "$(/usr/local/bin/brew shellenv)"
+    fi
   fi
+
+  # If still not found, offer interactive installation if running in a terminal
+  if ! command -v brew >/dev/null 2>&1; then
+    warn "Homebrew is required on macOS to install Podman and ttyd, but was not found."
+    if [ -t 0 ]; then
+      printf '\nWould you like to install Homebrew now? [y/N] '
+      read -r answer
+      if [[ "${answer:-}" =~ ^[Yy]$ ]]; then
+        log "Installing Homebrew..."
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+        if [ -x /opt/homebrew/bin/brew ]; then
+          eval "$(/opt/homebrew/bin/brew shellenv)"
+        elif [ -x /usr/local/bin/brew ]; then
+          eval "$(/usr/local/bin/brew shellenv)"
+        fi
+      fi
+    fi
+  fi
+
+  # Re-verify brew
+  if ! command -v brew >/dev/null 2>&1; then
+    die "Homebrew is required on macOS. Install it by running:
+
+  /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"
+
+Then re-run ./install.sh. Learn more: https://brew.sh"
+  fi
+
+  # Persist brew on PATH in ~/.zprofile for future shells (e.g. Apple Silicon)
+  if [ -x /opt/homebrew/bin/brew ]; then
+    grep -q '/opt/homebrew/bin/brew shellenv' ~/.zprofile 2>/dev/null || \
+      printf '\neval "$(/opt/homebrew/bin/brew shellenv)"\n' >> ~/.zprofile
+  fi
+}
+
+install_podman_macos() {
   if command -v podman >/dev/null 2>&1; then
     log "Podman already installed"
   else
@@ -362,6 +403,7 @@ deploy_lab() {
 
 case "${PLATFORM}" in
   macos)
+    ensure_homebrew_macos
     install_podman_macos
     install_ttyd_macos
     setup_podman_machine_macos

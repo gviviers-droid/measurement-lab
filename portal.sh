@@ -14,6 +14,17 @@ set -euo pipefail
 DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "${DIR}"
 
+# Ensure Homebrew path is active on macOS if ttyd is not on standard PATH
+if [ "$(uname -s)" = "Darwin" ]; then
+  if ! command -v ttyd >/dev/null 2>&1; then
+    if [ -x /opt/homebrew/bin/brew ]; then
+      eval "$(/opt/homebrew/bin/brew shellenv)"
+    elif [ -x /usr/local/bin/brew ]; then
+      eval "$(/usr/local/bin/brew shellenv)"
+    fi
+  fi
+fi
+
 MEASLAB_HOP=direct
 MEASLAB_MACHINE=podman-machine-default
 MEASLAB_HOST=127.0.0.1
