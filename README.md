@@ -160,11 +160,12 @@ For curriculum alignment with course modules, consult the [Activities Overview](
 ### 1. Lab Lifecycle
 Execute from the repository root:
 ```bash
-./lab.sh up       # Deploy topology, apply impairments, verify BGP health
-./lab.sh check    # Verify reachability, DNS, and latency tolerances
-./lab.sh reset    # Clear faults, peering, and congestion back to base state
-./lab.sh down     # Stop and tear down all lab containers
-./lab.sh update   # Pull latest repo updates & refresh lab (or run ./update.sh)
+./lab.sh up          # Deploy topology, apply impairments, verify BGP health
+./lab.sh check       # Verify reachability, DNS, and latency tolerances
+./lab.sh reset       # Clear faults, peering, and congestion back to base state
+./lab.sh down        # Stop and tear down all lab containers
+./lab.sh update      # Pull latest repo updates & refresh lab (or run ./update.sh)
+./lab.sh uninstall   # Cleanly remove lab, containers, and free RAM/disk (or ./uninstall.sh)
 ```
 *(On Linux/WSL2, prefix with `sudo` if running without rootless container permissions; on macOS, `./lab.sh` routes into the Podman VM automatically).*
 

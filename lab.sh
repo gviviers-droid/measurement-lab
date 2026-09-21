@@ -15,7 +15,7 @@ MEASLAB_HOP=direct
 MEASLAB_MACHINE=podman-machine-default
 [ -f .measlab/runtime.env ] && . .measlab/runtime.env
 
-if [ "${MEASLAB_HOP}" = "podman-machine" ] && [ "$(uname -s)" = "Darwin" ] && [ "${1:-}" != "docs" ] && [ "${1:-}" != "update" ]; then
+if [ "${MEASLAB_HOP}" = "podman-machine" ] && [ "$(uname -s)" = "Darwin" ] && [ "${1:-}" != "docs" ] && [ "${1:-}" != "update" ] && [ "${1:-}" != "uninstall" ]; then
   if [ -n "${SUDO_USER:-}" ]; then
     exec sudo -u "${SUDO_USER}" podman machine ssh "${MEASLAB_MACHINE}" -- "cd '${DIR}' && sudo ./lab.sh $*"
   else
@@ -55,7 +55,10 @@ case "${1:-}" in
   update)
     exec "${DIR}/update.sh"
     ;;
+  uninstall)
+    exec "${DIR}/uninstall.sh"
+    ;;
   *)
-    echo "Usage: $0 up|check|reset|down|docs|update"; exit 1
+    echo "Usage: $0 up|check|reset|down|docs|update|uninstall"; exit 1
     ;;
 esac

@@ -165,6 +165,29 @@ If new activities, exercises, or fixes are published to the repository, you can 
 
 ---
 
+## 🗑️ How to Completely Uninstall the Lab
+
+When you have finished testing or completed the course and want to cleanly remove the lab and reclaim disk space and RAM:
+
+1. Open your terminal inside your `measurement-lab-main` folder.
+2. Run the clean uninstaller:
+   - **macOS / Linux:**
+     ```bash
+     ./uninstall.sh
+     ```
+   - **Windows (PowerShell):**
+     ```powershell
+     .\uninstall.ps1
+     ```
+3. The uninstaller will safely:
+   - Stop running portal servers and terminals.
+   - Tear down all 14 virtual network containers and bridges.
+   - Reclaim ~3–5 GB of disk space by clearing container images and temporary runtime files.
+   - **On macOS:** Stop and remove the `podman-machine-default` VM, immediately freeing 4 GB of dedicated RAM and 5–10 GB of disk space.
+4. You can then safely delete the downloaded `measurement-lab-main` folder from your computer.
+
+---
+
 ## 📝 Feedback We Need From You
 
 Please reply to this email with a quick note answering:
