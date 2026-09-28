@@ -44,6 +44,21 @@ log "Lab files updated successfully!"
 IS_DEPLOYED=0
 if [ -f .measlab/runtime.env ]; then
   . .measlab/runtime.env
+  if [ "$(uname -s)" = "Darwin" ]; then
+    if [ -d /opt/podman/bin ] && [[ ":$PATH:" != *":/opt/podman/bin:"* ]]; then
+      export PATH="/opt/podman/bin:$PATH"
+    fi
+    if [ -d /opt/local/bin ] && [[ ":$PATH:" != *":/opt/local/bin:"* ]]; then
+      export PATH="/opt/local/bin:$PATH"
+    fi
+    if ! command -v podman >/dev/null 2>&1; then
+      if [ -x /opt/homebrew/bin/brew ]; then
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+      elif [ -x /usr/local/bin/brew ]; then
+        eval "$(/usr/local/bin/brew shellenv)"
+      fi
+    fi
+  fi
   if [ "${MEASLAB_HOP:-direct}" = "podman-machine" ] && [ "$(uname -s)" = "Darwin" ]; then
     podman machine ssh "${MEASLAB_MACHINE:-podman-machine-default}" -- "sudo docker ps -a --format '{{.Names}}'" 2>/dev/null | grep -q '^clab-measlab-' && IS_DEPLOYED=1 || true
   else

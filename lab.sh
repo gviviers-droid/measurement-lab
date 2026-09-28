@@ -15,6 +15,23 @@ MEASLAB_HOP=direct
 MEASLAB_MACHINE=podman-machine-default
 [ -f .measlab/runtime.env ] && . .measlab/runtime.env
 
+# Ensure Podman, Homebrew, or MacPorts paths are active on macOS
+if [ "$(uname -s)" = "Darwin" ]; then
+  if [ -d /opt/podman/bin ] && [[ ":$PATH:" != *":/opt/podman/bin:"* ]]; then
+    export PATH="/opt/podman/bin:$PATH"
+  fi
+  if [ -d /opt/local/bin ] && [[ ":$PATH:" != *":/opt/local/bin:"* ]]; then
+    export PATH="/opt/local/bin:$PATH"
+  fi
+  if ! command -v podman >/dev/null 2>&1; then
+    if [ -x /opt/homebrew/bin/brew ]; then
+      eval "$(/opt/homebrew/bin/brew shellenv)"
+    elif [ -x /usr/local/bin/brew ]; then
+      eval "$(/usr/local/bin/brew shellenv)"
+    fi
+  fi
+fi
+
 if [ "${MEASLAB_HOP}" = "podman-machine" ] && [ "$(uname -s)" = "Darwin" ] && [ "${1:-}" != "docs" ] && [ "${1:-}" != "update" ] && [ "${1:-}" != "uninstall" ]; then
   if [ -n "${SUDO_USER:-}" ]; then
     exec sudo -u "${SUDO_USER}" podman machine ssh "${MEASLAB_MACHINE}" -- "cd '${DIR}' && sudo ./lab.sh $*"

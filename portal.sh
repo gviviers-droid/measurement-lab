@@ -14,8 +14,11 @@ set -euo pipefail
 DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "${DIR}"
 
-# Ensure Homebrew or MacPorts path is active on macOS if ttyd is not on standard PATH
+# Ensure Podman, Homebrew, or MacPorts paths are active on macOS
 if [ "$(uname -s)" = "Darwin" ]; then
+  if [ -d /opt/podman/bin ] && [[ ":$PATH:" != *":/opt/podman/bin:"* ]]; then
+    export PATH="/opt/podman/bin:$PATH"
+  fi
   if [ -d /opt/local/bin ] && [[ ":$PATH:" != *":/opt/local/bin:"* ]]; then
     export PATH="/opt/local/bin:$PATH"
   fi
@@ -43,22 +46,31 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-for entry in ${TERMINALS}; do
-  node="${entry%%:*}"
-  port="${entry##*:}"
-  shell_cmd="sudo docker exec -it clab-measlab-${node} sh"
+if command -v ttyd >/dev/null 2>&1; then
+  for entry in ${TERMINALS}; do
+    node="${entry%%:*}"
+    port="${entry##*:}"
+    shell_cmd="sudo docker exec -it clab-measlab-${node} sh"
+    if [ "${MEASLAB_HOP}" = "podman-machine" ]; then
+      ttyd -p "${port}" -i "${MEASLAB_HOST}" -W -t titleFixed="${node}" \
+        podman machine ssh "${MEASLAB_MACHINE}" -- "${shell_cmd}" \
+        > /dev/null 2>&1 &
+    else
+      ttyd -p "${port}" -i "${MEASLAB_HOST}" -W -t titleFixed="${node}" \
+        bash -c "${shell_cmd}" \
+        > /dev/null 2>&1 &
+    fi
+    PIDS="${PIDS} $!"
+    echo "Terminal for ${node} at http://${MEASLAB_HOST}:${port}"
+  done
+else
+  echo "Note: ttyd is not installed. Browser web terminals will not be active."
   if [ "${MEASLAB_HOP}" = "podman-machine" ]; then
-    ttyd -p "${port}" -i "${MEASLAB_HOST}" -W -t titleFixed="${node}" \
-      podman machine ssh "${MEASLAB_MACHINE}" -- "${shell_cmd}" \
-      > /dev/null 2>&1 &
+    echo "To access router shells via terminal, use: podman machine ssh ${MEASLAB_MACHINE} -- sudo docker exec -it clab-measlab-<node> sh"
   else
-    ttyd -p "${port}" -i "${MEASLAB_HOST}" -W -t titleFixed="${node}" \
-      bash -c "${shell_cmd}" \
-      > /dev/null 2>&1 &
+    echo "To access router shells via terminal, use: sudo docker exec -it clab-measlab-<node> sh"
   fi
-  PIDS="${PIDS} $!"
-  echo "Terminal for ${node} at http://${MEASLAB_HOST}:${port}"
-done
+fi
 
 echo "Control panel + frontend at http://localhost:8080 (Ctrl-C to stop everything)."
 python3 frontend/portal_server.py 8080

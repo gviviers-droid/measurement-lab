@@ -271,6 +271,23 @@ install_ttyd_linux() {
 # ---------------------------------------------------------------- macOS ----
 
 ensure_prerequisites_macos() {
+  # Add standalone Podman package path if present
+  if [ -d /opt/podman/bin ]; then
+    if [[ ":$PATH:" != *":/opt/podman/bin:"* ]]; then
+      export PATH="/opt/podman/bin:$PATH"
+    fi
+    # If symlink to /usr/local/bin/podman is missing, create it
+    if [ ! -x /usr/local/bin/podman ] && [ -x /opt/podman/bin/podman ]; then
+      sudo mkdir -p /usr/local/bin 2>/dev/null || true
+      for b in podman gvproxy vfkit krunkit podman-mac-helper; do
+        if [ -f "/opt/podman/bin/${b}" ]; then
+          sudo ln -sf "/opt/podman/bin/${b}" "/usr/local/bin/${b}" 2>/dev/null || true
+        fi
+      done
+      hash -r 2>/dev/null || true
+    fi
+  fi
+
   # Add MacPorts to PATH if present
   if [ -d /opt/local/bin ] && [[ ":$PATH:" != *":/opt/local/bin:"* ]]; then
     export PATH="/opt/local/bin:$PATH"
@@ -308,7 +325,19 @@ ensure_prerequisites_macos() {
     fi
   fi
 
-  # Persist brew on PATH in ~/.zprofile for future shells (Apple Silicon or Intel)
+  # Persist podman and brew on PATH in ~/.zprofile / ~/.bash_profile for future shells
+  if [ -d /opt/podman/bin ]; then
+    for prof in ~/.zprofile ~/.bash_profile; do
+      if [ -f "${prof}" ]; then
+        grep -q '/opt/podman/bin' "${prof}" 2>/dev/null || \
+          printf '\nexport PATH="/opt/podman/bin:$PATH"\n' >> "${prof}"
+      fi
+    done
+    if [ ! -f ~/.zprofile ] && [ ! -f ~/.bash_profile ]; then
+      printf '\nexport PATH="/opt/podman/bin:$PATH"\n' >> ~/.zprofile
+    fi
+  fi
+
   if [ -x /opt/homebrew/bin/brew ]; then
     grep -q '/opt/homebrew/bin/brew shellenv' ~/.zprofile 2>/dev/null || \
       printf '\neval "$(/opt/homebrew/bin/brew shellenv)"\n' >> ~/.zprofile
@@ -338,15 +367,52 @@ install_podman_macos() {
 
   local arch
   arch="$(uname -m)"
-  if [ "${arch}" = "x86_64" ]; then
-    log "Intel Mac detected without Homebrew or MacPorts."
-    log "Downloading official Red Hat Podman standalone installer package (v5.4.0 amd64)..."
-    local pkg_url="https://github.com/containers/podman/releases/download/v5.4.0/podman-installer-macos-amd64.pkg"
+  local pkg_arch=""
+  case "${arch}" in
+    x86_64) pkg_arch="amd64" ;;
+    arm64)  pkg_arch="arm64" ;;
+  esac
+
+  if [ -n "${pkg_arch}" ]; then
+    if [ "${arch}" = "x86_64" ]; then
+      log "Intel Mac detected without Homebrew or MacPorts."
+    else
+      log "Apple Silicon Mac detected without Homebrew or MacPorts."
+    fi
+    log "Downloading official Red Hat Podman standalone installer package (v5.4.0 ${pkg_arch})..."
+    local pkg_url="https://github.com/containers/podman/releases/download/v5.4.0/podman-installer-macos-${pkg_arch}.pkg"
     local tmp_pkg="/tmp/podman-installer.pkg"
     curl -fsSL "${pkg_url}" -o "${tmp_pkg}"
     log "Installing Podman package (you may be prompted for your Mac password)..."
     sudo installer -pkg "${tmp_pkg}" -target /
     rm -f "${tmp_pkg}"
+
+    # The installer places binaries into /opt/podman/bin and creates /etc/paths.d/podman-pkg,
+    # but the currently running shell process does not inherit new paths.d entries without restarting.
+    if [ -d /opt/podman/bin ] && [[ ":$PATH:" != *":/opt/podman/bin:"* ]]; then
+      export PATH="/opt/podman/bin:$PATH"
+    fi
+
+    # Symlink binaries to /usr/local/bin (always on default macOS PATH) for immediate universal access
+    sudo mkdir -p /usr/local/bin
+    for b in podman gvproxy vfkit krunkit podman-mac-helper; do
+      if [ -f "/opt/podman/bin/${b}" ]; then
+        sudo ln -sf "/opt/podman/bin/${b}" "/usr/local/bin/${b}"
+      fi
+    done
+    hash -r 2>/dev/null || true
+
+    # Persist in shell profiles for future shells
+    for prof in ~/.zprofile ~/.bash_profile; do
+      if [ -f "${prof}" ]; then
+        grep -q '/opt/podman/bin' "${prof}" 2>/dev/null || \
+          printf '\nexport PATH="/opt/podman/bin:$PATH"\n' >> "${prof}"
+      fi
+    done
+    if [ ! -f ~/.zprofile ] && [ ! -f ~/.bash_profile ]; then
+      printf '\nexport PATH="/opt/podman/bin:$PATH"\n' >> ~/.zprofile
+    fi
+
     command -v podman >/dev/null 2>&1 || die "Podman installation failed. Please install Podman Desktop manually: https://podman-desktop.io/downloads"
     return
   fi

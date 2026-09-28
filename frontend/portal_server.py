@@ -18,12 +18,19 @@ Usage: python3 frontend/portal_server.py [port]   (default port 8080)
 """
 
 import json
+import os
 import re
 import shlex
 import subprocess
 import sys
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
+
+# On macOS, ensure Podman and package managers are on PATH
+if sys.platform == "darwin":
+    for extra_dir in ("/opt/podman/bin", "/opt/local/bin", "/opt/homebrew/bin", "/usr/local/bin"):
+        if os.path.isdir(extra_dir) and extra_dir not in os.environ.get("PATH", "").split(":"):
+            os.environ["PATH"] = f"{extra_dir}:{os.environ.get('PATH', '')}"
 
 ROOT = Path(__file__).resolve().parent.parent
 FRONTEND = ROOT / "frontend"

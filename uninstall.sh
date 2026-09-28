@@ -58,6 +58,22 @@ if [ -f .measlab/runtime.env ]; then
   . .measlab/runtime.env
 fi
 
+if [ "${PLATFORM}" = "Darwin" ]; then
+  if [ -d /opt/podman/bin ] && [[ ":$PATH:" != *":/opt/podman/bin:"* ]]; then
+    export PATH="/opt/podman/bin:$PATH"
+  fi
+  if [ -d /opt/local/bin ] && [[ ":$PATH:" != *":/opt/local/bin:"* ]]; then
+    export PATH="/opt/local/bin:$PATH"
+  fi
+  if ! command -v podman >/dev/null 2>&1; then
+    if [ -x /opt/homebrew/bin/brew ]; then
+      eval "$(/opt/homebrew/bin/brew shellenv)"
+    elif [ -x /usr/local/bin/brew ]; then
+      eval "$(/usr/local/bin/brew shellenv)"
+    fi
+  fi
+fi
+
 # 3. Tear down virtual network containers
 log "Tearing down lab network containers..."
 if [ "${PLATFORM}" = "Darwin" ] && [ "${MEASLAB_HOP}" = "podman-machine" ]; then
@@ -102,15 +118,31 @@ if [ "${PLATFORM}" = "Darwin" ]; then
   fi
 
   # Offer Homebrew packages cleanup
-  echo
-  RM_BREW=""
-  if [ "${FORCE}" -ne 1 ]; then
-    printf 'Homebrew packages (podman, ttyd) are installed on macOS.\n'
-    read -rp "Would you also like to uninstall podman and ttyd via Homebrew? [y/N] " RM_BREW
+  if command -v brew >/dev/null 2>&1 && brew list podman >/dev/null 2>&1; then
+    echo
+    RM_BREW=""
+    if [ "${FORCE}" -ne 1 ]; then
+      printf 'Homebrew packages (podman, ttyd) are installed on macOS.\n'
+      read -rp "Would you also like to uninstall podman and ttyd via Homebrew? [y/N] " RM_BREW
+    fi
+    if [[ "${RM_BREW:-}" =~ ^[Yy]$ ]]; then
+      log "Uninstalling Homebrew packages..."
+      brew uninstall podman ttyd 2>/dev/null || true
+    fi
   fi
-  if [[ "${RM_BREW:-}" =~ ^[Yy]$ ]]; then
-    log "Uninstalling Homebrew packages..."
-    brew uninstall podman ttyd 2>/dev/null || true
+
+  # Offer standalone Podman cleanup if installed via official pkg
+  if [ -d /opt/podman ]; then
+    echo
+    RM_STANDALONE=""
+    if [ "${FORCE}" -ne 1 ]; then
+      printf 'Official Red Hat Podman standalone package is installed in /opt/podman.\n'
+      read -rp "Would you also like to remove the standalone Podman package? [y/N] " RM_STANDALONE
+    fi
+    if [[ "${RM_STANDALONE:-}" =~ ^[Yy]$ ]]; then
+      log "Removing standalone Podman..."
+      sudo rm -rf /opt/podman /etc/paths.d/podman-pkg /usr/local/bin/podman /usr/local/bin/gvproxy /usr/local/bin/vfkit /usr/local/bin/krunkit /usr/local/bin/podman-mac-helper 2>/dev/null || true
+    fi
   fi
 
 elif [ "${PLATFORM}" = "Linux" ]; then
