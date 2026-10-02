@@ -1,6 +1,6 @@
 # Activity 6, Scenario 3: Double Trouble
 
-**Maps to:** Modules 2.3, 2.5 (Analysing Measurement Data) and 2.6 (Troubleshooting with Measurements)
+**Maps to:** Modules 2.6 (Core Performance Metrics: Jitter, Loss and the Whole Picture), 2.8 (Interpreting Data, Detecting Anomalies) and 2.9 (Systematic Troubleshooting)
 **Time:** 35 to 45 minutes
 **Start state:** lab deployed, `lab-check.sh` all green, congestion stopped, peering down, Scenarios 1 and 2 off.
 **Do not read** the files under `scripts/scenarios/`; they contain the answer.

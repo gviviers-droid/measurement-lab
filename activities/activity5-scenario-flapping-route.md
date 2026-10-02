@@ -1,6 +1,6 @@
 # Activity 5, Scenario 2: Now You See It, Now You Don't
 
-**Maps to:** Module 2.6 (Troubleshooting with Measurements), with a direct bridge to Unit 3 (RIS and BGPlay)
+**Maps to:** Module 2.9 (Systematic Troubleshooting), with a direct bridge to Unit 3 (RIS and BGPlay)
 **Time:** 30 minutes
 **Start state:** lab deployed, `lab-check.sh` all green, congestion stopped, peering down, Scenario 1 off.
 **Do not read** the files under `scripts/scenarios/`; they contain the answer.

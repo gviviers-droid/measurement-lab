@@ -1,6 +1,6 @@
 # Activity 1: Measure the Path
 
-**Maps to:** Modules 2.1 (Active Measurement) and 2.3 (Core Performance Metrics)
+**Maps to:** Modules 2.2 (Active Measurement: Ping) and 2.3 (Traceroute and Advanced Tools)
 **Time:** 30 to 40 minutes
 **You need:** the lab deployed and checked (see README.md), plus a terminal.
 
@@ -205,7 +205,7 @@ The final line reports `min/avg/max/mdev`.
 
 **Question 4a.** How far apart are your minimum and maximum? If you had sent one ping and it happened to hit the maximum, how wrong would your latency estimate have been?
 
-**Question 4b.** For this path, which single number would you report to a colleague as "the latency", and why? Keep your answer; Module 2.5 and the next activity return to this question with better tools.
+**Question 4b.** For this path, which single number would you report to a colleague as "the latency", and why? Keep your answer; Module 2.8 and the next activity return to this question with better tools.
 
 <details class="answers" markdown="1">
 <summary>Check your answers for Task 4 (reveal after writing your own)</summary>

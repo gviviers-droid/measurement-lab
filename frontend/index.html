@@ -474,7 +474,7 @@ lab), then reload this page from <code>http://localhost:8080</code>.</p>
 </div>
 
 <h2>Measurement logger &middot; CSV export</h2>
-<p>Periodically probes targets from <code>host1</code> and appends latency, jitter and loss to <code>measurements.csv</code> for time-series analysis (Module 2.5).</p>
+<p>Periodically probes targets from <code>host1</code> and appends latency, jitter and loss to <code>measurements.csv</code> for time-series analysis (Module 2.8).</p>
 <div class="btn-row">
   <button class="portal-btn" data-action="logger_start">Start logging</button>
   <button class="portal-btn" data-action="logger_stop">Stop logging</button>
@@ -686,7 +686,7 @@ console's bottom-right corner to resize it.</p>
 
 </article>
 <article id="activity1" class="page" data-title="Activity 1: Measure the Path"><h1>Activity 1: Measure the Path</h1>
-<p><strong>Maps to:</strong> Modules 2.1 (Active Measurement) and 2.3 (Core Performance Metrics)
+<p><strong>Maps to:</strong> Modules 2.2 (Active Measurement: Ping) and 2.3 (Traceroute and Advanced Tools)
 <strong>Time:</strong> 30 to 40 minutes
 <strong>You need:</strong> the lab deployed and checked (see README.md), plus a terminal.</p>
 <h2>The rules of this lab</h2>
@@ -880,7 +880,7 @@ HOST: host1                       Loss%   Snt   Last   Avg  Best  Wrst StDev
 </code></pre>
 <p>The final line reports <code>min/avg/max/mdev</code>.</p>
 <p><strong>Question 4a.</strong> How far apart are your minimum and maximum? If you had sent one ping and it happened to hit the maximum, how wrong would your latency estimate have been?</p>
-<p><strong>Question 4b.</strong> For this path, which single number would you report to a colleague as "the latency", and why? Keep your answer; Module 2.5 and the next activity return to this question with better tools.</p>
+<p><strong>Question 4b.</strong> For this path, which single number would you report to a colleague as "the latency", and why? Keep your answer; Module 2.8 and the next activity return to this question with better tools.</p>
 <details class="answers">
 <summary>Check your answers for Task 4 (reveal after writing your own)</summary>
 <pre><code class="language-text"><span class="code-label">Sample output (ping -c 100 -i 0.2 10.40.10.10 summary):</span>
@@ -937,7 +937,7 @@ Paths: (1 available, best #1)
 </details>
 </article>
 <article id="activity2" class="page" data-title="Activity 2: When the Path Gets Busy"><h1>Activity 2: When the Path Gets Busy</h1>
-<p><strong>Maps to:</strong> Modules 2.3 (Core Performance Metrics) and 2.5 (Analysing Measurement Data)
+<p><strong>Maps to:</strong> Modules 2.6 (Core Performance Metrics: Jitter, Loss and the Whole Picture), 2.7 (Bandwidth, Congestion, Time of Day) and 2.8 (Interpreting Data, Detecting Anomalies)
 <strong>Time:</strong> 30 minutes
 <strong>Start state:</strong> lab deployed, <code>lab-check.sh</code> all green, congestion stopped, peering down.
 <strong>You need:</strong> two terminals: one shell inside host1, and one on your own machine in the lab folder (or use the Control Portal at <code>http://localhost:8080</code>).</p>
@@ -1042,13 +1042,13 @@ HOST: host1                       Loss%   Snt   Last   Avg  Best  Wrst StDev
 <p><strong>Question 4c.</strong> On the real Internet, load on a link follows the waking hours of the people behind it. Express in two sentences why a measurement campaign for this path must span at least 24 hours, and what a measurement taken only at 04:00 would falsely conclude.</p>
 <details class="answers">
 <summary>Check your answers for Task 4 (reveal after writing your own)</summary>
-<p><strong>4a.</strong> The graph would show mostly flat baseline values with, at best, one or two elevated samples, depending on whether the hourly probe happened to land inside a busy period. It would miss the shape, depth and duration of both congestion windows entirely, and could miss them altogether. Sampling frequency bounds what a measurement can see; Module 2.5 calls this the resolution of a measurement campaign, and RIPE Atlas anchors this lesson at Internet scale in Unit 3.</p>
+<p><strong>4a.</strong> The graph would show mostly flat baseline values with, at best, one or two elevated samples, depending on whether the hourly probe happened to land inside a busy period. It would miss the shape, depth and duration of both congestion windows entirely, and could miss them altogether. Sampling frequency bounds what a measurement can see; Module 1.4 calls this the sampling rate of a measurement campaign, and RIPE Atlas anchors this lesson at Internet scale in Unit 3.</p>
 <p><strong>4b.</strong> Median and 95th percentile is the defensible pair: the median describes the typical experience and resists outliers, while p95 exposes the tail that users feel as slowness. Mean plus maximum is the common wrong answer, since one lucky or unlucky packet distorts both.</p>
 <p><strong>4c.</strong> A path measured only during quiet hours describes the link, and a path measured across a full day describes the service people receive from it. A campaign sampling only at 04:00 would conclude the path is fast, clean and stable, and it would be right about the cable and wrong about the Internet.</p>
 </details>
 </article>
 <article id="activity3" class="page" data-title="Activity 3: Turn On Peering"><h1>Activity 3: Turn On Peering</h1>
-<p><strong>Maps to:</strong> Modules 2.1 and 2.3, and the Unit 1 material on IXPs and Internet flattening
+<p><strong>Maps to:</strong> Modules 2.2 and 2.3, and the Unit 1 material on IXPs and Internet flattening (Module 1.3)
 <strong>Time:</strong> 25 minutes
 <strong>Start state:</strong> lab deployed, <code>lab-check.sh</code> all green, congestion stopped, peering down.
 <strong>You need:</strong> a shell inside host1, a shell on your own machine in the lab folder, and access to r1 and r2 (all directly accessible in the Control Portal at <code>http://localhost:8080</code>).</p>
@@ -1158,7 +1158,7 @@ Paths: (2 available, best #2)
 </details>
 </article>
 <article id="activity4" class="page" data-title="Activity 4, Scenario 1: The Slow Neighbour"><h1>Activity 4, Scenario 1: The Slow Neighbour</h1>
-<p><strong>Maps to:</strong> Module 2.6 (Troubleshooting with Measurements)
+<p><strong>Maps to:</strong> Module 2.9 (Systematic Troubleshooting)
 <strong>Time:</strong> 30 minutes, plus 10 for the optional mitigation
 <strong>Start state:</strong> lab deployed, <code>lab-check.sh</code> all green, congestion stopped, peering down.
 <strong>Do not read</strong> the files under <code>scripts/scenarios/</code>; they contain the answer.</p>
@@ -1282,7 +1282,7 @@ Neighbor        V    AS MsgRcvd MsgSent   TblVer  InQ OutQ  Up/Down State/PfxRcd
 <p>The name for this pattern is tromboning: traffic between two nearby networks detours through a distant third, out and back like the slide of a trombone. In Unit 3 you will find real trombones in RIPE Atlas traceroutes, and the evidence chain you built here, symptom, path, AS attribution, is the one you will use there.</p>
 </article>
 <article id="activity5" class="page" data-title="Activity 5, Scenario 2: Now You See It, Now You Don&#x27;t"><h1>Activity 5, Scenario 2: Now You See It, Now You Don&#x27;t</h1>
-<p><strong>Maps to:</strong> Module 2.6 (Troubleshooting with Measurements), with a direct bridge to Unit 3 (RIS and BGPlay)
+<p><strong>Maps to:</strong> Module 2.9 (Systematic Troubleshooting), with a direct bridge to Unit 3 (RIS and BGPlay)
 <strong>Time:</strong> 30 minutes
 <strong>Start state:</strong> lab deployed, <code>lab-check.sh</code> all green, congestion stopped, peering down, Scenario 1 off.
 <strong>Do not read</strong> the files under <code>scripts/scenarios/</code>; they contain the answer.</p>
@@ -1402,7 +1402,7 @@ From 10.1.1.1 icmp_seq=1 Destination Net Unreachable
 <p>The name for this pattern is a route flap, and its signature, a prefix rhythmically announced and withdrawn, propagates through the routing system to every observer. That last point is the doorway to Unit 3: RIPE RIS records exactly these announcements and withdrawals from hundreds of vantage points, and BGPlay animates them, so the flap you just diagnosed from one AS with a looking glass is the flap you will next watch ripple across the whole Internet.</p>
 </article>
 <article id="activity6" class="page" data-title="Activity 6, Scenario 3: Double Trouble"><h1>Activity 6, Scenario 3: Double Trouble</h1>
-<p><strong>Maps to:</strong> Modules 2.3, 2.5 (Analysing Measurement Data) and 2.6 (Troubleshooting with Measurements)
+<p><strong>Maps to:</strong> Modules 2.6 (Core Performance Metrics: Jitter, Loss and the Whole Picture), 2.8 (Interpreting Data, Detecting Anomalies) and 2.9 (Systematic Troubleshooting)
 <strong>Time:</strong> 35 to 45 minutes
 <strong>Start state:</strong> lab deployed, <code>lab-check.sh</code> all green, congestion stopped, peering down, Scenarios 1 and 2 off.
 <strong>Do not read</strong> the files under <code>scripts/scenarios/</code>; they contain the answer.</p>

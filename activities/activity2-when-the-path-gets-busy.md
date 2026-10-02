@@ -1,6 +1,6 @@
 # Activity 2: When the Path Gets Busy
 
-**Maps to:** Modules 2.3 (Core Performance Metrics) and 2.5 (Analysing Measurement Data)
+**Maps to:** Modules 2.6 (Core Performance Metrics: Jitter, Loss and the Whole Picture), 2.7 (Bandwidth, Congestion, Time of Day) and 2.8 (Interpreting Data, Detecting Anomalies)
 **Time:** 30 minutes
 **Start state:** lab deployed, `lab-check.sh` all green, congestion stopped, peering down.
 **You need:** two terminals: one shell inside host1, and one on your own machine in the lab folder (or use the Control Portal at `http://localhost:8080`).
@@ -157,7 +157,7 @@ sudo ./scripts/congestion.sh stop
 <details class="answers" markdown="1">
 <summary>Check your answers for Task 4 (reveal after writing your own)</summary>
 
-**4a.** The graph would show mostly flat baseline values with, at best, one or two elevated samples, depending on whether the hourly probe happened to land inside a busy period. It would miss the shape, depth and duration of both congestion windows entirely, and could miss them altogether. Sampling frequency bounds what a measurement can see; Module 2.5 calls this the resolution of a measurement campaign, and RIPE Atlas anchors this lesson at Internet scale in Unit 3.
+**4a.** The graph would show mostly flat baseline values with, at best, one or two elevated samples, depending on whether the hourly probe happened to land inside a busy period. It would miss the shape, depth and duration of both congestion windows entirely, and could miss them altogether. Sampling frequency bounds what a measurement can see; Module 1.4 calls this the sampling rate of a measurement campaign, and RIPE Atlas anchors this lesson at Internet scale in Unit 3.
 
 **4b.** Median and 95th percentile is the defensible pair: the median describes the typical experience and resists outliers, while p95 exposes the tail that users feel as slowness. Mean plus maximum is the common wrong answer, since one lucky or unlucky packet distorts both.
 

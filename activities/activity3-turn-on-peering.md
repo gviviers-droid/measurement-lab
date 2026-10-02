@@ -1,6 +1,6 @@
 # Activity 3: Turn On Peering
 
-**Maps to:** Modules 2.1 and 2.3, and the Unit 1 material on IXPs and Internet flattening
+**Maps to:** Modules 2.2 and 2.3, and the Unit 1 material on IXPs and Internet flattening (Module 1.3)
 **Time:** 25 minutes
 **Start state:** lab deployed, `lab-check.sh` all green, congestion stopped, peering down.
 **You need:** a shell inside host1, a shell on your own machine in the lab folder, and access to r1 and r2 (all directly accessible in the Control Portal at `http://localhost:8080`).

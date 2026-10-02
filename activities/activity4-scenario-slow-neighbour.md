@@ -1,6 +1,6 @@
 # Activity 4, Scenario 1: The Slow Neighbour
 
-**Maps to:** Module 2.6 (Troubleshooting with Measurements)
+**Maps to:** Module 2.9 (Systematic Troubleshooting)
 **Time:** 30 minutes, plus 10 for the optional mitigation
 **Start state:** lab deployed, `lab-check.sh` all green, congestion stopped, peering down.
 **Do not read** the files under `scripts/scenarios/`; they contain the answer.
