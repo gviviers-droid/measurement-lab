@@ -8,7 +8,7 @@
 | Router CLI (r1) | **r1** terminal (`vtysh`) | `podman exec -it clab-measlab-r1 vtysh` |
 | Router CLI (r2) | **r2** terminal (`vtysh`) | `podman exec -it clab-measlab-r2 vtysh` |
 | Router CLI (r3) | **r3** terminal (`vtysh`) | `podman exec -it clab-measlab-r3 vtysh` |
-| Leave a router CLI | `exit` | `exit` (twice) |
+| Leave a router CLI | `exit` | `exit` |
 
 Only r1, r2, r3 and host1 are yours. Everything else refuses you, by design.
 
@@ -21,9 +21,13 @@ Only r1, r2, r3 and host1 are yours. Everything else refuses you, by design.
 | Faster probing (5 per second) | `ping -c 100 -i 0.2 <target>` |
 | Path discovery | `traceroute -n 10.40.10.10` |
 | Path discovery, IPv6 | `traceroute -n -6 3fff:40:10::10` |
-| Per-hop loss, jitter and latency | `mtr -n --report --report-cycles 100 <target>` |
+| Per-hop loss, round-trip time and spread | `mtr -n --report --report-cycles 100 <target>` |
 
-The `-n` flag skips name lookups and shows raw addresses. In `mtr` output, `StDev` expresses jitter and `Wrst` is the worst round trip seen.
+The `-n` flag skips name lookups and shows the addresses only.
+
+In `mtr` output, `StDev` is the standard deviation of each hop's round trips. `Wrst` is the slowest round trip seen. For a jitter figure, read the `mdev` value at the end of ping's output.
+
+Use ping for timing. The lab's traceroute prints times such as 0.002 ms on hops with no added delay. Ping measures r3 and r1 at about 0.1 to 0.2 ms.
 
 ## Statistics one-liners
 
@@ -45,7 +49,7 @@ sort -n rtt.txt | awk '{a[NR]=$1; s+=$1}
        print "max:", a[NR]}'
 ```
 
-A shrinking count is your loss figure: lost pings produce no line.
+A lost ping produces no line, so a count below 100 shows loss. The median shows the typical round trip. 95% of round trips were at or below the p95 value.
 
 ## Reading your routers
 
@@ -56,12 +60,14 @@ Run these inside `vtysh` on r1, r2 or r3.
 | All BGP sessions and their state | `show bgp summary` |
 | Best path and alternatives, one prefix | `show bgp ipv4 unicast 10.40.0.0/16` |
 | Same, IPv6 | `show bgp ipv6 unicast 3fff:40::/32` |
-| Everything learned at the IXP | `show bgp ipv4 unicast` |
-| The routing table actually in use | `show ip route` / `show ipv6 route` |
+| Routes r2 learned from the route server | `show bgp ipv4 unicast neighbors 100.64.99.1 routes` |
+| Same, IPv6 | `show bgp ipv6 unicast neighbors 3fff:ff::1 routes` |
+| The routing table in use | `show ip route` / `show ipv6 route` |
 | Your OSPF neighbours | `show ip ospf neighbor` |
-| Recent log messages | `show logging` |
 
-In BGP output, read the AS path right to left: the rightmost AS originated the prefix. `Idle (Admin)` means an operator shut the session on purpose; a session cycling between states on its own means trouble.
+The route server rows work on r2 only, and only while your peering is up.
+
+In BGP output, read the autonomous system (AS) path from right to left. The rightmost AS originated the prefix. `Idle (Admin)` means an operator shut the session on purpose. A session that keeps changing state on its own points to a problem.
 
 ## The looking glass
 
@@ -73,7 +79,9 @@ sudo ./scripts/lg.sh transit "show bgp summary"
 sudo ./scripts/lg.sh route-server "show bgp summary"
 ```
 
-Routers: `upstream-a`, `upstream-b`, `transit`, `route-server`. The route server's summary is the IXP member list with session states.
+Routers: `upstream-a`, `upstream-b`, `transit`, `route-server`. The route server's summary lists the exchange members and the state of each session.
+
+In the base state, two route server rows read `Active`, which means the session is not up. One is dest-1 at 100.64.99.40. The other is your own r2 at 100.64.99.100, because your peering is down.
 
 ## Lab controls
 
@@ -87,7 +95,7 @@ Run from the lab folder on your own machine.
 | Tear down | `sudo ./lab.sh down` |
 | Background load on or off | `sudo ./scripts/congestion.sh start` / `stop` |
 | Continuous CSV logger | `sudo ./scripts/logger.sh start` / `stop` / `dump` |
-| Your IXP peering on or off | `sudo ./scripts/peering.sh up` / `down` |
+| Your peering at the exchange on or off | `sudo ./scripts/peering.sh up` / `down` |
 | Start or clear a fault scenario | `sudo ./scripts/scenario.sh <1|2|3> on` / `off` |
 
 Do not read the files under `scripts/scenarios/` before finishing Activities 4, 5 and 6: they name the faults.
@@ -104,7 +112,11 @@ Do not read the files under `scripts/scenarios/` before finishing Activities 4, 
 | transit, side facing A | `rt.measlab` | 100.64.13.2 | 3fff:30:0:13::2 | AS 65030 |
 | dest-1 router | `rd1.measlab` | 100.64.34.2 | 3fff:30:0:34::2 | AS 65040 |
 | target1 | `target1.measlab` | 10.40.10.10 | 3fff:40:10::10 | AS 65040 |
-| dest-2, IXP port | `rd2.measlab` | 100.64.99.50 | 3fff:ff::50 | AS 65050 |
+| dest-2, exchange port | `rd2.measlab` | 100.64.99.50 | 3fff:ff::50 | AS 65050 |
 | target2 | `target2.measlab` | 10.50.10.10 | 3fff:50:10::10 | AS 65050 |
 
-Addresses beginning 100.64.99 or 3fff:ff: sit on the IXP peering LAN. Each AS holds one IPv4 /16 and one IPv6 /32 from 3fff::/20. All DNS names resolve forward and reverse dual-stack records locally.
+Each network except the route server holds one IPv4 /16 and one IPv6 /32. The IPv6 /32s come from 3fff::/20.
+
+Addresses beginning 100.64 are on the links between networks. Those beginning 100.64.99 or 3fff:ff: are on the exchange's peering LAN. No network announces the 100.64 addresses, so a ping to one from host1 returns `Destination Net Unreachable` from 10.1.10.1.
+
+Each name resolves to both its IPv4 and its IPv6 address. Reverse lookups work for both.

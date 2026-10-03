@@ -1,6 +1,6 @@
 # Unit 2 Activities: Overview
 
-Six activities run on the one base topology, escalating from guided measurement to independent fault diagnosis. Learners install the lab once; every activity starts from the same base state and any scenario switches on and off by script.
+Six activities run on the same base topology. They move from guided measurement to independent fault diagnosis. Learners install the lab once. Every activity starts from the same base state. A script switches each scenario on and off.
 
 | # | Activity | Modules | Type | Scripts used | Time |
 |---|---|---|---|---|---|
@@ -8,19 +8,47 @@ Six activities run on the one base topology, escalating from guided measurement 
 | 2 | When the Path Gets Busy | 2.6, 2.7, 2.8 | Guided | congestion.sh | 30 min |
 | 3 | Turn On Peering | 2.2, 2.3, 1.3 | Guided | peering.sh | 25 min |
 | 4 | The Slow Neighbour | 2.9 | Scenario | scenario.sh 1, lg.sh | 30 to 40 min |
-| 5 | Now You See It, Now You Don't | 2.9 | Scenario | scenario.sh 2, lg.sh | 30 min |
-| 6 | Double Trouble (Stretch) | 2.6, 2.8, 2.9 | Scenario | scenario.sh 3, lg.sh | 35 to 45 min |
+| 5 | A Route That Comes and Goes | 2.9 | Scenario | scenario.sh 2, lg.sh | 30 min |
+| 6 | Two Faults at Once (Stretch) | 2.6, 2.8, 2.9 | Scenario | scenario.sh 3, lg.sh | 35 to 45 min |
 
 ## The arc
 
-Activity 1 teaches the instruments: traceroute, ping, mtr, and the learner's own BGP table, in both address families, against two targets with contrasting paths. Activity 2 adds time and load, turning the statistics of Module 2.8 into things the learner computes from their own packets. Activity 3 has the learner change their own network for the first time, with the before-and-after discipline that real peering decisions rest on. Activities 4 and 5 withdraw the guidance: a ticket, the tools, and an incident summary as the deliverable, first for a degraded path and then for an intermittent one. Activity 6 is a stretch scenario for learners who finish early, presenting a complex multi-variable incident with simultaneous, independent faults across different destinations.
+Each activity builds on the one before it:
 
-Each activity's closing questions point forward to Unit 3: distributed vantage points (RIPE Atlas), the Internet-wide BGP view (RIS, BGPlay), and measurement campaigns over time.
+1. **Activity 1** teaches the instruments in both address families. Learners use traceroute, ping and mtr, then read their own BGP table. The two targets have different paths.
+2. **Activity 2** adds load over time. Cross traffic arrives in bursts that fill a queue and then let it drain. Learners compute the Module 2.8 statistics from their own packets.
+3. **Activity 3** is a before-and-after measurement. Learners switch on a peering session at the exchange. They measure both targets before and after the change and compare the results.
+4. **Activities 4 and 5** remove the step-by-step guidance. Learners get a ticket and the tools. They write an incident summary. Activity 4 has a slow path. Activity 5 has a route that comes and goes.
+5. **Activity 6** is a stretch scenario for learners who finish early. Two separate faults run at once, each on a different destination.
+
+The closing questions of each activity point forward to three Unit 3 topics:
+
+- views from many vantage points (RIPE Atlas)
+- the BGP routes that the Routing Information Service (RIS) collectors record from their peers, as BGPlay shows them
+- measurement campaigns that run over time
 
 ## Base state, and why it matters
 
-Every sheet assumes: `lab-check.sh` green, congestion stopped, peering down, all scenarios off. Activities 3 to 6 end by restoring this state. If a learner reports strange results, the first question is always whether a previous activity left something switched on; `lab-check.sh` plus `congestion.sh status`, `peering.sh status` and re-running `scenario.sh <n> off` resets the world.
+Every sheet assumes the base state:
+
+- `sudo ./lab.sh check` passes on every line
+- congestion is stopped
+- peering is down
+- all scenarios are off
+
+Activities 2 to 6 each end by restoring this state. A learner may report strange results. First ask whether an earlier activity left something switched on. One command restores the base state and then runs the health check:
+
+```
+sudo ./lab.sh reset
+```
 
 ## For maintainers
 
-The learner-facing scenario switch is `scripts/scenario.sh`, which keeps its output neutral. The scripts under `scripts/scenarios/` document each fault and are therefore spoilers; task sheets tell learners not to read them. When adding a scenario: implement it as a toggle in `scripts/scenarios/`, add a neutral case to `scenario.sh`, write the task sheet with the model incident summary, and extend `lab-check.sh` only if the base state changes (it should not).
+The learner-facing scenario switch is `scripts/scenario.sh`. Its output stays neutral. The scripts under `scripts/scenarios/` describe each fault, so they give the answers away. The task sheets tell learners not to read them.
+
+To add a scenario:
+
+1. Write it as a toggle in `scripts/scenarios/`.
+2. Add a neutral case to `scenario.sh`.
+3. Write the task sheet with its model incident summary.
+4. Change `lab-check.sh` only if the base state changes. It should not change.

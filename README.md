@@ -145,11 +145,11 @@ The curriculum advances from fundamental active measurements to complex, multi-v
 | # | Activity | Core Topics | Type | Key Scripts | Estimated Time |
 |:---:|---|---|:---:|---|:---:|
 | **1** | [Measure the Path](activities/activity1-measure-the-path.md) | `ping`, `traceroute`, `mtr`, BGP routing tables | Guided | *None* | 30–40 min |
-| **2** | [When the Path Gets Busy](activities/activity2-when-the-path-gets-busy.md) | Queueing delay, bufferbloat, jitter, loss | Guided | `congestion.sh`, `logger.sh` | 30 min |
-| **3** | [Turn On Peering](activities/activity3-turn-on-peering.md) | IXP peering, route servers, latency comparison | Guided | `peering.sh` | 25 min |
-| **4** | [The Slow Neighbour](activities/activity4-scenario-slow-neighbour.md) | Troubleshooting routing detours (*tromboning*) | Scenario | `scenario.sh 1`, `lg.sh` | 30–40 min |
-| **5** | [Now You See It, Now You Don't](activities/activity5-scenario-flapping-route.md) | Diagnosing intermittent link flaps & route damping | Scenario | `scenario.sh 2`, `lg.sh` | 30 min |
-| **6** | [Double Trouble (Stretch)](activities/activity6-scenario-double-trouble.md) | Disentangling concurrent multi-variable incidents | Scenario | `scenario.sh 3`, `lg.sh` | 35–45 min |
+| **2** | [When the Path Gets Busy](activities/activity2-when-the-path-gets-busy.md) | Queuing delay, jitter, loss, percentiles | Guided | `congestion.sh`, `logger.sh` | 30 min |
+| **3** | [Turn On Peering](activities/activity3-turn-on-peering.md) | IXP peering, route servers, before-and-after measurement | Guided | `peering.sh` | 25 min |
+| **4** | [The Slow Neighbour](activities/activity4-scenario-slow-neighbour.md) | Troubleshooting a path that became slower | Scenario | `scenario.sh 1`, `lg.sh` | 30–40 min |
+| **5** | [A Route That Comes and Goes](activities/activity5-scenario-flapping-route.md) | Diagnosing intermittent reachability | Scenario | `scenario.sh 2`, `lg.sh` | 30 min |
+| **6** | [Two Faults at Once (Stretch)](activities/activity6-scenario-double-trouble.md) | Separating two faults that happen at the same time | Scenario | `scenario.sh 3`, `lg.sh` | 35–45 min |
 
 For curriculum alignment with course modules, consult the [Activities Overview](activities/overview.md).
 
@@ -181,9 +181,9 @@ Execute from the repository root:
 ./scripts/peering.sh up|down|status
 
 # Learner-facing fault scenario triggers (neutral output)
-./scripts/scenario.sh 1 on|off   # Scenario 1: Path detour / trombone
-./scripts/scenario.sh 2 on|off   # Scenario 2: Flapping BGP session
-./scripts/scenario.sh 3 on|off   # Scenario 3: Double Trouble (concurrent faults)
+./scripts/scenario.sh 1 on|off   # Scenario 1, used in Activity 4
+./scripts/scenario.sh 2 on|off   # Scenario 2, used in Activity 5
+./scripts/scenario.sh 3 on|off   # Scenario 3, used in Activity 6
 
 # Read-only Looking Glass into external routers
 ./scripts/lg.sh upstream-a "show bgp ipv4 unicast"

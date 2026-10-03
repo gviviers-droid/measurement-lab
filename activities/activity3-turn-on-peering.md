@@ -3,13 +3,15 @@
 **Maps to:** Modules 2.2 and 2.3, and the Unit 1 material on IXPs and Internet flattening (Module 1.3)
 **Time:** 25 minutes
 **Start state:** lab deployed, `lab-check.sh` all green, congestion stopped, peering down.
-**You need:** a shell inside host1, a shell on your own machine in the lab folder, and access to r1 and r2 (all directly accessible in the Control Portal at `http://localhost:8080`).
+**You need:** a shell inside host1 and a shell on your own machine in the lab folder. You also need access to r1 and r2. The Control Portal at `http://localhost:8080` gives you all of these.
 
-Your AS has held a port at the IXP since the lab began, configured and paid for, carrying nothing. Today you become a peer. The measurement discipline: never change a network without a before picture, so the first half of this activity records the world as it is, and the second half enables the sessions and measures what changed. This before-and-after method is exactly how operators justify peering decisions with data.
+Your network is autonomous system (AS) 65001. Your border router r2 has a port at the Internet Exchange Point (IXP). The port has been configured since the lab began. No BGP sessions run on it yet. In this activity you turn those sessions on.
 
-## Task 1: The before picture
+The method is before and after. First you record the network as it is. Then you turn on the sessions and repeat the same measurements. The two records show which destinations peering changed and which it did not.
 
-From host1 (switch to the **host1** terminal in the Control Portal, or run `podman exec -it clab-measlab-host1 bash`), record path and latency to target2 in both families:
+## Task 1: Measure before the change
+
+Open a shell on host1. Use the **host1** terminal in the Control Portal, or run `podman exec -it clab-measlab-host1 bash`. Record the path and the round-trip time to target2 in both address families:
 
 ```
 traceroute -n 10.50.10.10
@@ -18,14 +20,14 @@ ping -c 20 10.50.10.10
 ping -c 20 3fff:50:10::10
 ```
 
-Then read your own routing. On r1 (in the Control Portal **r1** terminal type `vtysh`, or run `podman exec -it clab-measlab-r1 vtysh`):
+Then read your own routing on r1. In the Control Portal **r1** terminal, type `vtysh`. Or run `podman exec -it clab-measlab-r1 vtysh`:
 
 ```
 show bgp ipv4 unicast 10.50.0.0/16
 show bgp ipv6 unicast 3fff:50::/32
 ```
 
-Note the AS path and which border router carries the traffic. Finally, look at the dormant sessions on r2 (in the Control Portal **r2** terminal type `vtysh`, or run `podman exec -it clab-measlab-r2 vtysh`):
+Note the AS path and which border router carries the traffic. Then look at the sessions on r2 that are not in use yet. In the Control Portal **r2** terminal, type `vtysh`. Or run `podman exec -it clab-measlab-r2 vtysh`:
 
 ```
 show bgp summary
@@ -35,42 +37,51 @@ show bgp summary
 > **How to read `show bgp summary`:**
 >
 > ```text
-> Neighbor        V    AS MsgRcvd MsgSent   TblVer  InQ OutQ  Up/Down State/PfxRcd
-> 100.64.99.1     4 65100       0       0        0    0    0    never Idle (Admin)
-> ^^^^^^^^^^^       ^^^^^                                             ^^^^^^^^^^^^
-> Neighbor IP     Peer AS                                             Session State:
->                                                                     Text = Session DOWN
->                                                                     Number = Session UP
+> IPv4 Unicast Summary:
+> Neighbor        V         AS   MsgRcvd   MsgSent   TblVer  InQ OutQ  Up/Down State/PfxRcd   PfxSnt Desc
+> 100.64.22.1     4      65020        28        23       11    0    0 00:19:56            5        1 upstream-b
 > ```
-> **The `State/PfxRcd` column rule:**
-> * When a session is **down or administratively shut**, it displays a **state name** (e.g. `Idle (Admin)`, `Active`, `Connect`).
-> * When a session is **up and established**, it displays an **integer** (the count of prefixes received, e.g. `1` or `3`). It does *not* write out the word "Established"!
+>
+> * The router prints one table for IPv4 and one for IPv6. Each table starts with a title line, such as `IPv4 Unicast Summary:`.
+> * `V` is the BGP version. It reads 4 in both tables, so it does not tell you the address family.
+> * `AS` is the AS number of the neighbour.
+> * When a session is up, `State/PfxRcd` shows a number. The number counts the prefixes received from that neighbour. The router does not print the word "Established".
+> * When a session is down, the same column shows a state name, such as `Idle (Admin)`, `Active` or `Connect`.
+> * `PfxSnt` counts the prefixes your router sends to that neighbour.
+>
+> In this example, r2's session with upstream B is up. r2 has received 5 prefixes from upstream B.
 
-**Question 1a.** What state does r2 report for the two sessions towards 100.64.99.1 and 3fff:ff::1, and what does that state mean?
+**Question 1a.** What state does r2 report for the two sessions towards 100.64.99.1 and 3fff:ff::1? What does that state mean?
 
 <details class="answers" markdown="1">
 <summary>Check your answer for Task 1 (reveal after writing your own)</summary>
 
 ```text
-Sample output (show bgp summary on r2):
-Neighbor        V    AS MsgRcvd MsgSent   TblVer  InQ OutQ  Up/Down State/PfxRcd
-100.64.99.1     4 65100       0       0        0    0    0    never Idle (Admin)
-3fff:ff::1      6 65100       0       0        0    0    0    never Idle (Admin)
+Sample output (show bgp summary on r2, excerpt):
+IPv4 Unicast Summary:
+Neighbor        V         AS   MsgRcvd   MsgSent   TblVer  InQ OutQ  Up/Down State/PfxRcd   PfxSnt Desc
+100.64.99.1     4      65100         0         0        0    0    0    never Idle (Admin)        0 IXP route server
+
+IPv6 Unicast Summary:
+Neighbor        V         AS   MsgRcvd   MsgSent   TblVer  InQ OutQ  Up/Down State/PfxRcd   PfxSnt Desc
+3fff:ff::1      4      65100         0         0        0    0    0    never Idle (Admin)        0 IXP route server
 ```
 
-**1a.** Idle (Admin): the sessions exist in configuration but an operator shut them down on purpose. Configured-but-disabled is a normal state on real routers, and it differs from a session that is down because of a fault.
+**1a.** Both sessions show `Idle (Admin)`. The sessions exist in r2's configuration. They are shut down on purpose. `never` in the `Up/Down` column means that the session has never been up.
+
+A session that is shut down on purpose is normal on real routers. It is different from a session that is down because of a fault.
 
 </details>
 
 ## Task 2: Become a peer
 
-In the Control Portal, click **Enable peering** (or on your own machine in the lab folder, run):
+In the Control Portal, click **Enable peering**. Or, on your own machine in the lab folder, run:
 
 ```
 sudo ./scripts/peering.sh up
 ```
 
-Give BGP half a minute, then confirm on r2 that both sessions show as Established (remember: look for a number in the `State/PfxRcd` column!) and count the prefixes received. Look at what arrived:
+Wait about 30 seconds for BGP. Then run `show bgp summary` on r2 again. Both sessions to the route server should now show a number in the `State/PfxRcd` column. Count the prefixes received. Then look at r2's routing table:
 
 ```
 show bgp ipv4 unicast
@@ -78,76 +89,193 @@ show bgp ipv6 unicast
 ```
 
 > [!TIP]
-> **How to read prefix routes (`show bgp ipv4 unicast`):**
+> **How to read the routing table (`show bgp ipv4 unicast`):**
 >
 > ```text
->    Network          Next Hop            Metric LocPrf Weight Path
-> *> 10.50.0.0/16     100.64.99.50                             65050 ?
-> ^^                  ^^^^^^^^^^^^                             ^^^^^
-> *> = Best path      Next-hop router                          AS sequence to destination
+> Status codes:  s suppressed, d damped, h history, u unsorted, * valid, > best, = multipath,
+>                i internal, r RIB-failure, S Stale, R Removed
+> Origin codes:  i - IGP, e - EGP, ? - incomplete
+>
+>      Network          Next Hop            Metric LocPrf Weight Path
+>  *>  10.50.0.0/16     100.64.99.50             0    250      0 65050 i
+>  *                    100.64.22.1                            0 65020 65050 i
 > ```
-> Look at the `Path` column: it lists the Autonomous Systems traversed to reach the destination network.
+>
+> * `*>` marks the best path to a prefix. A row with `*` alone is another valid path to the same prefix.
+> * A row that starts with `*>i` or `* i` was learned from another router in your own network.
+> * `LocPrf` shows the local preference, when one is set.
+> * `Path` lists the AS numbers on the way to the prefix. The nearest AS comes first.
+> * The last `i` in each row is the origin code, IGP. It does not mean internal.
 
-**Question 2a.** Which prefixes did the route server send you, and with what AS paths? One AS you expected to see in those paths is missing. Which, and why?
+**Question 2a.** Look for the rows whose next hop is on the IXP peering LAN (100.64.99.x or 3fff:ff::x). Those routes came from the route server. Which prefixes are they, and what are their AS paths? One AS number you might expect is missing. Which one, and why?
 
 <details class="answers" markdown="1">
 <summary>Check your answer for Task 2 (reveal after writing your own)</summary>
 
 ```text
-Sample output (show bgp ipv4 unicast on r2):
-   Network          Next Hop            Metric LocPrf Weight Path
-*> 10.10.0.0/16     100.64.99.10                             65010 ?
-*> 10.20.0.0/16     100.64.99.20                             65020 ?
-*> 10.50.0.0/16     100.64.99.50                             65050 ?
+Sample output (show bgp summary on r2, excerpt):
+Neighbor        V         AS   MsgRcvd   MsgSent   TblVer  InQ OutQ  Up/Down State/PfxRcd   PfxSnt Desc
+100.64.99.1     4      65100         7         4       14    0    0 00:00:29            3        1 IXP route server
+3fff:ff::1      4      65100         7         4       14    0    0 00:00:29            3        1 IXP route server
+
+Sample output (show bgp ipv4 unicast on r2, excerpt):
+     Network          Next Hop            Metric LocPrf Weight Path
+ *>  10.1.0.0/16      0.0.0.0                  0         32768 i
+ * i                  10.1.255.1               0    100      0 i
+ *>  10.10.0.0/16     100.64.99.10             0    250      0 65010 i
+ *                    100.64.22.1                            0 65020 65010 i
+ *>  10.20.0.0/16     100.64.99.20             0    250      0 65020 i
+ *                    100.64.22.1              0             0 65020 i
+ *>i 10.30.0.0/16     10.1.255.1                    200      0 65010 65030 i
+ *                    100.64.22.1                            0 65020 65030 i
+ *>i 10.40.0.0/16     10.1.255.1                    200      0 65010 65030 65040 i
+ *                    100.64.22.1                            0 65020 65030 65040 i
+ *>  10.50.0.0/16     100.64.99.50             0    250      0 65050 i
+ *                    100.64.22.1                            0 65020 65050 i
+
+Displayed 6 routes and 12 total paths
 ```
 
-**2a.** The route server passes you the prefixes of the other members: upstream A (10.10.0.0/16, 3fff:10::/32), upstream B, and dest-2 (10.50.0.0/16, 3fff:50::/32), each with a path of a single AS. Missing: AS 65100, the route server itself. A route server distributes routes between members without inserting its own AS number, so peering through it looks, in BGP, like a direct adjacency with every member.
+**2a.** Both sessions are up, and each has received 3 prefixes. In IPv4 the route server sent you these routes:
+
+* 10.10.0.0/16 from upstream A, with the path `65010`
+* 10.20.0.0/16 from upstream B, with the path `65020`
+* 10.50.0.0/16 from dest-2, with the path `65050`
+
+In IPv6 it sent 3fff:10::/32, 3fff:20::/32 and 3fff:50::/32, with the same paths. Each path has one AS number: the network that holds the prefix.
+
+The missing AS number is 65100, the route server's AS. A route server passes routes between members without adding its AS number. So in BGP, peering through a route server looks like a direct session with each member.
 
 </details>
 
-## Task 3: The after picture
+## Task 3: Measure after the change
 
-Repeat every measurement from Task 1: both traceroutes, both pings, both BGP lookups.
+Repeat every measurement from Task 1: both traceroutes, both pings and both BGP lookups on r1. Then measure target1 again with traceroute and ping, as you did in Activity 1.
 
-**Question 3a.** Describe the new path to target2: which machines, how many hops, which of your border routers.
+**Question 3a.** Describe the new path to target2. Which machines does it cross? How many hops does it have? Which border router does it leave through?
 
-**Question 3b.** Quantify the improvement: round-trip time before versus after, in both address families.
+**Question 3b.** Compare the round-trip time to target2 before and after, in both address families. Is the change larger than the spread inside each run?
 
-**Question 3c.** Your router now knows two routes to 10.50.0.0/16. Read the BGP output on r2: which attribute makes the peering route win, and what is its value compared with the transit-learned route?
+**Question 3c.** r1 now knows two routes to 10.50.0.0/16. Read the BGP output on r1. Which attribute selects the best route? What are its values on the two routes?
 
-**Question 3d.** Measure target1 again. Did peering change anything for it? State the general rule this demonstrates.
+**Question 3d.** Did peering change anything for target1? What does this tell you about which destinations peering changes?
 
 <details class="answers" markdown="1">
 <summary>Check your answers for Task 3 (reveal after writing your own)</summary>
 
 ```text
-Sample output (traceroute -n 10.50.10.10):
- 1  10.1.10.1     0.105 ms  0.088 ms  0.080 ms   (r3)
- 2  10.1.2.1      0.210 ms  0.195 ms  0.180 ms   (r2 - border B!)
- 3  100.64.99.50  0.550 ms  0.520 ms  0.490 ms   (dest-2 IXP port)
- 4  10.50.10.10   0.780 ms  0.720 ms  0.690 ms   (target2)
+Sample output, before peering (traceroute -n 10.50.10.10):
+traceroute to 10.50.10.10 (10.50.10.10), 30 hops max, 46 byte packets
+ 1  10.1.10.1  0.004 ms  0.003 ms  0.002 ms
+ 2  10.1.1.1  0.001 ms  0.003 ms  0.003 ms
+ 3  100.64.11.1  0.002 ms  0.003 ms  0.002 ms
+ 4  100.64.99.50  8.368 ms  7.219 ms  8.169 ms
+ 5  10.50.10.10  8.612 ms  11.348 ms  8.541 ms
 
-Sample excerpt (show bgp ipv4 unicast 10.50.0.0/16 on r2):
-Paths: (2 available, best #2)
-  65010 65050
-    10.1.1.1 (via iBGP from r1), LocPrf 200
-  65050
-    100.64.99.50 (via peering), LocPrf 250, best (Local Pref)
+Sample output, after peering (traceroute -n 10.50.10.10):
+traceroute to 10.50.10.10 (10.50.10.10), 30 hops max, 46 byte packets
+ 1  10.1.10.1  0.004 ms  0.002 ms  0.004 ms
+ 2  10.1.2.1  0.002 ms  0.002 ms  0.004 ms
+ 3  100.64.99.50  0.002 ms  0.003 ms  0.003 ms
+ 4  10.50.10.10  0.002 ms  0.002 ms  0.003 ms
 ```
 
-**3a.** host1 to r3, then r2, then straight to dest-2's IXP port (100.64.99.50, or 3fff:ff::50), then target2. Four hops, leaving through r2, with upstream A no longer involved.
+**3a.** The new path goes from host1 to r3 (10.1.10.1), then r2 (10.1.2.1). From r2 it goes to the IXP port of dest-2 (100.64.99.50), then to target2. That is four hops instead of five.
 
-**3b.** Before: a few milliseconds via upstream A's peering (the path found in Activity 1). After: below a millisecond in both families, since the path now crosses only your own AS and the exchange fabric. The improvement is modest here because the before path was already peered at one remove; the structural gain is independence: your traffic to dest-2 no longer depends on upstream A at all, which Scenario 1 in the next activity makes valuable.
+The traffic now leaves your network through r2. Upstream A is no longer on the forward path. The path crosses your AS, the IXP and the AS of dest-2.
 
-**3c.** Local preference. The peering route carries 250 against 200 for the transit-learned route via r1, so it wins before AS path length is even compared. Your own policy, not the Internet, made this choice, which is the point: routing is policy, and you just set one.
+In IPv6 the path is the same: 3fff:1:10::1, 3fff:1:0:2::1, 3fff:ff::50, then 3fff:50:10::10.
 
-**3d.** Nothing changed for target1. dest-1 is not present at the exchange, so your new sessions offer no route to it. The rule: peering improves reachability only to networks that are also at the exchange; everything else still rides transit. Real peering decisions weigh exactly this: how much of my traffic goes to networks I could reach across this fabric?
+The traceroute in this lab prints times under 1 ms that are not reliable. Use ping for timing.
+
+```text
+Before peering, IPv4 (a run of 50 pings, ping -c 50 -i 0.2):
+--- 10.50.10.10 ping statistics ---
+50 packets transmitted, 50 received, 0% packet loss, time 10058ms
+rtt min/avg/max/mdev = 7.382/10.199/13.052/1.549 ms
+
+After peering, IPv4 (the same run of 50 pings):
+--- 10.50.10.10 ping statistics ---
+50 packets transmitted, 50 received, 0% packet loss, time 10249ms
+rtt min/avg/max/mdev = 0.055/0.230/0.328/0.066 ms
+
+Before peering, IPv6 (a run of 100 pings, ping -6 -c 100 -i 0.2):
+--- 3fff:50:10::10 ping statistics ---
+100 packets transmitted, 100 received, 0% packet loss, time 20279ms
+rtt min/avg/max/mdev = 7.287/10.259/13.715/1.551 ms
+
+After peering, IPv6 (ping -c 20):
+--- 3fff:50:10::10 ping statistics ---
+20 packets transmitted, 20 received, 0% packet loss, time 19501ms
+rtt min/avg/max/mdev = 0.045/0.262/0.342/0.069 ms
+```
+
+**3b.** The round-trip time fell from about 10 ms to about 0.2 ms in both families:
+
+* Before: an average of 10.199 ms in IPv4 and 10.259 ms in IPv6.
+* After: an average of 0.230 ms in IPv4 and 0.262 ms in IPv6.
+
+Before peering, the replies ranged from 7.287 ms to 13.715 ms. After peering, the slowest IPv4 reply took 0.328 ms. That is faster than the fastest reply before peering. The two runs do not overlap. So the change is far larger than the normal variation (Module 2.8).
+
+These measurements show that the time changed. They do not show which link added the 10 ms before peering. The traceroute before peering shows the rise at hop 4. Traceroute shows only the forward path. Replies can come back another way (Module 2.9).
+
+```text
+Sample output (show bgp ipv4 unicast 10.50.0.0/16 on r1, after peering):
+BGP routing table entry for 10.50.0.0/16, version 9
+Paths: (2 available, best #1, table default)
+  Not advertised to any peer
+  65050
+    10.1.255.2 (metric 10) from 10.1.255.2 (10.1.255.2)
+      Origin IGP, metric 0, localpref 250, valid, internal, best (Local Pref)
+      Last update: Sat Oct  3 06:00:26 2026
+  65010 65050
+    100.64.11.1 from 100.64.11.1 (10.10.255.1)
+      Origin IGP, localpref 200, valid, external
+      Last update: Sat Oct  3 05:39:17 2026
+```
+
+**3c.** The attribute is local preference. The route through r2 and the IXP has `localpref 250`. The route through upstream A has `localpref 200`. The router marks the winner `best (Local Pref)`. BGP compares local preference before AS path length, so the higher value wins.
+
+The next hop 10.1.255.2 is r2, shown by its router identifier in brackets.
+
+Your network's policy was already configured before this activity. r2 sets 250 on routes from the IXP. r1 sets 200 on routes from upstream A. Turning on peering gave r2 a new route, and the existing policy chose it.
+
+```text
+Sample output, after peering (traceroute -n 10.40.10.10):
+traceroute to 10.40.10.10 (10.40.10.10), 30 hops max, 46 byte packets
+ 1  10.1.10.1  0.003 ms  0.002 ms  0.003 ms
+ 2  10.1.1.1  0.001 ms  0.001 ms  0.003 ms
+ 3  100.64.11.1  0.001 ms  0.002 ms  0.002 ms
+ 4  100.64.13.2  21.289 ms  24.038 ms  25.028 ms
+ 5  100.64.34.2  49.024 ms  49.426 ms  47.715 ms
+ 6  10.40.10.10  49.722 ms  51.344 ms  48.503 ms
+
+Before peering (ping -c 50 10.40.10.10):
+--- 10.40.10.10 ping statistics ---
+50 packets transmitted, 50 received, 0% packet loss, time 49216ms
+rtt min/avg/max/mdev = 44.245/54.482/68.001/5.393 ms
+
+After peering (ping -c 50 10.40.10.10):
+--- 10.40.10.10 ping statistics ---
+50 packets transmitted, 50 received, 0% packet loss, time 49291ms
+rtt min/avg/max/mdev = 43.820/53.654/67.870/4.984 ms
+```
+
+**3d.** Nothing changed for target1. The path is the same six hops, through r1, upstream A and transit. The median round-trip time was 53.7 ms before peering and 53.2 ms after. Each run spread over more than 20 ms. So a difference of 0.5 ms is inside the normal variation.
+
+dest-1 (AS 65040) has no session at the IXP. The route server sent you no route to it. Peering changes the path only to networks that send their routes to the route server. Traffic to every other destination still goes through your upstream providers.
 
 </details>
 
-## Task 4: Summarise the findings and scope
+## Task 4: Summarise what changed
 
-Write three concise sentences suitable for non-specialist stakeholders: what you enabled, what measurably improved, and the exact scope of the improvement (which destinations improved and which did not). Then restore the base state for the next activity by clicking **Disable peering** in the Control Portal (or run):
+Write three short sentences for a reader who is not a network specialist. Say:
+
+* what you turned on
+* what changed in your measurements
+* which destinations changed and which did not
+
+Then restore the base state for the next activity. Click **Disable peering** in the Control Portal, or run:
 
 ```
 sudo ./scripts/peering.sh down
@@ -156,6 +284,6 @@ sudo ./scripts/peering.sh down
 <details class="answers" markdown="1">
 <summary>Check your answer for Task 4 (reveal after writing your own)</summary>
 
-**4.** Model answer: "We activated our existing port at the exchange and now exchange routes directly with the other members. Traffic to the content network there dropped from around 2 ms to under 1 ms and no longer depends on our upstream provider. The change affects only destinations present at the exchange; the rest of our traffic is unchanged."
+**4.** Model answer: "AS 65001 turned on BGP sessions at the Internet Exchange Point. Round-trip time to dest-2 fell from about 10 ms to about 0.2 ms, in IPv4 and IPv6. Traffic to dest-1 did not change, because dest-1 has no session at the Internet Exchange Point."
 
 </details>
