@@ -16,7 +16,10 @@ restore () {
     -c "no neighbor 3fff:30:0:34::1 shutdown" || true
   echo; echo "Flapping stopped, sessions restored."
 }
-trap restore EXIT INT TERM
+# EXIT runs restore once, however the script ends. INT and TERM only end it: a handler that returns would let
+# the loop carry on, and `scenario.sh 2 off` then left dest-1 flapping.
+trap restore EXIT
+trap 'exit 0' INT TERM
 
 echo "Flapping dest-1's transit sessions every 40 s. Ctrl-C to stop."
 while true; do
@@ -24,10 +27,10 @@ while true; do
     -c "configure terminal" -c "router bgp 65040" \
     -c "neighbor 100.64.34.1 shutdown" \
     -c "neighbor 3fff:30:0:34::1 shutdown"
-  sleep 40
+  sleep 40 & wait $!
   docker exec ${RD1} vtysh \
     -c "configure terminal" -c "router bgp 65040" \
     -c "no neighbor 100.64.34.1 shutdown" \
     -c "no neighbor 3fff:30:0:34::1 shutdown"
-  sleep 40
+  sleep 40 & wait $!
 done

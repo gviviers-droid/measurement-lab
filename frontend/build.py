@@ -91,7 +91,7 @@ lab), then reload this page from <code>http://localhost:8080</code>.</p>
 </div>
 
 <h2>Measurement logger &middot; CSV export</h2>
-<p>Periodically probes targets from <code>host1</code> and appends latency, jitter and loss to <code>measurements.csv</code> for time-series analysis (Module 2.5).</p>
+<p>Periodically probes targets from <code>host1</code> and appends latency, jitter and loss to <code>measurements.csv</code> for time-series analysis (Module 2.8).</p>
 <div class="btn-row">
   <button class="portal-btn" data-action="logger_start">Start logging</button>
   <button class="portal-btn" data-action="logger_stop">Stop logging</button>
@@ -230,13 +230,13 @@ console's bottom-right corner to resize it.</p>
       }
       if (lblScen) {
         if (res.scenario3 === "on") {
-          lblScen.textContent = "Scenario 3 (Double Trouble)";
-          dotScen.className = "status-dot dot-err";
+          lblScen.textContent = "Scenario 3 on";
+          dotScen.className = "status-dot dot-warn";
         } else if (res.scenario1 === "on") {
-          lblScen.textContent = "Scenario 1 (Detour)";
+          lblScen.textContent = "Scenario 1 on";
           dotScen.className = "status-dot dot-warn";
         } else if (res.scenario2 === "on") {
-          lblScen.textContent = "Scenario 2 (Flapping)";
+          lblScen.textContent = "Scenario 2 on";
           dotScen.className = "status-dot dot-warn";
         } else {
           lblScen.textContent = "None (Base State)";

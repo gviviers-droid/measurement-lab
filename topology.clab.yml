@@ -24,16 +24,26 @@ topology:
       exec:
         - sysctl -w net.ipv4.ip_forward=1
         - sysctl -w net.ipv6.conf.all.forwarding=1
+        # Without this, traffic to an unrouted address leaves silently through the management network,
+        # so routers never answer 'unreachable' and link addresses look dead for no visible reason.
+        # Reverse-path filtering then drops traceroute replies from the unannounced link addresses, so it is off,
+        # as on most operators' internal routers.
+        - ip route del default dev eth0
+        - sh -c 'for f in /proc/sys/net/ipv4/conf/*/rp_filter; do echo 0 > $f; done'
     r2:
       binds: [configs/daemons:/etc/frr/daemons, configs/vtysh.conf:/etc/frr/vtysh.conf, configs/r2/frr.conf:/etc/frr/frr.conf]
       exec:
         - sysctl -w net.ipv4.ip_forward=1
         - sysctl -w net.ipv6.conf.all.forwarding=1
+        - ip route del default dev eth0
+        - sh -c 'for f in /proc/sys/net/ipv4/conf/*/rp_filter; do echo 0 > $f; done'
     r3:
       binds: [configs/daemons:/etc/frr/daemons, configs/vtysh.conf:/etc/frr/vtysh.conf, configs/r3/frr.conf:/etc/frr/frr.conf]
       exec:
         - sysctl -w net.ipv4.ip_forward=1
         - sysctl -w net.ipv6.conf.all.forwarding=1
+        - ip route del default dev eth0
+        - sh -c 'for f in /proc/sys/net/ipv4/conf/*/rp_filter; do echo 0 > $f; done'
     host1:
       image: ghcr.io/srl-labs/network-multitool
       binds:
@@ -54,26 +64,36 @@ topology:
       exec:
         - sysctl -w net.ipv4.ip_forward=1
         - sysctl -w net.ipv6.conf.all.forwarding=1
+        - ip route del default dev eth0
+        - sh -c 'for f in /proc/sys/net/ipv4/conf/*/rp_filter; do echo 0 > $f; done'
     rb:   # upstream B, AS 65020: 10.20.0.0/16, 3fff:20::/32
       binds: [configs/daemons:/etc/frr/daemons, configs/vtysh.conf:/etc/frr/vtysh.conf, configs/rb/frr.conf:/etc/frr/frr.conf]
       exec:
         - sysctl -w net.ipv4.ip_forward=1
         - sysctl -w net.ipv6.conf.all.forwarding=1
+        - ip route del default dev eth0
+        - sh -c 'for f in /proc/sys/net/ipv4/conf/*/rp_filter; do echo 0 > $f; done'
     rt:   # transit, AS 65030: 10.30.0.0/16, 3fff:30::/32
       binds: [configs/daemons:/etc/frr/daemons, configs/vtysh.conf:/etc/frr/vtysh.conf, configs/rt/frr.conf:/etc/frr/frr.conf]
       exec:
         - sysctl -w net.ipv4.ip_forward=1
         - sysctl -w net.ipv6.conf.all.forwarding=1
+        - ip route del default dev eth0
+        - sh -c 'for f in /proc/sys/net/ipv4/conf/*/rp_filter; do echo 0 > $f; done'
     rd1:  # dest-1 (hosting network), AS 65040: 10.40.0.0/16, 3fff:40::/32
       binds: [configs/daemons:/etc/frr/daemons, configs/vtysh.conf:/etc/frr/vtysh.conf, configs/rd1/frr.conf:/etc/frr/frr.conf]
       exec:
         - sysctl -w net.ipv4.ip_forward=1
         - sysctl -w net.ipv6.conf.all.forwarding=1
+        - ip route del default dev eth0
+        - sh -c 'for f in /proc/sys/net/ipv4/conf/*/rp_filter; do echo 0 > $f; done'
     rd2:  # dest-2 (content network), AS 65050: 10.50.0.0/16, 3fff:50::/32
       binds: [configs/daemons:/etc/frr/daemons, configs/vtysh.conf:/etc/frr/vtysh.conf, configs/rd2/frr.conf:/etc/frr/frr.conf]
       exec:
         - sysctl -w net.ipv4.ip_forward=1
         - sysctl -w net.ipv6.conf.all.forwarding=1
+        - ip route del default dev eth0
+        - sh -c 'for f in /proc/sys/net/ipv4/conf/*/rp_filter; do echo 0 > $f; done'
     rs:   # IXP route server, AS 65100
       binds: [configs/daemons:/etc/frr/daemons, configs/vtysh.conf:/etc/frr/vtysh.conf, configs/rs/frr.conf:/etc/frr/frr.conf]
     ixp-sw:  # IXP peering LAN: 100.64.99.0/24 and 3fff:ff::/64

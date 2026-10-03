@@ -613,13 +613,13 @@ console's bottom-right corner to resize it.</p>
       }
       if (lblScen) {
         if (res.scenario3 === "on") {
-          lblScen.textContent = "Scenario 3 (Double Trouble)";
-          dotScen.className = "status-dot dot-err";
+          lblScen.textContent = "Scenario 3 on";
+          dotScen.className = "status-dot dot-warn";
         } else if (res.scenario1 === "on") {
-          lblScen.textContent = "Scenario 1 (Detour)";
+          lblScen.textContent = "Scenario 1 on";
           dotScen.className = "status-dot dot-warn";
         } else if (res.scenario2 === "on") {
-          lblScen.textContent = "Scenario 2 (Flapping)";
+          lblScen.textContent = "Scenario 2 on";
           dotScen.className = "status-dot dot-warn";
         } else {
           lblScen.textContent = "None (Base State)";
