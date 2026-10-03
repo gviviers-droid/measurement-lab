@@ -8,7 +8,9 @@
 #                                      10 Mbit/s capacity, 200-packet    congested far-end link
 #                                      queue (about 230 ms of buffer)
 #   transit <-> dest-2     (rt eth4) : 30 ms delay, 2 ms jitter          backup path, used by trombone scenario
-# The IXP peering LAN stays clean: peering is fast, which is the point.
+#   upstream B -> learner  (rb eth1) : 8 ms delay, 1 ms jitter         the paid path to the exchange
+# The IXP peering LAN stays clean: peering is fast, which is the point. Without the delay on upstream B, target2
+# answered in 0.24 ms before peering and after it, and Activity 3's before-and-after measured nothing.
 
 set -euo pipefail
 LAB=measlab
@@ -19,5 +21,6 @@ containerlab tools netem set --runtime podman -n clab-${LAB}-rt -i eth3 --delay 
 # hundred milliseconds. Capped at 200 packets, so congestion shows the delay and spread Module 2.7 teaches.
 docker exec clab-${LAB}-rt tc qdisc change dev eth3 root netem limit 200 delay 25ms 2ms loss 1% rate 10Mbit
 containerlab tools netem set --runtime podman -n clab-${LAB}-rt -i eth4 --delay 30ms --jitter 2ms
+containerlab tools netem set --runtime podman -n clab-${LAB}-rb -i eth1 --delay 8ms --jitter 1ms
 
 echo "Base impairments applied. See script header for the ground truth."

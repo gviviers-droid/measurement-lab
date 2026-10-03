@@ -604,7 +604,7 @@ console's bottom-right corner to resize it.</p>
       var dotScen = document.getElementById("dot-scen");
 
       if (lblCong) {
-        lblCong.textContent = res.congestion === "running" ? "Active (10.5M)" : "Stopped";
+        lblCong.textContent = res.congestion === "running" ? "Active (bursts)" : "Stopped";
         dotCong.className = "status-dot " + (res.congestion === "running" ? "dot-warn" : "dot-ok");
       }
       if (lblPeer) {
